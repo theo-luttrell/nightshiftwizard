@@ -60,11 +60,19 @@
             border-radius: 8px;
             width: 80%;
             max-width: 280px;
+            max-height: 90vh; /* Prevents overflow on mobile */
+            overflow-y: auto; /* Allows scrolling inside menus if needed */
         }
+        /* Custom Scrollbar for Menus */
+        .overlay-screen::-webkit-scrollbar, .shop-container::-webkit-scrollbar { width: 6px; }
+        .overlay-screen::-webkit-scrollbar-track, .shop-container::-webkit-scrollbar-track { background: #111; }
+        .overlay-screen::-webkit-scrollbar-thumb, .shop-container::-webkit-scrollbar-thumb { background: #3e1a5f; border-radius: 3px; }
+
         .pixel-title {
             font-size: 20px;
             color: #ff00ff;
             text-shadow: 3px 3px 0px #3e1a5f;
+            margin-top: 10px;
             margin-bottom: 5px;
             line-height: 1.4;
             cursor: pointer;
@@ -132,7 +140,7 @@
 
         /* SHOP UI */
         .shop-container {
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
             width: 100%;
             border: 2px solid #3e1a5f;
@@ -175,10 +183,8 @@
                     <button onclick="startGame(false)">PLAY RUN</button>
                     <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
                     <button class="special" onclick="startGame(true)">BOSS RUSH</button>
-                    <div style="display:flex; width: 100%; gap: 5px;">
-                        <button onclick="switchScreen('howToPlayScreen')">HOW TO</button>
-                        <button onclick="switchScreen('optionsScreen')">OPTS</button>
-                    </div>
+                    <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
+                    <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
                 </div>
 
                 <div id="shopScreen" class="overlay-screen" style="display: none;">
@@ -196,8 +202,8 @@
                     <div class="menu-text" style="text-align: left;">
                         <span style="color:#fff;">CATCH:</span> Stars & Comets<br><br>
                         <span style="color:#ff4444;">DODGE:</span> Skulls & Phantoms<br><br>
-                        <span style="color:#00ffff;">POTION:</span> Grants Shield<br><br>
-                        <span style="color:#ff00ff;">SHARD:</span> Currency (Save!)
+                        <span style="color:#00ffff;">POWER UPS:</span> Grants Boosts<br><br>
+                        <span style="color:#ff00ff;">SHARDS:</span> Buy Upgrades (Save!)
                     </div>
                     <button onclick="switchScreen('mainMenuScreen')">BACK</button>
                 </div>
@@ -212,7 +218,7 @@
                 <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
                     <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
                     <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
-                    <button style="background-color: #006400; border-color: #39ff14;" onclick="addDevShards()">+100 SHARDS</button>
+                    <button style="background-color: #006400; border-color: #39ff14;" onclick="addDevShards()">+1000 SHARDS</button>
                     <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
                 </div>
 
@@ -257,9 +263,13 @@
     let maxComboAllTime = 1;
     let arcaneShards = 0;
     let shopData = {
-        magnetLvl: 0, // max 3
-        comboLvl: 0,  // max 3
-        skins: ['default'], // unlocked skins
+        magnetLvl: 0,
+        comboLvl: 0,
+        potionLvl: 0,
+        bootsLvl: 0,
+        blastLvl: 0,
+        greedLvl: 0,
+        skins: ['default'],
         activeSkin: 'default'
     };
 
@@ -270,6 +280,13 @@
         arcaneShards = parseInt(localStorage.getItem('nsw_shards')) || 0;
         const loadedShop = JSON.parse(localStorage.getItem('nsw_shopData'));
         if (loadedShop) shopData = { ...shopData, ...loadedShop };
+        
+        // Sanitize missing fields for returning players
+        if(shopData.potionLvl === undefined) shopData.potionLvl = 0;
+        if(shopData.bootsLvl === undefined) shopData.bootsLvl = 0;
+        if(shopData.blastLvl === undefined) shopData.blastLvl = 0;
+        if(shopData.greedLvl === undefined) shopData.greedLvl = 0;
+
     } catch(e) { console.warn("Local storage blocked or unavailable."); }
 
     function saveGame() {
@@ -381,12 +398,8 @@
     };
 
     // Initialize Parallax BG
-    for(let i=0; i<30; i++) {
-        bgStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: Math.random() * 2 + 1, speed: Math.random() * 30 + 10 });
-    }
-    for(let i=0; i<40; i++) {
-        farStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: 1, speed: Math.random() * 10 + 2 });
-    }
+    for(let i=0; i<30; i++) bgStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: Math.random() * 2 + 1, speed: Math.random() * 30 + 10 });
+    for(let i=0; i<40; i++) farStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: 1, speed: Math.random() * 10 + 2 });
 
     // --- AUDIO ---
     let audioCtx = null;
@@ -425,16 +438,22 @@
         }
     }
 
-    function triggerShake(duration, magnitude) {
-        shakeTimer = duration; shakeMag = magnitude;
+    function triggerShake(duration, magnitude) { shakeTimer = duration; shakeMag = magnitude; }
+
+    // --- EXPONENTIAL IDLE SHOP SYSTEM ---
+    function getExpCost(base, growth, lvl) {
+        return Math.floor(base * Math.pow(growth, lvl));
     }
 
-    // --- SHOP SYSTEM ---
     const shopItems = [
-        { id: 'magnet', title: 'ASTRAL MAGNET', desc: '+1s Magnet duration', costs: [10, 25, 50], getLvl: () => shopData.magnetLvl, max: 3, action: () => shopData.magnetLvl++ },
-        { id: 'combo', title: 'COMBO MOMENTUM', desc: 'Start with higher combo', costs: [20, 50, 100], getLvl: () => shopData.comboLvl, max: 3, action: () => shopData.comboLvl++ },
-        { id: 'pyromancer', title: 'PYROMANCER ROBES', desc: 'Sizzle with style', cost: 75, isSkin: true },
-        { id: 'necromancer', title: 'NECROMANCER ROBES', desc: 'Embrace the dark arts', cost: 150, isSkin: true }
+        { id: 'greed', title: 'SHARD GREED', desc: '+1 Shard per pickup', baseCost: 10, growth: 1.6, max: 20, getLvl: () => shopData.greedLvl, action: () => shopData.greedLvl++ },
+        { id: 'combo', title: 'COMBO MOMENTUM', desc: '+1 Starting Combo', baseCost: 25, growth: 1.8, max: 15, getLvl: () => shopData.comboLvl, action: () => shopData.comboLvl++ },
+        { id: 'magnet', title: 'ASTRAL MAGNET', desc: '+0.5s Magnet duration', baseCost: 15, growth: 1.5, max: 20, getLvl: () => shopData.magnetLvl, action: () => shopData.magnetLvl++ },
+        { id: 'boots', title: 'ROCKET BOOTS', desc: '+0.5s Boots duration', baseCost: 15, growth: 1.5, max: 20, getLvl: () => shopData.bootsLvl, action: () => shopData.bootsLvl++ },
+        { id: 'blast', title: 'ARCANE BLAST', desc: '+0.2s Laser duration', baseCost: 20, growth: 1.5, max: 20, getLvl: () => shopData.blastLvl, action: () => shopData.blastLvl++ },
+        { id: 'potion', title: 'POTION BREWER', desc: '+2% chance Shield stays', baseCost: 20, growth: 1.4, max: 25, getLvl: () => shopData.potionLvl, action: () => shopData.potionLvl++ },
+        { id: 'pyromancer', title: 'PYROMANCER ROBES', desc: 'Sizzle with style', cost: 250, isSkin: true },
+        { id: 'necromancer', title: 'NECROMANCER ROBES', desc: 'Embrace the dark arts', cost: 750, isSkin: true }
     ];
 
     function openShop() {
@@ -463,7 +482,7 @@
                     btnHTML = `<button onclick="equipSkin('${item.id}')">EQUIP</button>`;
                 } else {
                     const canAfford = arcaneShards >= item.cost;
-                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buySkin('${item.id}', ${item.cost})">${item.cost} SHARDS</button>`;
+                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buySkin('${item.id}', ${item.cost})">${item.cost} ♦</button>`;
                 }
                 
                 div.innerHTML = `
@@ -476,13 +495,13 @@
             } else {
                 const lvl = item.getLvl();
                 const isMax = lvl >= item.max;
-                const cost = isMax ? 0 : item.costs[lvl];
+                const cost = isMax ? 0 : getExpCost(item.baseCost, item.growth, lvl);
                 const canAfford = arcaneShards >= cost;
                 
                 if (isMax) {
                     btnHTML = `<button disabled>MAXED</button>`;
                 } else {
-                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${item.id}', ${cost})">${cost} SHARDS</button>`;
+                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${item.id}', ${cost})">${cost} ♦</button>`;
                 }
                 
                 div.innerHTML = `
@@ -496,7 +515,6 @@
             container.appendChild(div);
         });
 
-        // Add Default Skin equip option if active skin isn't default
         if (shopData.activeSkin !== 'default') {
             const defDiv = document.createElement('div');
             defDiv.className = 'shop-item';
@@ -543,7 +561,7 @@
     }
 
     function addDevShards() {
-        arcaneShards += 100;
+        arcaneShards += 1000; // Boosted to test exponential pricing
         saveGame();
         updateMenuStats();
     }
@@ -683,9 +701,7 @@
         if (score > highScore) { highScore = score; isNewRecord = true; }
         if (maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
         
-        // Add collected shards to bank
         arcaneShards += runShards;
-        
         saveGame();
         updateMenuStats();
         
@@ -703,7 +719,7 @@
         isBossRush = rushMode;
         score = 0; items = []; particles = []; runShards = 0;
         
-        // Apply Upgrades
+        // Apply Base Upgrades
         maxComboRun = 1 + shopData.comboLvl;
         comboMult = 1 + shopData.comboLvl; 
         
@@ -735,17 +751,11 @@
         // Background Animation
         if (showBgStars) {
             let spaceSpeedMult = rocketTimer > 0 ? 5 : 1;
-            farStars.forEach(s => {
-                s.y += s.speed * dt * spaceSpeedMult;
-                if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
-            });
-            bgStars.forEach(s => {
-                s.y += s.speed * dt * spaceSpeedMult;
-                if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
-            });
+            farStars.forEach(s => { s.y += s.speed * dt * spaceSpeedMult; if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; } });
+            bgStars.forEach(s => { s.y += s.speed * dt * spaceSpeedMult; if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; } });
         }
         
-        // Particle & Shake Updates
+        // Particle Updates
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.9; p.vy *= 0.9; p.life -= dt;
             if (p.life <= 0) particles.splice(i, 1);
@@ -768,7 +778,7 @@
         if (laserTimer > 0) laserTimer -= dt;
         if (comboTimer > 0) { 
             comboTimer -= dt; 
-            // Reset to base combo upgraded level
+            // Reset to upgraded base combo level
             if (comboTimer <= 0) comboMult = 1 + shopData.comboLvl; 
         }
         if (comboMult > maxComboRun) maxComboRun = comboMult;
@@ -783,19 +793,15 @@
 
         // BOSS LOGIC
         if (isBossRush) {
-            if (!bossActive) {
-                bossRushDelay -= dt;
-                if (bossRushDelay <= 0) spawnBoss();
-            }
+            if (!bossActive) { bossRushDelay -= dt; if (bossRushDelay <= 0) spawnBoss(); }
         } else {
             if (score >= nextBossScore && !bossActive) spawnBoss();
         }
 
         if (bossActive) {
             let isEnraged = boss.hp <= Math.ceil(boss.maxHp * 0.4); 
-            if (boss.y < 20) {
-                boss.y += 50 * worldDt; 
-            } else {
+            if (boss.y < 20) { boss.y += 50 * worldDt; } 
+            else {
                 if (boss.type === 0) { boss.x += boss.speed * (isEnraged?1.5:1) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
                 else if (boss.type === 1) { boss.wave += worldDt * (isEnraged?2.5:1.5); boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
                 else if (boss.type === 2) { boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * (isEnraged?8:4); boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
@@ -852,7 +858,6 @@
             
             let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
             
-            // Laser Destroys Bad
             if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
                 if (isBad) { spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444'); items.splice(i, 1); score += 20 * comboMult; continue; }
             }
@@ -867,15 +872,27 @@
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, isInvincible ? '#a9a9a9' : '#39ff14');
                         score += 50 * comboMult; triggerShake(0.1, 3); items.splice(i, 1);
                     } else if (player.hasShield) {
-                        player.hasShield = false; playSound('crunch');
-                        spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
+                        // Apply Idle Upgrade: % chance to keep shield
+                        let keepShieldChance = shopData.potionLvl * 0.02; // 2% per level
+                        if (Math.random() < keepShieldChance) {
+                            playSound('chime');
+                            spawnParticles(item.x + item.w/2, item.y + item.h/2, '#39ff14');
+                        } else {
+                            player.hasShield = false; 
+                            playSound('crunch');
+                            spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
+                        }
                         triggerShake(0.3, 8); items.splice(i, 1);
                     } else {
                         processGameOver();
                         return;
                     }
                 } else {
-                    if (item.type === 'shard') { runShards++; playSound('chime'); }
+                    if (item.type === 'shard') { 
+                        // Apply Idle Upgrade: Greed
+                        runShards += (1 + shopData.greedLvl); 
+                        playSound('chime'); 
+                    }
                     else if (item.type === 'star') score += 10 * comboMult;
                     else if (item.type === 'comet') score += 50 * comboMult;
                     else if (item.type === 'holyStar') {
@@ -891,9 +908,10 @@
                         }
                     } 
                     else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
-                    else if (item.type === 'rocket') { rocketTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'magnet') { magnetTimer = 5.0 + (shopData.magnetLvl * 1.5); playSound('chime'); } // Apply shop upgrade
-                    else if (item.type === 'blast')  { laserTimer = 2.0; playSound('bossHit'); triggerShake(0.2, 5); }
+                    // Apply Idle Upgrades to Durations
+                    else if (item.type === 'rocket') { rocketTimer = 5.0 + (shopData.bootsLvl * 0.5); playSound('chime'); }
+                    else if (item.type === 'magnet') { magnetTimer = 5.0 + (shopData.magnetLvl * 0.5); playSound('chime'); } 
+                    else if (item.type === 'blast')  { laserTimer = 2.0 + (shopData.blastLvl * 0.2); playSound('bossHit'); triggerShake(0.2, 5); }
                     else { playSound('bloop'); comboMult++; comboTimer = 3.0; baseSpeed += 1; }
                     
                     spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color);
@@ -959,11 +977,11 @@
             if (isBossRush) ctx.fillText(`SCORE: ${score}`, 10, 45);
 
             if (comboMult > 1) {
+                // If combo is significantly higher than starting combo, make it red
                 ctx.fillStyle = comboMult > (4 + shopData.comboLvl) ? '#ff4444' : '#ffd700';
                 ctx.fillText(`COMBO x${comboMult}`, 10, isBossRush ? 65 : 45);
             }
 
-            // Draw Shard Counter
             if (!isBossRush) {
                 ctx.fillStyle = '#ff00ff';
                 ctx.textAlign = "right";
