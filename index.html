@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Night Shift Wizard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111118;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 4px solid #333;
+        }
+
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            background: linear-gradient(to bottom, #050510 0%, #111128 100%);
+            cursor: none; /* Hides cursor over the game area for better immersion */
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-over-screen {
+            display: none;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            pointer-events: auto;
+            border: 2px solid #5d275d;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: #5d275d;
+            color: white;
+            border: 2px solid #8a3a8a;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 15px;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #8a3a8a;
+        }
+
+        button:active {
+            background-color: #d15cd1;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="gameOverScreen" class="game-over-screen">
+                <h1 style="color: #ff4444; margin: 0 0 10px 0;">CURSED!</h1>
+                <p id="finalScoreText" style="font-size: 1.2rem; margin: 0;">Score: 0</p>
+                <button onclick="resetGame()">RETRY</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreText = document.getElementById('finalScoreText');
+
+    // --- PIXEL ART DATA ---
+    const colors = {
+        'tr': 'transparent', 
+        'bl': '#000000', // Black
+        'wh': '#ffffff', // White
+        'sk': '#e0e0e0', // Skin/Skull
+        'pu': '#6a31a1', // Purple robe
+        'dp': '#3e1a5f', // Dark Purple
+        'go': '#ffd700', // Gold
+        'or': '#ffa500', // Orange
+        'rd': '#ff4444', // Red
+        'dr': '#8b0000', // Dark Red
+        'be': '#333333' // Beard/Shadow
+    };
+
+    const wizardSprite = [
+        ['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],
+        ['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],
+        ['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],
+        ['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],
+        ['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],
+        ['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']
+    ];
+
+    const starSprite = [
+        ['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],
+        ['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],
+        ['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],
+        ['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],
+        ['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],
+        ['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],
+        ['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],
+        ['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],
+        ['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']
+    ];
+
+    const skullSprite = [
+        ['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],
+        ['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],
+        ['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],
+        ['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],
+        ['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],
+        ['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],
+        ['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],
+        ['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']
+    ];
+
+    // --- GAME SETTINGS ---
+    const V_WIDTH = 320;
+    const V_HEIGHT = 480;
+    let score = 0;
+    let isGameOver = false;
+    let mouseX = V_WIDTH / 2; // Track pointer X position
+
+    const player = {
+        x: V_WIDTH / 2 - 16,
+        y: V_HEIGHT - 60,
+        w: 32,
+        h: 32
+    };
+
+    let items = [];
+    let spawnTimer = 0;
+    let baseSpeed = 2;
+
+    // --- UTILS ---
+    function drawPixelSprite(sprite, x, y, size) {
+        const pixelSize = size / 16;
+        for (let r = 0; r < sprite.length; r++) {
+            for (let c = 0; c < sprite[r].length; c++) {
+                const colorKey = sprite[r][c];
+                if (colorKey !== 'tr') {
+                    ctx.fillStyle = colors[colorKey];
+                    // Adding 0.5 prevents slight bleeding/gaps between pixels in some browsers
+                    ctx.fillRect(x + (c * pixelSize), y + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
+                }
+            }
+        }
+    }
+
+    function resize() {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        // Scale the canvas while keeping the 320x480 aspect ratio
+        const scale = Math.min(screenWidth / V_WIDTH, screenHeight / V_HEIGHT);
+        
+        canvas.width = V_WIDTH * scale;
+        canvas.height = V_HEIGHT * scale;
+        ctx.scale(scale, scale);
+    }
+
+    // --- LOGIC ---
+    function spawnItem() {
+        // 70% chance for skull, 30% chance for star
+        const type = Math.random() > 0.3 ? 'skull' : 'star';
+        items.push({
+            x: Math.random() * (V_WIDTH - 24),
+            y: -30,
+            w: 24,
+            h: 24,
+            type: type,
+            speed: baseSpeed + Math.random()
+        });
+    }
+
+    function resetGame() {
+        score = 0;
+        items = [];
+        isGameOver = false;
+        baseSpeed = 2;
+        player.x = V_WIDTH / 2 - 16;
+        mouseX = V_WIDTH / 2;
+        gameOverScreen.style.display = 'none';
+        requestAnimationFrame(update);
+    }
+
+    // --- INPUT HANDLING ---
+    function updatePointerPosition(clientX) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = V_WIDTH / rect.width;
+        // Center the wizard precisely on the pointer
+        mouseX = (clientX - rect.left) * scaleX - (player.w / 2);
+    }
+
+    window.addEventListener('mousemove', e => {
+        updatePointerPosition(e.clientX);
+    });
+
+    canvas.addEventListener('touchstart', e => {
+        updatePointerPosition(e.touches[0].clientX);
+        e.preventDefault(); // Prevent scrolling
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', e => {
+        updatePointerPosition(e.touches[0].clientX);
+        e.preventDefault(); // Prevent scrolling
+    }, {passive: false});
+
+    function handleInput() {
+        // Smoothly snap to mouse/touch pos
+        player.x = mouseX;
+
+        // Constraints so player doesn't walk off screen
+        if (player.x < 0) player.x = 0;
+        if (player.x > V_WIDTH - player.w) player.x = V_WIDTH - player.w;
+    }
+
+    // --- MAIN GAME LOOP ---
+    function update() {
+        if (isGameOver) return;
+
+        handleInput();
+
+        // Progressive Difficulty & Spawning
+        spawnTimer++;
+        if (spawnTimer > Math.max(15, 50 - (score / 5))) {
+            spawnItem();
+            spawnTimer = 0;
+        }
+
+        // Item Movement & Collision
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
+            item.y += item.speed;
+
+            // Adjusted Hitboxes for better gameplay feel
+            // Stars have a larger hitbox (-6 padding) making them magnetic
+            // Skulls have a smaller hitbox (+8 padding) allowing for near-misses
+            let hitPadding = (item.type === 'star') ? -6 : 8;
+
+            let itemHitbox = {
+                x: item.x + hitPadding,
+                y: item.y + hitPadding,
+                w: item.w - (hitPadding * 2),
+                h: item.h - (hitPadding * 2)
+            };
+
+            // AABB Collision Detection
+            if (player.x < itemHitbox.x + itemHitbox.w &&
+                player.x + player.w > itemHitbox.x &&
+                player.y < itemHitbox.y + itemHitbox.h &&
+                player.y + player.h > itemHitbox.y) {
+                
+                if (item.type === 'star') {
+                    score += 10;
+                    baseSpeed += 0.08; // Speeds up the game slightly
+                    items.splice(i, 1);
+                } else {
+                    endGame();
+                }
+                continue;
+            }
+
+            // Cleanup objects that fall completely off-screen
+            if (item.y > V_HEIGHT) {
+                items.splice(i, 1);
+            }
+        }
+
+        render();
+        requestAnimationFrame(update);
+    }
+
+    function endGame() {
+        isGameOver = true;
+        gameOverScreen.style.display = 'block';
+        finalScoreText.innerText = `Final Score: ${score}`;
+    }
+
+    function render() {
+        // Clear frame
+        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+
+        // Draw Player
+        drawPixelSprite(wizardSprite, player.x, player.y, player.w);
+
+        // Draw Items
+        items.forEach(item => {
+            const sprite = item.type === 'star' ? starSprite : skullSprite;
+            drawPixelSprite(sprite, item.x, item.y, item.w);
+        });
+
+        // Draw Score UI
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px 'Courier New'";
+        ctx.textAlign = "left";
+        // Adding a slight drop shadow to text for readability
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 2;
+        ctx.fillText(`SCORE: ${score}`, 10, 25);
+        
+        // Reset shadow so it doesn't affect pixel art in the next frame
+        ctx.shadowColor = "transparent";
+    }
+
+    // Init
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(update);
+
+</script>
+</body>
+</html>
