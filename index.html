@@ -3,551 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Night Shift Wizard: Arcane Overdrive</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Night Shift Wizard 4.0</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
-            background-color: #0b0b1a;
-            color: #fff;
-            font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+            background: #020205;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            touch-action: none;
+            touch-action: none; /* Prevent scroll on mobile touch */
+            user-select: none;
         }
-
         #game-container {
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
-            border: 4px solid #333;
-            background-color: #050510;
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            max-height: 800px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+            background: linear-gradient(to bottom, #050510, #1a0a2a);
         }
-
         canvas {
             display: block;
-            image-rendering: pixelated;
-            background: linear-gradient(to bottom, #050510 0%, #111128 100%);
-            cursor: none;
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+        }
+        .ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
         }
-
-        .overlay-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: rgba(5, 5, 16, 0.95);
-            padding: 20px;
-            pointer-events: auto;
-            border: 2px solid #5d275d;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 280px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .pixel-title {
-            font-size: 18px;
-            color: #ff00ff;
-            text-shadow: 3px 3px 0px #3e1a5f;
-            margin-bottom: 5px;
-            line-height: 1.4;
-            cursor: pointer;
-        }
-
-        .subtitle {
-            font-size: 8px;
-            color: #00ffff;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        .stat-line {
-            font-size: 8px;
-            color: #ffd700;
-            margin-bottom: 10px;
-        }
-
-        .currency-display {
-            color: #ff00ff;
-            font-size: 10px;
-            margin-bottom: 10px;
-        }
-
-        /* Shop Styling */
-        .shop-item {
-            width: 100%;
-            background: #1a1a3a;
-            border: 1px solid #5d275d;
-            margin: 5px 0;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .shop-header {
+        #hud {
+            padding: 15px;
             display: flex;
             justify-content: space-between;
-            width: 100%;
-            font-size: 7px;
-            margin-bottom: 4px;
+            text-shadow: 2px 2px 0 #000;
+            font-weight: bold;
         }
-        .item-lvl { color: #00ffff; }
-        .item-cost { font-size: 7px; color: #ff00ff; margin-bottom: 5px; }
-
-        .menu-text {
-            font-size: 9px;
-            line-height: 1.8;
-            margin-bottom: 15px;
-            color: #e0e0e0;
-        }
-
-        .boss-warning {
-            display: none;
+        #menu, #game-over {
             position: absolute;
-            top: 35%;
-            color: #ff4444;
-            font-size: 14px;
-            text-shadow: 2px 2px 0px #000;
-            animation: blink 0.4s infinite alternate;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 2, 5, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
         }
-
-        @keyframes blink {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-
+        .hidden { display: none !important; }
         button {
-            background-color: #3e1a5f;
-            color: white;
-            border: 2px solid #8a3a8a;
-            padding: 12px;
-            font-size: 10px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-family: inherit;
-            width: 100%;
+            margin: 10px; padding: 15px 30px;
+            background: #2a0a4a; color: #fff;
+            border: 2px solid #8a2be2; cursor: pointer;
+            font-family: inherit; font-size: 18px;
             text-transform: uppercase;
-            transition: all 0.2s;
+            transition: 0.2s;
+            border-radius: 8px;
         }
-
-        button:hover:not(:disabled) { background-color: #6a31a1; transform: scale(1.05); }
-        button:active { background-color: #ff00ff; }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
-        input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
-
-        .new-record { color: #39ff14; font-size: 10px; animation: blink 0.3s infinite alternate; display: none; margin-bottom: 10px; }
-
+        button:hover { background: #8a2be2; box-shadow: 0 0 15px #8a2be2; }
+        h1 { color: #b388ff; text-align: center; text-shadow: 0 0 10px #b388ff; }
+        #new-record {
+            position: absolute;
+            top: 30%; width: 100%; text-align: center;
+            color: #ffaa00; font-size: 32px; font-weight: bold;
+            animation: pulse 0.5s infinite alternate;
+            text-shadow: 0 0 20px #ff0000;
+        }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui-layer">
-            
-            <div id="mainMenuScreen" class="overlay-screen">
-                <h1 class="pixel-title" onclick="registerSecretClick()">NIGHT SHIFT WIZARD</h1>
-                <p class="subtitle">ARCANE OVERDRIVE</p>
-                <div class="currency-display">✧ <span id="mainShards">0</span></div>
-                <div class="stat-line">HI-SCORE: <span id="menuHS">0</span></div>
-                <button onclick="startGame(false)">PLAY ARCADE</button>
-                <button onclick="startGame(true)" style="color:#ff4444;">BOSS RUSH</button>
-                <button onclick="switchScreen('shopScreen'); updateShopUI();">THE ARMORY</button>
-                <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
-                <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
-            </div>
-
-            <div id="shopScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">WIZARD'S SHOP</h2>
-                <div class="currency-display">SHARDS: <span id="shopShards">0</span></div>
-                <div id="shopList" style="width: 100%;"></div>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-
-            <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
-                <div class="menu-text" style="text-align: left;">
-                    <span style="color:#fff;">CATCH:</span> Stars & Comets<br>
-                    <span style="color:#ff4444;">DODGE:</span> Skulls, Bats & Meteors [cite: 6, 9, 11]<br>
-                    <span style="color:#ff00ff;">JEWEL:</span> Magnetizes Loot [cite: 3]<br>
-                    <span style="color:#ffd700;">WATCH:</span> Freeze Enemies [cite: 4]<br>
-                    <span style="color:#rd;">BLAST:</span> Screen Clear [cite: 5]
-                </div>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-
-            <div id="optionsScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">OPTIONS</h2>
-                <label><input type="checkbox" id="muteToggle" onchange="toggleMute()"> Mute Sound</label>
-                <label><input type="checkbox" id="bgToggle" checked onchange="toggleBg()"> Show Stars</label>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-
-            <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
-                <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
-                <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
-                <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
-            </div>
-
-            <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
-            
-            <div id="gameOverScreen" class="overlay-screen" style="display: none;">
-                <h1 style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0;">CURSED!</h1>
-                <p id="newRecordText" class="new-record">NEW RECORD! [cite: 16]</p>
-                <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0;">Score: 0</p>
-                <p id="earnedShardsText" style="font-size: 8px; color: #ff00ff; margin-bottom: 15px;">Found 0 Shards</p>
-                <button onclick="startGame(isBossRushMode)">RETRY</button>
-                <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
-            </div>
-
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="ui-layer" id="hud-layer">
+        <div id="hud">
+            <div>Mana: <span id="scoreDisplay">0</span><br>Combo: <span id="comboDisplay">0</span></div>
+            <div style="text-align:right;">High Score: <span id="highScoreDisplay">0</span><br>HP: <span id="hpDisplay">3</span></div>
         </div>
+        <div id="new-record" class="hidden">NEW RECORD!</div>
     </div>
+
+    <div id="menu">
+        <h1>NIGHT SHIFT WIZARD<br><span style="font-size: 0.5em; color: #888;">Update 4.0</span></h1>
+        <p>Highest Mana: <span id="menuHighScore">0</span></p>
+        <button onclick="startGame(false)">Night Shift (Standard)</button>
+        <button onclick="startGame(true)">Boss Rush</button>
+    </div>
+
+    <div id="game-over" class="hidden">
+        <h1 style="color: #ff3333;">SHIFT ENDED</h1>
+        <p>Final Mana: <span id="finalScore">0</span></p>
+        <button onclick="showMenu()">Back to Menu</button>
+    </div>
+</div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
-    // --- PERSISTENCE & UPGRADES (Update 5.1) ---
-    const UPGRADE_CONFIG = {
-        shield: { name: "SHIELD CAP", base: 50, growth: 2.5, max: 3 },
-        magnet: { name: "MAGNET TIME", base: 30, growth: 1.6, max: 10 },
-        watch:  { name: "TIME FREEZE", base: 60, growth: 1.8, max: 10 },
-        blast:  { name: "ARCANE BEAM", base: 45, growth: 1.7, max: 10 }
-    };
-
-    let shards = parseInt(localStorage.getItem('nsw_shards')) || 0;
-    let highScore = parseInt(localStorage.getItem('nsw_hs')) || 0;
-    let levels = JSON.parse(localStorage.getItem('nsw_lvls')) || { shield: 0, magnet: 0, watch: 0, blast: 0 };
-
-    function saveGame() {
-        localStorage.setItem('nsw_shards', shards);
-        localStorage.setItem('nsw_hs', highScore);
-        localStorage.setItem('nsw_lvls', JSON.stringify(levels));
+    // Resize canvas to match container
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
     }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    // UI Elements
-    const screens = {
-        'mainMenuScreen': document.getElementById('mainMenuScreen'),
-        'howToPlayScreen': document.getElementById('howToPlayScreen'),
-        'optionsScreen': document.getElementById('optionsScreen'),
-        'devToolsScreen': document.getElementById('devToolsScreen'),
-        'gameOverScreen': document.getElementById('gameOverScreen'),
-        'shopScreen': document.getElementById('shopScreen')
-    };
-    const bossWarning = document.getElementById('bossWarning');
-    const finalScoreText = document.getElementById('finalScoreText');
-
-    // --- STATE VARIABLES ---
-    let gameState = 'MENU';
-    let isMuted = false;
-    let showBgStars = true;
-    let isBossRushMode = false;
-    let shakeTimer = 0;
-    let secretClicks = 0;
-    let isInvincible = false;
-
-    // --- PIXEL ART DATA (ALL RESTORED + NEW) ---
-    const colors = {
-        'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
-        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
-        'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
-        'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#000000', 'dk': '#1a0000'
-    };
-
-    const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
-    const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
-    const phantomSprite = [['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']];
-    const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const batSprite = [['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr'],['tr','bl','gy','gy','bl','tr','tr','tr','tr','bl','gy','gy','bl','tr','tr','tr'],['bl','gy','gy','gy','gy','bl','bl','bl','bl','gy','gy','gy','gy','bl','tr','tr'],['bl','gy','gy','bl','gy','gy','gy','gy','gy','gy','bl','gy','gy','bl','tr','tr'],['tr','bl','bl','tr','bl','gy','rd','gy','rd','gy','bl','tr','bl','bl','tr','tr'],['tr','tr','tr','tr','bl','gy','gy','gy','gy','gy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','gy','gy','gy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','bl','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
-    const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
-    const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
-    const watchSprite = [['tr','tr','go','go','go','go','tr','tr'],['tr','go','cy','wh','wh','cy','go','tr'],['go','cy','wh','bl','bl','wh','cy','go'],['tr','go','cy','cy','cy','cy','go','tr']];
-    const shardSprite = [['tr','tr','mg','mg','tr','tr'],['tr','mg','wh','wh','mg','tr'],['mg','wh','wh','wh','wh','mg'],['mg','wh','wh','wh','wh','mg'],['tr','mg','wh','wh','mg','tr'],['tr','tr','mg','mg','tr','tr']];
-    const meteorSprite = [['tr','tr','dr','dr','dk','tr','tr','tr'],['tr','dr','rd','rd','dr','dk','tr','tr'],['dr','rd','or','rd','rd','dr','dk','tr'],['dr','rd','or','or','rd','dr','dk','tr'],['dr','dr','rd','rd','dr','dr','dk','tr'],['tr','dr','dr','dr','dr','dk','tr','tr']];
-
-    const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
-    const eyeSprite = [['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','vi','vi','bk','bk','cy','wh','wh','cy','cy','cy','bk','bk','vi','vi','tr'],['vi','vi','bk','bk','cy','wh','wh','cy','bk','bk','cy','cy','bk','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','bk','cy','cy','cy','bk','bk','bk','cy','cy','bk','bk','vi','vi'],['tr','vi','vi','bk','bk','cy','cy','cy','cy','cy','cy','bk','bk','vi','vi','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr']];
-    const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
-    const lichSprite = [['tr','tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','bk','dp','dp','dp','gy','gy','gy','gy','gy','gy','dp','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','bk','cy','bk','bk','cy','bk','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','dp','gy','gy','bk','bk','gy','gy','dp','dp','dp','bk','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr']];
-    
-    const bossSprites = [dragonSprite, eyeSprite, slimeSprite, lichSprite];
-
-    // --- GAME CONSTANTS ---
-    const V_WIDTH = 320;
-    const V_HEIGHT = 480;
-    const NORMAL_SPEED = 300;
-
+    // --- META-PROGRESSION ---
     let score = 0;
-    let mouseX = V_WIDTH / 2;
-    
-    const player = { x: 144, y: 410, w: 32, h: 32, speed: NORMAL_SPEED, curShields: 0 };
+    let combo = 0;
+    let playerHp = 3;
+    let highScore = parseInt(localStorage.getItem('wizardHighScore')) || 0;
+    let highCombo = parseInt(localStorage.getItem('wizardHighCombo')) || 0;
 
-    let items = [], particles = [], bgStars = [], bgFar = [], fires = [];
-    let timers = { magnet: 0, watch: 0, blast: 0, rocket: 0 };
-    let spawnTimer = 0, lastTime = performance.now();
-    let comboMult = 1, comboTimer = 0, baseSpeed = 150; 
-    let sessionShards = 0;
-    let keys = { left: false, right: false };
+    // --- GAME STATE ---
+    let state = 'MENU';
+    let isBossRush = false;
+    let bossLevel = 1;
+    let frames = 0;
 
-    let bossLevel = 0;
-    let nextBossScore = 1500;
-    let bossActive = false;
-    let boss = { x: 128, y: -80, w: 64, h: 64, hp: 5, maxHp: 5, speed: 100, dir: 1, attackTimer: 0, type: 0, wave: 0, teleportTimer: 0 };
+    // Entities
+    let player = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 40 };
+    let spells = [];
+    let items = []; // Falling mana/hazards
+    let boss = null;
 
-    // Initialize BG Stars
-    for(let i=0; i<30; i++) {
-        bgStars.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, size: Math.random()*2+1, speed: Math.random()*30+10 });
-        bgFar.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, size: 1, speed: Math.random()*10+5 });
+    // --- SCREEN SHAKE ---
+    let shakeFrames = 0;
+    let shakeIntensity = 0;
+    function triggerShake(duration, intensity) {
+        shakeFrames = duration;
+        shakeIntensity = intensity;
     }
 
-    // --- AUDIO ---
-    let audioCtx = null;
-    function playSound(f, type='sine', d=0.1) {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (isMuted || audioCtx.state === 'suspended') return;
-        let o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + d);
-    }
-    
-    window.addEventListener('mousedown', () => { if(audioCtx) audioCtx.resume(); }, {once:true});
+    // --- PARALLAX STARS ---
+    const createStars = (count, speedMult, sizeMult, color) => {
+        return Array.from({ length: count }, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            speed: (Math.random() * 0.5 + 0.2) * speedMult,
+            size: (Math.random() * 1.5 + 0.5) * sizeMult,
+            color: color
+        }));
+    };
+    const deepSpaceStars = createStars(60, 0.3, 1, '#2a2a5a');
+    const foregroundStars = createStars(30, 1.5, 1.5, '#ffffff');
 
-    // --- UI CONTROLS ---
-    function switchScreen(id) {
-        Object.values(screens).forEach(s => s.style.display = 'none');
-        if(id) screens[id].style.display = 'flex';
-        if(id === 'mainMenuScreen') {
-            document.getElementById('mainShards').innerText = shards;
-            document.getElementById('menuHS').innerText = highScore;
-        }
-    }
-
-    function registerSecretClick() { secretClicks++; if(secretClicks >= 5) { switchScreen('devToolsScreen'); secretClicks = 0; } }
-    function toggleMute() { isMuted = document.getElementById('muteToggle').checked; }
-    function toggleBg() { showBgStars = document.getElementById('bgToggle').checked; }
-    function toggleInvincibility() { isInvincible = document.getElementById('invincibilityToggle').checked; }
-
-    // --- CORE GRAPHICS ---
-    function drawS(sprite, x, y, size) {
-        const pixelSize = size / 16;
-        for (let r = 0; r < sprite.length; r++) {
-            for (let c = 0; c < sprite[r].length; c++) {
-                if (sprite[r][c] !== 'tr') {
-                    ctx.fillStyle = colors[sprite[r][c]];
-                    ctx.fillRect(x + (c * pixelSize), y + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
-                }
-            }
-        }
-    }
-
-    function resize() {
-        const scale = Math.min(window.innerWidth / V_WIDTH, window.innerHeight / V_HEIGHT);
-        canvas.width = V_WIDTH * scale; canvas.height = V_HEIGHT * scale; ctx.scale(scale, scale);
-    }
-    window.addEventListener('resize', resize); resize();
-
-    function updatePointer(clientX) {
+    // --- INPUT HANDLING (Touch & Mouse) ---
+    function updatePlayerPosition(e) {
+        if (state !== 'PLAYING') return;
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const rect = canvas.getBoundingClientRect();
-        mouseX = (clientX - rect.left) * (V_WIDTH / rect.width) - 16;
-    }
-    window.addEventListener('mousemove', e => updatePointer(e.clientX));
-    canvas.addEventListener('touchmove', e => { updatePointer(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
-
-    window.addEventListener('keydown', e => {
-        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
-        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-    });
-    window.addEventListener('keyup', e => {
-        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
-        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
-    });
-
-    // --- SPAWNING ---
-    function spawnItem() {
-        if(bossActive) return;
-        let r = Math.random(), type = 'skull', sprite = skullSprite, w=24, h=24, spd=110 + score/50, col='#8b0000';
-        if (r > 0.98) { type='shard'; sprite=shardSprite; w=16; h=16; col='#ff00ff'; }
-        else if (r > 0.94) { type='watch'; sprite=watchSprite; w=16; h=16; col='#ffd700'; } [cite: 4]
-        else if (r > 0.90) { type='magnet'; sprite=magnetSprite; w=16; h=16; col='#ff00ff'; } [cite: 3]
-        else if (r > 0.85 && score > 500) { type='meteor'; sprite=meteorSprite; w=20; h=20; col='#ffa500'; spd*=1.5; } [cite: 11]
-        else if (r > 0.75) { type='bat'; sprite=batSprite; w=24; h=16; col='#a9a9a9'; } [cite: 9]
-        else if (r > 0.65) { type='specter'; sprite=specterSprite; w=24; h=24; col='#ffffff'; spd=75; } [cite: 7]
-        else if (r > 0.55) { type='star'; sprite=starSprite; }
-        items.push({ x: Math.random()*(V_WIDTH-w), y: -30, w, h, type, sprite, speed: spd*(baseSpeed/100), col, wave: Math.random()*Math.PI*2, split: false });
-    }
-
-    function spawnParticles(x, y, color) {
-        for(let i=0; i<10; i++) {
-            const angle = Math.random()*Math.PI*2, spd = Math.random()*120+50;
-            particles.push({ x, y, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd, life: 0.5, color });
-        }
-    }
-
-    function startGame(rush = false) {
-        isBossRushMode = rush; score = 0; items = []; particles = []; fires = []; sessionShards = 0;
-        player.x = 144; player.curShields = levels.shield; [cite: 1]
-        timers = { magnet: 0, watch: 0, blast: 0, rocket: 0 };
-        bossLevel = 0; bossActive = rush; nextBossScore = rush ? 0 : 1500;
-        if(rush) { boss.hp = 5; boss.y = -80; boss.type = 0; }
-        switchScreen(null); bossWarning.style.display = 'none'; document.getElementById('newRecordText').style.display = 'none';
-        lastTime = performance.now(); gameState = 'PLAYING';
-    }
-
-    // --- LOOP ---
-    function update(timestamp) {
-        let dt = (timestamp - lastTime)/1000 || 0.016; if(dt > 0.1) dt = 0.1; lastTime = timestamp;
-        if (showBgStars) {
-            bgStars.forEach(s => { s.y += s.speed*dt*(timers.rocket>0?5:1); if(s.y>V_HEIGHT){s.y=0; s.x=Math.random()*V_WIDTH;} });
-            bgFar.forEach(s => { s.y += s.speed*dt; if(s.y>V_HEIGHT){s.y=0; s.x=Math.random()*V_WIDTH;} }); [cite: 17]
-        }
-        for(let i=particles.length-1; i>=0; i--){
-            let p=particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.9; p.vy*=0.9; p.life-=dt;
-            if(p.life<=0) particles.splice(i,1);
-        }
-        if (gameState !== 'PLAYING') { render(); requestAnimationFrame(update); return; }
-
-        let eDt = (timers.watch > 0) ? 0 : dt; [cite: 4]
-        Object.keys(timers).forEach(k => { if(timers[k]>0) timers[k]-=dt; });
-        if(shakeTimer > 0) shakeTimer -= dt; [cite: 15]
-
-        if(keys.left) player.x -= player.speed*dt; else if(keys.right) player.x += player.speed*dt;
-        else player.x += (mouseX - player.x)*10*dt;
-        player.x = Math.max(0, Math.min(V_WIDTH - player.w, player.x));
-
-        // Floor Hazards
-        for(let i=fires.length-1; i>=0; i--){
-            let f=fires[i]; f.l-=dt; 
-            if(Math.abs(player.x-f.x)<20 && f.l>0 && !isInvincible){
-                if(player.curShields>0){player.curShields--; fires.splice(i,1); shakeTimer=0.2; playSound(150,'square');}
-                else { endG(); return; }
-            } [cite: 11]
-            if(f.l<=0) fires.splice(i,1);
-        }
-
-        if(score >= nextBossScore && !bossActive) {
-            bossActive = true; boss.hp = 5 + bossLevel*2; boss.maxHp = boss.hp; boss.y = -80; boss.type = bossLevel%4;
-            bossWarning.style.display = 'block'; setTimeout(()=>bossWarning.style.display='none',2000);
-        }
-
-        if(bossActive){
-            if(boss.y < 20) boss.y += 50*eDt;
-            else if(eDt > 0){
-                let enraged = boss.hp <= 2; [cite: 12]
-                if(boss.type===0){ boss.x+=boss.speed*(enraged?1.5:1)*boss.dir*dt; if(boss.x<0||boss.x>V_WIDTH-boss.w)boss.dir*=-1;}
-                boss.attackTimer += dt;
-                if(boss.attackTimer > (enraged?0.6:1.2)){
-                    items.push({x:boss.x+24,y:boss.y+60,w:24,h:24,type:'skull',sprite:skullSprite,speed:200,col:'#8b0000'});
-                    if(enraged && boss.type===0) items.push({x:boss.x+40,y:boss.y+60,w:24,h:24,type:'skull',sprite:skullSprite,speed:200,col:'#8b0000'}); [cite: 13, 14]
-                    boss.attackTimer=0;
-                }
-            }
-        } else {
-            spawnTimer += dt; if(spawnTimer > 0.8) { spawnItem(); spawnTimer=0; }
-        }
-
-        for(let i=items.length-1; i>=0; i--){
-            let it=items[i]; let itDt = (['star','shard','watch','magnet'].includes(it.type)) ? dt : eDt;
-            it.y += it.speed*itDt; 
-            if(it.type==='specter') it.x += (player.x-it.x)*1.5*itDt; [cite: 7]
-            if(it.type==='bat' && it.y>V_HEIGHT/2 && !it.split){
-                items.push({x:it.x,y:it.y,w:16,h:16,type:'skull',sprite:skullSprite,speed:it.speed,vx:-100});
-                items.push({x:it.x,y:it.y,w:16,h:16,type:'skull',sprite:skullSprite,speed:it.speed,vx:100}); [cite: 10]
-                items.splice(i,1); continue;
-            }
-            if(timers.magnet>0 && (it.type==='star'||it.type==='shard')) it.x+=(player.x-it.x)*(4+levels.magnet)*dt; [cite: 3]
-
-            if(Math.abs(player.x-it.x)<22 && Math.abs(player.y-it.y)<22){
-                if(['skull','meteor','bat','specter'].includes(it.type)){
-                    if(!isInvincible){
-                        if(player.curShields>0){player.curShields--; items.splice(i,1); shakeTimer=0.2; playSound(150,'square');}
-                        else { endG(); return; }
-                    }
-                } else {
-                    if(it.type==='star') score+=10; if(it.type==='shard') sessionShards++;
-                    if(it.type==='watch') timers.watch = 3 + levels.watch; [cite: 4]
-                    if(it.type==='magnet') timers.magnet = 5 + levels.magnet; [cite: 3]
-                    playSound(880); items.splice(i,1);
-                }
-                continue;
-            }
-            if(it.type==='meteor' && it.y>V_HEIGHT-20){fires.push({x:it.x,y:V_HEIGHT-10,l:2}); items.splice(i,1); shakeTimer=0.1;} [cite: 11]
-            if(it.y>V_HEIGHT) items.splice(i,1);
-        }
-        render(); requestAnimationFrame(update);
-    }
-
-    function endG() {
-        gameState='MENU'; shards += sessionShards; saveGame(); [cite: 15]
-        if(score>highScore){highScore=score; document.getElementById('newRecordText').style.display='block';}
-        document.getElementById('finalScoreText').innerText = `Score: ${score}`;
-        document.getElementById('earnedShardsText').innerText = `Found ${sessionShards} Shards`;
-        switchScreen('gameOverScreen'); playSound(100,'sawtooth',0.3);
-    }
-
-    function render() {
-        ctx.clearRect(0,0,V_WIDTH,V_HEIGHT);
-        if(shakeTimer > 0) ctx.translate(Math.random()*6-3, Math.random()*6-3); [cite: 15]
-        bgFar.forEach(s => { ctx.fillStyle='#000044'; ctx.fillRect(s.x,s.y,s.size,s.size); });
-        bgStars.forEach(s => { ctx.fillStyle='#ffffff'; ctx.globalAlpha=0.3; ctx.fillRect(s.x,s.y,s.size,s.size); ctx.globalAlpha=1;});
+        player.x = clientX - rect.left;
         
-        for(let i=0; i<player.curShields; i++){
-            ctx.strokeStyle='#00ffff'; ctx.beginPath(); ctx.arc(player.x+16,player.y+16,22+i*4,0,Math.PI*2); ctx.stroke();
-        }
-        drawS(wizardSprite, player.x, player.y, 32);
-        if(bossActive) drawS(bossSprites[boss.type], boss.x, boss.y, 64);
-        items.forEach(it => drawS(it.sprite, it.x, it.y, it.w));
-        fires.forEach(f => { ctx.fillStyle='#ff4444'; ctx.globalAlpha=f.l/2; ctx.fillRect(f.x,f.y,32,10); ctx.globalAlpha=1; });
-        particles.forEach(p => { ctx.fillStyle=p.color; ctx.globalAlpha=p.life/0.5; ctx.fillRect(p.x,p.y,4,4); ctx.globalAlpha=1; });
+        // Keep wizard in bounds
+        if (player.x < 15) player.x = 15;
+        if (player.x > canvas.width - 15) player.x = canvas.width - 15;
+    }
+    canvas.addEventListener('mousemove', updatePlayerPosition);
+    canvas.addEventListener('touchmove', updatePlayerPosition);
 
-        if(gameState==='PLAYING'){
-            ctx.fillStyle="#fff"; ctx.font="8px 'Press Start 2P'";
-            ctx.fillText(`SCORE: ${score}`, 10, 20); ctx.fillText(`✧: ${sessionShards}`, 10, 35);
+    // Auto-fire timer for Boss Rush
+    setInterval(() => {
+        if (state === 'PLAYING' && isBossRush) {
+            spells.push({ x: player.x, y: player.y - 40, speed: 7, radius: 4 });
         }
-        ctx.setTransform(1,0,0,1,0,0);
+    }, 200); // Shoot every 200ms
+
+    // --- CORE LOGIC ---
+    function startGame(bossRushToggled) {
+        isBossRush = bossRushToggled;
+        state = 'PLAYING';
+        score = 0; combo = 0; playerHp = 3; bossLevel = 1; items = []; spells = []; boss = null;
+        frames = 0;
+        
+        document.getElementById('menu').classList.add('hidden');
+        document.getElementById('game-over').classList.add('hidden');
+        document.getElementById('new-record').classList.add('hidden');
+        updateHUD();
+
+        if (isBossRush) spawnBoss();
     }
 
-    function updateShopUI() {
-        document.getElementById('shopShards').innerText = shards;
-        const list = document.getElementById('shopList'); list.innerHTML = '';
-        Object.keys(UPGRADE_CONFIG).forEach(k => {
-            const c = UPGRADE_CONFIG[k], lvl = levels[k], cost = Math.floor(c.base * Math.pow(c.growth, lvl));
-            const isMax = lvl >= c.max;
-            list.innerHTML += `<div class="shop-item"><div class="shop-header"><span>${c.name}</span><span class="item-lvl">LVL ${lvl}</span></div><div class="item-cost">${isMax?'MAXED':'COST: '+cost}</div><button onclick="buy('${k}',${cost})" ${isMax||shards<cost?'disabled':''}>UPGRADE</button></div>`;
+    function showMenu() {
+        state = 'MENU';
+        document.getElementById('game-over').classList.add('hidden');
+        document.getElementById('menu').classList.remove('hidden');
+        document.getElementById('menuHighScore').innerText = highScore;
+    }
+
+    function updateHUD() {
+        document.getElementById('scoreDisplay').innerText = score;
+        document.getElementById('comboDisplay').innerText = combo;
+        document.getElementById('hpDisplay').innerText = playerHp;
+        document.getElementById('highScoreDisplay').innerText = highScore;
+    }
+
+    function spawnBoss() {
+        boss = {
+            x: canvas.width / 2, y: 100,
+            hp: 20 + (bossLevel * 10), maxHp: 20 + (bossLevel * 10),
+            shield: bossLevel > 1 ? 10 : 0, maxShield: 10,
+            width: 80, height: 80,
+            speed: 2 + (bossLevel * 0.5), direction: 1
+        };
+    }
+
+    function gameOver() {
+        state = 'GAMEOVER';
+        document.getElementById('game-over').classList.remove('hidden');
+        document.getElementById('finalScore').innerText = score;
+
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('wizardHighScore', highScore);
+            document.getElementById('new-record').classList.remove('hidden');
+        }
+        if (combo > highCombo) {
+            highCombo = combo;
+            localStorage.setItem('wizardHighCombo', highCombo);
+        }
+    }
+
+    function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
+        return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+    }
+
+    // --- DRAWING WIZARD ---
+    function drawWizard() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // Robe
+        ctx.fillStyle = '#8a2be2';
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(-15, 20);
+        ctx.lineTo(15, 20);
+        ctx.fill();
+        
+        // Head
+        ctx.fillStyle = '#ffccaa';
+        ctx.beginPath();
+        ctx.arc(0, -15, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Magical Top Hat
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-15, -25, 30, 4); // brim
+        ctx.fillRect(-10, -45, 20, 20); // top
+        ctx.fillStyle = '#b388ff';
+        ctx.fillRect(-10, -30, 20, 5); // band
+
+        ctx.restore();
+    }
+
+    // --- GAME LOOP ---
+    function updateAndDraw() {
+        // 1. Clear & Draw Parallax
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        [deepSpaceStars, foregroundStars].forEach(layer => {
+            layer.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) star.y = 0;
+                ctx.fillStyle = star.color;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
         });
+
+        if (state === 'PLAYING') {
+            frames++;
+            ctx.save();
+
+            // Apply Screen Shake
+            if (shakeFrames > 0) {
+                ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity);
+                shakeFrames--;
+            }
+
+            drawWizard();
+
+            // --- STANDARD MODE: Catching Items ---
+            if (!isBossRush) {
+                if (frames % 40 === 0) {
+                    const isHazard = Math.random() > 0.7;
+                    items.push({
+                        x: Math.random() * (canvas.width - 20) + 10,
+                        y: -20, radius: 10,
+                        speed: 3 + Math.random() * 2,
+                        type: isHazard ? 'HAZARD' : 'MANA'
+                    });
+                }
+
+                for (let i = items.length - 1; i >= 0; i--) {
+                    let item = items[i];
+                    item.y += item.speed;
+
+                    // Draw Item
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = item.type === 'MANA' ? '#00ffff' : '#ff3333';
+                    ctx.fill();
+
+                    // Collision with Wizard
+                    if (Math.hypot(player.x - item.x, (player.y - 10) - item.y) < 25) {
+                        if (item.type === 'MANA') {
+                            combo++;
+                            score += 10 * combo;
+                        } else {
+                            playerHp--;
+                            combo = 0;
+                            triggerShake(15, 10);
+                            if (playerHp <= 0) gameOver();
+                        }
+                        items.splice(i, 1);
+                        updateHUD();
+                        continue;
+                    }
+
+                    if (item.y > canvas.height) {
+                        if (item.type === 'MANA') combo = 0; // Missed good item resets combo
+                        items.splice(i, 1);
+                        updateHUD();
+                    }
+                }
+            }
+
+            // --- BOSS RUSH MODE ---
+            if (isBossRush && boss) {
+                // Boss Movement
+                boss.x += boss.speed * boss.direction;
+                if (boss.x > canvas.width - boss.width / 2 || boss.x < boss.width / 2) {
+                    boss.direction *= -1;
+                }
+
+                // Boss Shooting
+                if (frames % Math.max(20, 60 - bossLevel * 10) === 0) {
+                    items.push({
+                        x: boss.x, y: boss.y + 40, radius: 8,
+                        speed: 4 + bossLevel, type: 'HAZARD'
+                    });
+                }
+
+                // Draw Boss
+                ctx.fillStyle = boss.shield > 0 ? '#4444ff' : '#880000';
+                ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2, boss.width, boss.height);
+                
+                // Draw HP / Shield Bars
+                ctx.fillStyle = 'red';
+                ctx.fillRect(boss.x - 40, boss.y - 60, 80, 6);
+                ctx.fillStyle = 'lime';
+                ctx.fillRect(boss.x - 40, boss.y - 60, 80 * (boss.hp / boss.maxHp), 6);
+                if (boss.shield > 0) {
+                    ctx.fillStyle = 'cyan';
+                    ctx.fillRect(boss.x - 40, boss.y - 50, 80 * (boss.shield / boss.maxShield), 4);
+                }
+
+                // Update Wizard Spells
+                for (let i = spells.length - 1; i >= 0; i--) {
+                    let s = spells[i];
+                    s.y -= s.speed;
+                    
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.fill();
+
+                    // Collision with Boss
+                    if (rectIntersect(s.x - s.radius, s.y - s.radius, s.radius*2, s.radius*2, 
+                                      boss.x - boss.width/2, boss.y - boss.height/2, boss.width, boss.height)) {
+                        spells.splice(i, 1);
+                        
+                        if (boss.shield > 0) {
+                            boss.shield--;
+                            triggerShake(3, 2); // Small shake for shield break
+                        } else {
+                            boss.hp--;
+                            combo++;
+                            score += 10 * combo;
+                            triggerShake(5, 5); // Shake for HP damage
+                        }
+                        
+                        if (boss.hp <= 0) {
+                            score += bossLevel * 1000;
+                            bossLevel++;
+                            triggerShake(20, 15);
+                            boss = null;
+                            setTimeout(spawnBoss, 2000); // Next boss delay
+                        }
+                        updateHUD();
+                        continue;
+                    }
+
+                    if (s.y < 0) spells.splice(i, 1);
+                }
+
+                // Update Boss Hazards
+                for (let i = items.length - 1; i >= 0; i--) {
+                    let item = items[i];
+                    item.y += item.speed;
+                    
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ff3333';
+                    ctx.fill();
+
+                    if (Math.hypot(player.x - item.x, (player.y - 10) - item.y) < 20) {
+                        playerHp--;
+                        combo = 0;
+                        triggerShake(15, 10);
+                        items.splice(i, 1);
+                        updateHUD();
+                        if (playerHp <= 0) gameOver();
+                        continue;
+                    }
+                    if (item.y > canvas.height) items.splice(i, 1);
+                }
+            }
+
+            ctx.restore();
+        }
+        requestAnimationFrame(updateAndDraw);
     }
 
-    function buy(k, cost) { if(shards>=cost) { shards-=cost; levels[k]++; saveGame(); updateShopUI(); playSound(660); } }
+    document.getElementById('menuHighScore').innerText = highScore;
+    updateAndDraw();
 
-    requestAnimationFrame(update); switchScreen('mainMenuScreen');
 </script>
 </body>
 </html>
