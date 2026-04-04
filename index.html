@@ -889,33 +889,37 @@
                     }
                 } else {
                     if (item.type === 'shard') { 
-                        // Apply Idle Upgrade: Greed
                         runShards += (1 + shopData.greedLvl); 
                         playSound('chime'); 
-                    }
-                    else if (item.type === 'star') score += 10 * comboMult;
-                    else if (item.type === 'comet') score += 50 * comboMult;
-                    else if (item.type === 'holyStar') {
+                    } else if (item.type === 'holyStar') {
                         playSound('bossHit'); boss.hp--; 
-                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff');
-                        triggerShake(0.1, 4);
+                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff'); triggerShake(0.1, 4);
                         if (boss.hp <= 0) { 
                             bossActive = false; score += 500 * comboMult; bossLevel++; baseSpeed += 15; 
-                            playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); 
-                            triggerShake(0.5, 12);
-                            if (isBossRush) bossRushDelay = 2.5;
-                            else nextBossScore = score + 1500;
+                            playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); triggerShake(0.5, 12); 
+                            if (runType === 'boss') bossRushDelay = 2.5; else nextBossScore = score + 1500; 
                         }
-                    } 
-                    else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
-                    // Apply Idle Upgrades to Durations
-                    else if (item.type === 'rocket') { rocketTimer = 5.0 + (shopData.bootsLvl * 0.5); playSound('chime'); }
-                    else if (item.type === 'magnet') { magnetTimer = 5.0 + (shopData.magnetLvl * 0.5); playSound('chime'); } 
-                    else if (item.type === 'blast')  { laserTimer = 2.0 + (shopData.blastLvl * 0.2); playSound('bossHit'); triggerShake(0.2, 5); }
-                    else { playSound('bloop'); comboMult++; comboTimer = 3.0; baseSpeed += 1; }
+                    } else if (item.type === 'potion') { 
+                        player.hasShield = true; playSound('chime'); 
+                    } else if (item.type === 'rocket') { 
+                        rocketTimer = 5.0 + (shopData.bootsLvl * 0.5); playSound('chime'); 
+                    } else if (item.type === 'magnet') { 
+                        magnetTimer = 5.0 + (shopData.magnetLvl * 0.5); playSound('chime'); 
+                    } else if (item.type === 'blast')  { 
+                        laserTimer = 2.0 + (shopData.blastLvl * 0.2); playSound('bossHit'); triggerShake(0.2, 5); 
+                    } else if (item.type === 'star' || item.type === 'comet') { 
+                        // Combo Logic properly isolated
+                        if (item.type === 'star') score += 10 * comboMult;
+                        if (item.type === 'comet') score += 50 * comboMult;
+                        playSound('bloop'); 
+                        comboMult++; 
+                        comboTimer = 3.0; 
+                        baseSpeed += 1; 
+                    }
                     
-                    spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color);
+                    spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color); 
                     items.splice(i, 1);
+                }
                 }
                 continue;
             }
