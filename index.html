@@ -236,7 +236,8 @@
     };
     let items = [];
     let particles = [];
-    let bgStars = [];
+    let bgFar = [];  // Slower, smaller stars
+    let bgNear = []; // Faster, larger stars
     let spawnTimer = 0;
     let lastTime = performance.now();
     let comboMult = 1;
@@ -258,10 +259,8 @@
     };
     // Initialize BG Stars
     for(let i=0; i<30; i++) {
-        bgStars.push({
-            x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT,
-            size: Math.random() * 2 + 1, speed: Math.random() * 30 + 10
-        });
+    bgFar.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, s: 1, spd: 20 });
+    bgNear.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, s: 2, spd: 60 });
     }
     // --- AUDIO ---
     let audioCtx = null;
@@ -421,11 +420,13 @@
         if (dt > 0.1) dt = 0.1; 
         lastTime = timestamp;
         // Background Animation (Runs even in Menu)
-        if (showBgStars) {
-            bgStars.forEach(s => {
-                s.y += s.speed * dt * (rocketTimer > 0 ? 5 : 1);
+        [bgFar, bgNear].forEach(layer => {
+            layer.forEach(s => {
+                s.y += s.spd * dt * (rocketTimer > 0 ? 5 : 1);
                 if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
             });
+        });
+        
             if (shakeIntensity > 0) {
                 shakeIntensity -= dt * 20; // Smoothly reduce shake over time
             }
@@ -532,6 +533,7 @@
                         shake = 8;
                     } else if (!isInvincible) {
                         triggerShake(20);
+                        saveProgress();
                         playSound('crunch'); gameState = 'MENU';
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
