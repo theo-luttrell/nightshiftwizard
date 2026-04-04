@@ -529,8 +529,8 @@
                         items.splice(i, 1);
                         triggerShake(8);
                     } else {
-                        triggerShake(15);
                         playSound('crunch'); gameState = 'MENU';
+                        triggerShake(15);
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
                         return;
