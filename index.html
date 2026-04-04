@@ -243,6 +243,11 @@
     let comboMult = 1;
     let comboTimer = 0;
     let baseSpeed = 150; 
+    const NORMAL_SPEED = 300;
+    let rocketTimer = 0;
+    let magnetTimer = 0;
+    let freezeTimer = 0;
+    let laserTimer = 0;
 
     // --- BOSS MECHANICS ---
     let bossLevel = 0;
@@ -323,9 +328,13 @@
         const rand = Math.random();
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
 
-        if (rand > 0.95) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
-        else if (rand > 0.85) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
-        else if (rand > 0.60) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
+        if (rand > 0.98) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
+        else if (rand > 0.96) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
+        else if (rand > 0.94) { type = 'watch'; sprite = watchSprite; sBase = 140; col = '#33ccff'; }
+        else if (rand > 0.92) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
+        else if (rand > 0.89) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
+        else if (rand > 0.80) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
+        else if (rand > 0.55) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
         else if (rand > 0.40) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
 
         items.push({
@@ -347,8 +356,9 @@
         score = 0; items = []; particles = []; isGameOver = false;
         player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
         player.hasShield = false; comboMult = 1; comboTimer = 0;
-        baseSpeed = 150; 
+        baseSpeed = 150; player.speed = NORMAL_SPEED;
         
+        rocketTimer = 0; magnetTimer = 0; freezeTimer = 0; laserTimer = 0;
         bossLevel = 0; bossActive = false; nextBossScore = 1500; 
         bossWarning.style.display = 'none'; gameOverScreen.style.display = 'none';
         
