@@ -19,11 +19,15 @@
             overflow: hidden;
             touch-action: none;
         }
-        #game-container {
+        #game-wrapper {
             position: relative;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
             border: 4px solid #333;
             background-color: #050510;
+        }
+        #game-container {
+            position: relative;
+            overflow: hidden;
         }
         canvas {
             display: block;
@@ -63,19 +67,27 @@
             text-shadow: 3px 3px 0px #3e1a5f;
             margin-bottom: 5px;
             line-height: 1.4;
-            cursor: pointer; /* Hint for the secret */
+            cursor: pointer;
         }
         .subtitle {
             font-size: 10px;
             color: #00ffff;
             margin-top: 0;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         .menu-text {
             font-size: 9px;
             line-height: 1.8;
             margin-bottom: 15px;
             color: #e0e0e0;
+        }
+        .stats-box {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #3e1a5f;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            width: 90%;
         }
         .boss-warning {
             display: none;
@@ -86,74 +98,141 @@
             text-shadow: 2px 2px 0px #000;
             animation: blink 0.4s infinite alternate;
         }
-        @keyframes blink {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        .new-record {
+            display: none;
+            color: #39ff14;
+            font-size: 10px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            animation: blink 0.3s infinite alternate;
         }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0; } }
         button {
             background-color: #3e1a5f;
             color: white;
             border: 2px solid #8a3a8a;
-            padding: 12px;
-            font-size: 10px;
+            padding: 10px;
+            font-size: 9px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 6px;
             font-family: inherit;
             width: 100%;
             text-transform: uppercase;
             transition: all 0.2s;
         }
+        button.special { background-color: #8b0000; border-color: #ff4444; }
+        button.shop-btn { background-color: #006400; border-color: #39ff14; }
         button:hover { background-color: #6a31a1; transform: scale(1.05); }
+        button.special:hover { background-color: #cc0000; }
         button:active { background-color: #ff00ff; }
-        /* Custom Checkbox for Settings */
+        button:disabled { background-color: #333; border-color: #555; color: #888; cursor: not-allowed; transform: none; }
+        
         label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
         input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
+
+        /* SHOP UI */
+        .shop-container {
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            border: 2px solid #3e1a5f;
+            background: #000;
+            margin-bottom: 10px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #3e1a5f;
+            padding: 8px 0;
+        }
+        .shop-info { text-align: left; font-size: 8px; width: 60%; line-height: 1.4; }
+        .shop-title { color: #ffd700; margin-bottom: 2px; }
+        .shop-desc { color: #aaa; font-size: 7px; }
+        .shop-action button { width: auto; padding: 6px; margin: 0; font-size: 8px; }
+        .shard-text { color: #ff00ff; text-shadow: 1px 1px 0 #fff; }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui-layer">
-            
-            <div id="mainMenuScreen" class="overlay-screen">
-                <h1 class="pixel-title" onclick="registerSecretClick()">NIGHT SHIFT WIZARD</h1>
-                <p class="subtitle">ARCANE OVERDRIVE</p>
-                <button onclick="startGame()">PLAY</button>
-                <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
-                <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
-            </div>
-            <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
-                <div class="menu-text" style="text-align: left;">
-                    <span style="color:#fff;">CATCH:</span> Stars & Comets<br><br>
-                    <span style="color:#ff4444;">DODGE:</span> Skulls & Phantoms<br><br>
-                    <span style="color:#00ffff;">POTION:</span> Grants Shield<br><br>
-                    <span style="color:#39ff14;">BOOTS:</span> 10x Speed + Ramming<br><br>
-                    <span style="color:#ff00ff;">JEWEL:</span> Magnetizes Loot
+    <div id="game-wrapper">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="ui-layer">
+                
+                <div id="mainMenuScreen" class="overlay-screen">
+                    <h1 class="pixel-title" onclick="registerSecretClick()">NIGHT SHIFT WIZARD</h1>
+                    <p class="subtitle">ARCANE OVERDRIVE</p>
+                    
+                    <div class="stats-box">
+                        <div class="menu-text" style="margin-bottom:0; color:#ffd700;">
+                            HIGH SCORE: <span id="menuHighScore">0</span><br><br>
+                            SHARDS: <span id="menuShards" class="shard-text">0</span>
+                        </div>
+                    </div>
+
+                    <button onclick="startGame(false)">PLAY RUN</button>
+                    <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
+                    <button class="special" onclick="startGame(true)">BOSS RUSH</button>
+                    <div style="display:flex; width: 100%; gap: 5px;">
+                        <button onclick="switchScreen('howToPlayScreen')">HOW TO</button>
+                        <button onclick="switchScreen('optionsScreen')">OPTS</button>
+                    </div>
                 </div>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-            <div id="optionsScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">OPTIONS</h2>
-                <label><input type="checkbox" id="muteToggle" onchange="toggleMute()"> Mute Sound</label>
-                <label><input type="checkbox" id="bgToggle" checked onchange="toggleBg()"> Show Stars</label>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-            <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
-                <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
-                <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
-                <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
-            </div>
-            <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
-            
-            <div id="gameOverScreen" class="overlay-screen" style="display: none;">
-                <h1 style="color: #ff4444; font-size: 20px; margin: 0 0 15px 0;">CURSED!</h1>
-                <p id="finalScoreText" style="font-size: 12px; margin: 0 0 15px 0;">Score: 0</p>
-                <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
-                <button onclick="startGame()">RETRY</button>
+
+                <div id="shopScreen" class="overlay-screen" style="display: none;">
+                    <h2 style="font-size: 14px; color: #ff00ff; margin-top:0;">THE EMPORIUM</h2>
+                    <p class="menu-text" style="margin-top:0;">You have: <span id="shopShardsDisplay" class="shard-text">0</span> Shards</p>
+                    
+                    <div class="shop-container" id="shopList">
+                        </div>
+                    
+                    <button onclick="switchScreen('mainMenuScreen')">EXIT SHOP</button>
+                </div>
+
+                <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
+                    <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
+                    <div class="menu-text" style="text-align: left;">
+                        <span style="color:#fff;">CATCH:</span> Stars & Comets<br><br>
+                        <span style="color:#ff4444;">DODGE:</span> Skulls & Phantoms<br><br>
+                        <span style="color:#00ffff;">POTION:</span> Grants Shield<br><br>
+                        <span style="color:#ff00ff;">SHARD:</span> Currency (Save!)
+                    </div>
+                    <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+                </div>
+
+                <div id="optionsScreen" class="overlay-screen" style="display: none;">
+                    <h2 style="font-size: 12px; color: #ffd700;">OPTIONS</h2>
+                    <label><input type="checkbox" id="muteToggle" onchange="toggleMute()"> Mute Sound</label>
+                    <label><input type="checkbox" id="bgToggle" checked onchange="toggleBg()"> Show Stars</label>
+                    <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+                </div>
+
+                <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
+                    <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
+                    <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
+                    <button style="background-color: #006400; border-color: #39ff14;" onclick="addDevShards()">+100 SHARDS</button>
+                    <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
+                </div>
+
+                <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
+                
+                <div id="gameOverScreen" class="overlay-screen" style="display: none;">
+                    <h1 style="color: #ff4444; font-size: 20px; margin: 0 0 15px 0;">CURSED!</h1>
+                    <p id="newRecordAlert" class="new-record">NEW RECORD!</p>
+                    <div class="stats-box">
+                        <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0;">Score: 0</p>
+                        <p id="finalComboText" style="font-size: 9px; color:#ffd700; margin: 0 0 10px 0;">Max Combo: x1</p>
+                        <p id="finalShardsText" style="font-size: 9px; color:#ff00ff; margin: 0;">Shards Found: 0</p>
+                    </div>
+                    <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
+                    <button id="retryBtn" onclick="startGame(false)">RETRY</button>
+                </div>
             </div>
         </div>
     </div>
+
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -161,6 +240,7 @@
     // UI Elements
     const screens = {
         'mainMenuScreen': document.getElementById('mainMenuScreen'),
+        'shopScreen': document.getElementById('shopScreen'),
         'howToPlayScreen': document.getElementById('howToPlayScreen'),
         'optionsScreen': document.getElementById('optionsScreen'),
         'devToolsScreen': document.getElementById('devToolsScreen'),
@@ -168,46 +248,75 @@
     };
     const bossWarning = document.getElementById('bossWarning');
     const finalScoreText = document.getElementById('finalScoreText');
+    const finalComboText = document.getElementById('finalComboText');
+    const finalShardsText = document.getElementById('finalShardsText');
+    const newRecordAlert = document.getElementById('newRecordAlert');
+    
+    // --- META-PROGRESSION & SAVES ---
+    let highScore = 0;
+    let maxComboAllTime = 1;
+    let arcaneShards = 0;
+    let shopData = {
+        magnetLvl: 0, // max 3
+        comboLvl: 0,  // max 3
+        skins: ['default'], // unlocked skins
+        activeSkin: 'default'
+    };
+
+    // Load Data
+    try {
+        highScore = parseInt(localStorage.getItem('nsw_highScore')) || 0;
+        maxComboAllTime = parseInt(localStorage.getItem('nsw_maxCombo')) || 1;
+        arcaneShards = parseInt(localStorage.getItem('nsw_shards')) || 0;
+        const loadedShop = JSON.parse(localStorage.getItem('nsw_shopData'));
+        if (loadedShop) shopData = { ...shopData, ...loadedShop };
+    } catch(e) { console.warn("Local storage blocked or unavailable."); }
+
+    function saveGame() {
+        try {
+            localStorage.setItem('nsw_highScore', highScore);
+            localStorage.setItem('nsw_maxCombo', maxComboAllTime);
+            localStorage.setItem('nsw_shards', arcaneShards);
+            localStorage.setItem('nsw_shopData', JSON.stringify(shopData));
+        } catch(e) {}
+    }
+
+    function updateMenuStats() {
+        document.getElementById('menuHighScore').innerText = highScore;
+        document.getElementById('menuShards').innerText = arcaneShards;
+    }
+    updateMenuStats();
+
     // --- STATE VARIABLES ---
-    let gameState = 'MENU'; // 'MENU' or 'PLAYING'
+    let gameState = 'MENU'; 
     let isMuted = false;
     let showBgStars = true;
-
-    // --- NEW STATE VARIABLES ---
-    let highScore = localStorage.getItem('nsw_highScore') || 0;
-    let highCombo = localStorage.getItem('nsw_highCombo') || 0;
-    let maxComboThisRun = 1;
-    let isNewRecord = false;
+    let isBossRush = false;
+    let bossRushDelay = 0;
     
-    function saveProgress() {
-        isNewRecord = false;
-        if (score > highScore) {
-            highScore = score;
-            localStorage.setItem('nsw_highScore', highScore);
-            isNewRecord = true;
-        }
-        if (maxComboThisRun > highCombo) {
-            highCombo = maxComboThisRun;
-            localStorage.setItem('nsw_highCombo', highCombo);
-            isNewRecord = true;
-        }
-    }
-    
-    // SECRET DEV STATE
     let secretClicks = 0;
     let isInvincible = false;
+    let runShards = 0;
+
     // --- PIXEL ART DATA ---
     const colors = {
         'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
         'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
         'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
         'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff'
+        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#111111'
     };
+    
+    // Skins
     const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    const pyromancerSprite = [['tr','tr','tr','tr','tr','dr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr','tr'],['tr','dr','dr','dr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','dr','dr','dr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','dr','or','dr','dr','dr','dr','dr','dr','dr','or','dr','tr','tr','tr','tr'],['tr','dr','or','dr','dr','dr','dr','dr','dr','dr','or','dr','tr','tr','tr','tr'],['tr','tr','tr','or','or','or','or','or','or','or','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    const necromancerSprite = [['tr','tr','tr','tr','tr','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','bl','wh','bl','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','bk','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bk','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr','tr','tr'],['tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','ng','dg','dg','dg','dg','dg','dg','dg','ng','dg','tr','tr','tr','tr'],['tr','dg','ng','dg','dg','dg','dg','dg','dg','dg','ng','dg','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    
+    // Items
     const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
+    const shardSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','mg','mg','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','mg','cy','mg','mg','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','mg','mg','mg','mg','mg','mg','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','mg','cy','mg','mg','cy','mg','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','mg','mg','mg','mg','mg','mg','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','mg','mg','mg','mg','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','mg','mg','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
     const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
     const phantomSprite = [['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']];
     const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
@@ -217,27 +326,35 @@
     const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
     const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
     const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
+    
+    // Boss Sprites
     const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
     const eyeSprite = [['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','vi','vi','bk','bk','cy','wh','wh','cy','cy','cy','bk','bk','vi','vi','tr'],['vi','vi','bk','bk','cy','wh','wh','cy','bk','bk','cy','cy','bk','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','bk','cy','cy','cy','bk','bk','bk','cy','cy','bk','bk','vi','vi'],['tr','vi','vi','bk','bk','cy','cy','cy','cy','cy','cy','bk','bk','vi','vi','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr']];
     const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
     const lichSprite = [['tr','tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','bk','dp','dp','dp','gy','gy','gy','gy','gy','gy','dp','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','bk','cy','bk','bk','cy','bk','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','dp','gy','gy','bk','bk','gy','gy','dp','dp','dp','bk','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr']];
     
     const bossSprites = [dragonSprite, eyeSprite, slimeSprite, lichSprite];
+
     // --- GAME CONSTANTS ---
     const V_WIDTH = 320;
     const V_HEIGHT = 480;
     const NORMAL_SPEED = 300;
     let score = 0;
+    let maxComboRun = 1;
     let mouseX = V_WIDTH / 2;
     
     const player = {
         x: V_WIDTH / 2 - 16, y: V_HEIGHT - 60,
         w: 32, h: 32, speed: NORMAL_SPEED, hasShield: false
     };
+    
     let items = [];
     let particles = [];
-    let bgFar = [];  // Slower, smaller stars
-    let bgNear = []; // Faster, larger stars
+    
+    // Background arrays
+    let bgStars = [];
+    let farStars = [];
+    
     let spawnTimer = 0;
     let lastTime = performance.now();
     let comboMult = 1;
@@ -249,6 +366,11 @@
     let magnetTimer = 0;
     let laserTimer = 0;
     let keys = { left: false, right: false };
+    
+    // CAMERA SHAKE
+    let shakeTimer = 0;
+    let shakeMag = 0;
+
     // BOSS STATE
     let bossLevel = 0;
     let nextBossScore = 1500;
@@ -257,11 +379,15 @@
         x: V_WIDTH / 2 - 32, y: -80, w: 64, h: 64, 
         hp: 5, maxHp: 5, speed: 100, dir: 1, attackTimer: 0, type: 0, wave: 0, teleportTimer: 0 
     };
-    // Initialize BG Stars
+
+    // Initialize Parallax BG
     for(let i=0; i<30; i++) {
-    bgFar.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, s: 1, spd: 20 });
-    bgNear.push({ x: Math.random()*V_WIDTH, y: Math.random()*V_HEIGHT, s: 2, spd: 60 });
+        bgStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: Math.random() * 2 + 1, speed: Math.random() * 30 + 10 });
     }
+    for(let i=0; i<40; i++) {
+        farStars.push({ x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT, size: 1, speed: Math.random() * 10 + 2 });
+    }
+
     // --- AUDIO ---
     let audioCtx = null;
     function initAudio() {
@@ -269,10 +395,10 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     
-    // Setup initial event listeners
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
+    
     function playSound(type) {
         if (!audioCtx || isMuted) return;
         const osc = audioCtx.createOscillator();
@@ -298,6 +424,137 @@
             osc.start(now); osc.stop(now + 0.3);
         }
     }
+
+    function triggerShake(duration, magnitude) {
+        shakeTimer = duration; shakeMag = magnitude;
+    }
+
+    // --- SHOP SYSTEM ---
+    const shopItems = [
+        { id: 'magnet', title: 'ASTRAL MAGNET', desc: '+1s Magnet duration', costs: [10, 25, 50], getLvl: () => shopData.magnetLvl, max: 3, action: () => shopData.magnetLvl++ },
+        { id: 'combo', title: 'COMBO MOMENTUM', desc: 'Start with higher combo', costs: [20, 50, 100], getLvl: () => shopData.comboLvl, max: 3, action: () => shopData.comboLvl++ },
+        { id: 'pyromancer', title: 'PYROMANCER ROBES', desc: 'Sizzle with style', cost: 75, isSkin: true },
+        { id: 'necromancer', title: 'NECROMANCER ROBES', desc: 'Embrace the dark arts', cost: 150, isSkin: true }
+    ];
+
+    function openShop() {
+        renderShop();
+        switchScreen('shopScreen');
+    }
+
+    function renderShop() {
+        document.getElementById('shopShardsDisplay').innerText = arcaneShards;
+        const container = document.getElementById('shopList');
+        container.innerHTML = '';
+
+        shopItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            
+            let btnHTML = '';
+            
+            if (item.isSkin) {
+                const unlocked = shopData.skins.includes(item.id);
+                const active = shopData.activeSkin === item.id;
+                
+                if (active) {
+                    btnHTML = `<button disabled>EQUIPPED</button>`;
+                } else if (unlocked) {
+                    btnHTML = `<button onclick="equipSkin('${item.id}')">EQUIP</button>`;
+                } else {
+                    const canAfford = arcaneShards >= item.cost;
+                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buySkin('${item.id}', ${item.cost})">${item.cost} SHARDS</button>`;
+                }
+                
+                div.innerHTML = `
+                    <div class="shop-info">
+                        <div class="shop-title">${item.title}</div>
+                        <div class="shop-desc">${item.desc}</div>
+                    </div>
+                    <div class="shop-action">${btnHTML}</div>
+                `;
+            } else {
+                const lvl = item.getLvl();
+                const isMax = lvl >= item.max;
+                const cost = isMax ? 0 : item.costs[lvl];
+                const canAfford = arcaneShards >= cost;
+                
+                if (isMax) {
+                    btnHTML = `<button disabled>MAXED</button>`;
+                } else {
+                    btnHTML = `<button ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${item.id}', ${cost})">${cost} SHARDS</button>`;
+                }
+                
+                div.innerHTML = `
+                    <div class="shop-info">
+                        <div class="shop-title">${item.title} [LVL ${lvl}/${item.max}]</div>
+                        <div class="shop-desc">${item.desc}</div>
+                    </div>
+                    <div class="shop-action">${btnHTML}</div>
+                `;
+            }
+            container.appendChild(div);
+        });
+
+        // Add Default Skin equip option if active skin isn't default
+        if (shopData.activeSkin !== 'default') {
+            const defDiv = document.createElement('div');
+            defDiv.className = 'shop-item';
+            defDiv.innerHTML = `
+                <div class="shop-info">
+                    <div class="shop-title">STANDARD ROBES</div>
+                    <div class="shop-desc">The classic look</div>
+                </div>
+                <div class="shop-action"><button onclick="equipSkin('default')">EQUIP</button></div>
+            `;
+            container.appendChild(defDiv);
+        }
+    }
+
+    function buyUpgrade(id, cost) {
+        if (arcaneShards >= cost) {
+            arcaneShards -= cost;
+            const item = shopItems.find(i => i.id === id);
+            item.action();
+            playSound('chime');
+            saveGame();
+            updateMenuStats();
+            renderShop();
+        }
+    }
+
+    function buySkin(id, cost) {
+        if (arcaneShards >= cost) {
+            arcaneShards -= cost;
+            shopData.skins.push(id);
+            shopData.activeSkin = id;
+            playSound('bloop');
+            saveGame();
+            updateMenuStats();
+            renderShop();
+        }
+    }
+
+    function equipSkin(id) {
+        shopData.activeSkin = id;
+        playSound('bloop');
+        saveGame();
+        renderShop();
+    }
+
+    function addDevShards() {
+        arcaneShards += 100;
+        saveGame();
+        updateMenuStats();
+    }
+
+    function getPlayerSprite() {
+        if (shopData.activeSkin === 'pyromancer') return pyromancerSprite;
+        if (shopData.activeSkin === 'necromancer') return necromancerSprite;
+        return wizardSprite;
+    }
+
+
     // --- UI CONTROLS ---
     function switchScreen(screenId) {
         Object.values(screens).forEach(s => s.style.display = 'none');
@@ -305,14 +562,12 @@
     }
     function registerSecretClick() {
         secretClicks++;
-        if(secretClicks >= 5) {
-            switchScreen('devToolsScreen');
-            secretClicks = 0;
-        }
+        if(secretClicks >= 5) { switchScreen('devToolsScreen'); secretClicks = 0; }
     }
     function toggleMute() { isMuted = document.getElementById('muteToggle').checked; }
     function toggleBg() { showBgStars = document.getElementById('bgToggle').checked; }
     function toggleInvincibility() { isInvincible = document.getElementById('invincibilityToggle').checked; }
+
     // --- CORE GRAPHICS ---
     function drawPixelSprite(sprite, x, y, size) {
         const pixelSize = size / 16;
@@ -332,6 +587,7 @@
     }
     window.addEventListener('resize', resize);
     resize();
+
     // --- INPUT ---
     function updatePointerPosition(clientX) {
         if(gameState !== 'PLAYING') return;
@@ -345,44 +601,71 @@
     window.addEventListener('keydown', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-        if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen'); // Tilde Key
+        if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen');
         initAudio();
     });
     window.addEventListener('keyup', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
     });
+
     // --- SPAWNING LOGIC ---
-    function spawnItem() {
+    function spawnBoss() {
+        bossActive = true; 
+        boss.type = bossLevel % 4; 
+        boss.maxHp = (isBossRush ? 8 : 5) + (bossLevel * 2); 
+        boss.hp = boss.maxHp;
+        boss.y = -80; boss.wave = 0; boss.teleportTimer = 0;
+        bossWarning.style.display = 'block'; 
+        setTimeout(() => bossWarning.style.display = 'none', 2000);
+        playSound('bossHit');
+        triggerShake(0.5, 5);
+    }
+
+    function spawnItem(forceGood = false) {
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
         let categoryRoll = Math.random();
-        // 10% Chance Powerup
-        if (categoryRoll > 0.90) {
-            let pRoll = Math.random();
-            if (pRoll > 0.75 && score >= 3000) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
-            else if (pRoll > 0.50 && score >= 2000) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
-            else if (pRoll > 0.25 && score >= 800) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
-            else { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; }
-        } 
-        // 25% Chance Good
-        else if (categoryRoll > 0.65) {
-            if (Math.random() > 0.5 && score >= 200) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
+        
+        if (forceGood) {
+            if (categoryRoll > 0.8) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; }
+            else if (categoryRoll > 0.4) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
             else { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
         } 
-        // 65% Chance Hazard
         else {
-            let eRoll = Math.random();
-            if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
-            else if (eRoll > 0.65 && score >= 1100) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; }
-            else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
-            else { type = 'skull'; sprite = skullSprite; sBase = 110; col = '#8b0000'; }
+            // 5% chance for a Shard
+            if (categoryRoll > 0.95) {
+                type = 'shard'; sprite = shardSprite; w = 16; h = 16; sBase = 100; col = '#ff00ff';
+            }
+            // 10% Chance Powerup
+            else if (categoryRoll > 0.85) {
+                let pRoll = Math.random();
+                if (pRoll > 0.75 && score >= 3000) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
+                else if (pRoll > 0.50 && score >= 2000) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
+                else if (pRoll > 0.25 && score >= 800) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
+                else { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; }
+            } 
+            // 25% Chance Good
+            else if (categoryRoll > 0.60) {
+                if (Math.random() > 0.5 && score >= 200) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
+                else { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
+            } 
+            // Hazard
+            else {
+                let eRoll = Math.random();
+                if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
+                else if (eRoll > 0.65 && score >= 1100) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; }
+                else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
+                else { type = 'skull'; sprite = skullSprite; sBase = 110; col = '#8b0000'; }
+            }
         }
+        
         items.push({
             x: Math.random() * (V_WIDTH - w), y: -30, w: w, h: h, 
             type: type, sprite: sprite, speed: sBase * (baseSpeed / 100), color: col,
             wave: Math.random() * Math.PI * 2, vx: 0, split: false
         });
     }
+    
     function spawnParticles(x, y, color) {
         for(let i=0; i<10; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -390,57 +673,91 @@
             particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.5, color: color });
         }
     }
-    function startGame() {
+
+    function processGameOver() {
+        playSound('crunch'); 
+        triggerShake(0.4, 15);
+        gameState = 'MENU';
+        
+        let isNewRecord = false;
+        if (score > highScore) { highScore = score; isNewRecord = true; }
+        if (maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
+        
+        // Add collected shards to bank
+        arcaneShards += runShards;
+        
+        saveGame();
+        updateMenuStats();
+        
+        finalScoreText.innerText = `Score: ${score}`;
+        finalComboText.innerText = `Max Combo: x${maxComboRun}`;
+        finalShardsText.innerText = `Shards Found: ${runShards}`;
+        newRecordAlert.style.display = isNewRecord ? 'block' : 'none';
+        
+        document.getElementById('retryBtn').onclick = () => startGame(isBossRush);
+        switchScreen('gameOverScreen');
+    }
+
+    function startGame(rushMode = false) {
         initAudio();
-        score = 0; items = []; particles = [];
+        isBossRush = rushMode;
+        score = 0; items = []; particles = []; runShards = 0;
+        
+        // Apply Upgrades
+        maxComboRun = 1 + shopData.comboLvl;
+        comboMult = 1 + shopData.comboLvl; 
+        
         player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
-        player.hasShield = false; comboMult = 1; comboTimer = 0;
+        player.hasShield = false; comboTimer = 0;
         baseSpeed = 150; player.speed = NORMAL_SPEED;
         
-        rocketTimer = 0; magnetTimer = 0; laserTimer = 0;
+        rocketTimer = 0; magnetTimer = 0; laserTimer = 0; shakeTimer = 0;
         keys = { left: false, right: false }; 
         
         bossLevel = 0; bossActive = false; nextBossScore = 1500; 
         
-        switchScreen(null); // Hide all overlay screens
+        switchScreen(null);
         bossWarning.style.display = 'none';
+        newRecordAlert.style.display = 'none';
         
+        if (isBossRush) bossRushDelay = 1.0;
+
         lastTime = performance.now();
         gameState = 'PLAYING';
     }
 
-    let shakeIntensity = 0;
-
-    function triggerShake(intensity) {
-        shakeIntensity = intensity;
-    }
     // --- MAIN GAME LOOP ---
     function update(timestamp) {
         let dt = (timestamp - lastTime) / 1000 || 0.016; 
         if (dt > 0.1) dt = 0.1; 
         lastTime = timestamp;
-        // Background Animation (Runs even in Menu)
-        [bgFar, bgNear].forEach(layer => {
-            layer.forEach(s => {
-                s.y += s.spd * dt * (rocketTimer > 0 ? 5 : 1);
+
+        // Background Animation
+        if (showBgStars) {
+            let spaceSpeedMult = rocketTimer > 0 ? 5 : 1;
+            farStars.forEach(s => {
+                s.y += s.speed * dt * spaceSpeedMult;
                 if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
             });
-        });
-        
-            if (shakeIntensity > 0) {
-                shakeIntensity -= dt * 20; // Smoothly reduce shake over time
-            }
+            bgStars.forEach(s => {
+                s.y += s.speed * dt * spaceSpeedMult;
+                if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
+            });
         }
-        // Particle Updates
+        
+        // Particle & Shake Updates
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.9; p.vy *= 0.9; p.life -= dt;
             if (p.life <= 0) particles.splice(i, 1);
         }
+        if (shakeTimer > 0) shakeTimer -= dt;
+
         if (gameState !== 'PLAYING') {
             render();
             requestAnimationFrame(update);
-            return; // Skip game logic if in menu
+            return;
         }
+
         // --- GAME LOGIC ---
         let worldDt = dt;
         if (rocketTimer > 0) {
@@ -449,35 +766,49 @@
         }
         if (magnetTimer > 0) magnetTimer -= dt;
         if (laserTimer > 0) laserTimer -= dt;
-        if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboMult = 1; }
+        if (comboTimer > 0) { 
+            comboTimer -= dt; 
+            // Reset to base combo upgraded level
+            if (comboTimer <= 0) comboMult = 1 + shopData.comboLvl; 
+        }
+        if (comboMult > maxComboRun) maxComboRun = comboMult;
+
         // PLAYER MOVEMENT
         if (keys.left) { player.x -= player.speed * dt; mouseX = player.x; } 
         else if (keys.right) { player.x += player.speed * dt; mouseX = player.x; } 
         else { player.x += (mouseX - player.x) * (player.speed/50) * dt; }
+        
         if (player.x < 0) { player.x = 0; mouseX = 0; }
         if (player.x > V_WIDTH - player.w) { player.x = V_WIDTH - player.w; mouseX = V_WIDTH - player.w; }
+
         // BOSS LOGIC
-        if (score >= nextBossScore && !bossActive) {
-            bossActive = true; boss.type = bossLevel % 4; boss.maxHp = 5 + (bossLevel * 2); boss.hp = boss.maxHp;
-            boss.y = -80; boss.wave = 0; boss.teleportTimer = 0;
-            bossWarning.style.display = 'block'; setTimeout(() => bossWarning.style.display = 'none', 2000);
-            playSound('bossHit');
+        if (isBossRush) {
+            if (!bossActive) {
+                bossRushDelay -= dt;
+                if (bossRushDelay <= 0) spawnBoss();
+            }
+        } else {
+            if (score >= nextBossScore && !bossActive) spawnBoss();
         }
+
         if (bossActive) {
-            let isEnraged = boss.hp <= 2; 
+            let isEnraged = boss.hp <= Math.ceil(boss.maxHp * 0.4); 
             if (boss.y < 20) {
                 boss.y += 50 * worldDt; 
             } else {
                 if (boss.type === 0) { boss.x += boss.speed * (isEnraged?1.5:1) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
                 else if (boss.type === 1) { boss.wave += worldDt * (isEnraged?2.5:1.5); boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
                 else if (boss.type === 2) { boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * (isEnraged?8:4); boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
-                else if (boss.type === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > (isEnraged?1.5:2.5)) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
+                else if (boss.type === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > (isEnraged?1.5:2.5)) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); triggerShake(0.2, 3); } }
+                
                 boss.attackTimer += worldDt;
                 let atkRate = Math.max(0.4, 0.8 - (bossLevel * 0.05));
                 if (isEnraged) atkRate *= 0.75;
+                
                 if (boss.attackTimer > atkRate) {
                     boss.attackTimer = 0;
                     if (Math.random() > 0.70) items.push({ x: Math.random() * (V_WIDTH - 24), y: -30, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: 110 * (baseSpeed / 100), vx: 0, color: '#8b0000', wave: 0 });
+                    
                     let isWeakness = Math.random() > 0.85; 
                     if (isWeakness) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'holyStar', sprite: holyStarSprite, speed: 130, vx: 0, color: '#00ffff' }); } 
                     else {
@@ -494,15 +825,22 @@
                     }
                 }
             }
+        } 
+
+        // SPANWING
+        spawnTimer += worldDt;
+        if (isBossRush) {
+            if (spawnTimer > 3.0 && bossActive) { spawnItem(true); spawnTimer = 0; }
         } else {
-            spawnTimer += worldDt;
-            if (spawnTimer > Math.max(0.3, 0.8 - (score / 5000))) { spawnItem(); spawnTimer = 0; }
+            if (!bossActive && spawnTimer > Math.max(0.3, 0.8 - (score / 5000))) { spawnItem(); spawnTimer = 0; }
         }
-        // ITEM MOVEMENT
+
+        // ITEM MOVEMENT & COLLISION
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
             item.y += item.speed * worldDt;
             item.x += (item.vx || 0) * worldDt;
+            
             if (item.type === 'phantom') { item.wave += worldDt * 5; item.x += Math.sin(item.wave) * 150 * worldDt; }
             if (item.type === 'specter' && item.y < V_HEIGHT * 0.6) { item.x += Math.sign(player.x - item.x) * 40 * worldDt; }
             if (item.type === 'bat' && item.y > V_HEIGHT * 0.35 && !item.split) {
@@ -510,48 +848,52 @@
                 items.push({ x: item.x + 8, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: 100, color: item.color });
                 spawnParticles(item.x + 12, item.y + 12, '#ff4444'); items.splice(i, 1); continue;
             }
-            if (magnetTimer > 0 && ['star','comet','holyStar'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
+            if (magnetTimer > 0 && ['star','comet','holyStar', 'shard'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
+            
             let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
+            
             // Laser Destroys Bad
             if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
                 if (isBad) { spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444'); items.splice(i, 1); score += 20 * comboMult; continue; }
             }
+            
             let hitPad = isBad ? 6 : -6;
             let hit = { x: item.x + hitPad, y: item.y + hitPad, w: item.w - (hitPad*2), h: item.h - (hitPad*2) };
-            // COLLISION
+            
+            // COLLISION WITH PLAYER
             if (player.x < hit.x + hit.w && player.x + player.w > hit.x && player.y < hit.y + hit.h && player.y + player.h > hit.y) {
                 if (isBad) {
-                    let shake = 15
                     if (rocketTimer > 0 || isInvincible) {
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, isInvincible ? '#a9a9a9' : '#39ff14');
-                        score += 50 * comboMult; items.splice(i, 1);
-                        shake = 0;
+                        score += 50 * comboMult; triggerShake(0.1, 3); items.splice(i, 1);
                     } else if (player.hasShield) {
                         player.hasShield = false; playSound('crunch');
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
-                        items.splice(i, 1);
-                        shake = 8;
-                    } else if (!isInvincible) {
-                        triggerShake(20);
-                        saveProgress();
-                        playSound('crunch'); gameState = 'MENU';
-                        finalScoreText.innerText = `Final Score: ${score}`;
-                        switchScreen('gameOverScreen');
+                        triggerShake(0.3, 8); items.splice(i, 1);
+                    } else {
+                        processGameOver();
                         return;
                     }
-                    triggerShake(shake);
                 } else {
-                    if (item.type === 'star') score += 10 * comboMult;
-                    if (item.type === 'comet') score += 50 * comboMult;
-                    if (item.type === 'holyStar') {
-                        triggerShake(5);
-                        playSound('bossHit'); boss.hp--; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff');
-                        if (boss.hp <= 0) { bossActive = false; score += 500 * comboMult; nextBossScore = score + 1500; bossLevel++; baseSpeed += 15; playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); }
+                    if (item.type === 'shard') { runShards++; playSound('chime'); }
+                    else if (item.type === 'star') score += 10 * comboMult;
+                    else if (item.type === 'comet') score += 50 * comboMult;
+                    else if (item.type === 'holyStar') {
+                        playSound('bossHit'); boss.hp--; 
+                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff');
+                        triggerShake(0.1, 4);
+                        if (boss.hp <= 0) { 
+                            bossActive = false; score += 500 * comboMult; bossLevel++; baseSpeed += 15; 
+                            playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); 
+                            triggerShake(0.5, 12);
+                            if (isBossRush) bossRushDelay = 2.5;
+                            else nextBossScore = score + 1500;
+                        }
                     } 
                     else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
                     else if (item.type === 'rocket') { rocketTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'magnet') { magnetTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'blast')  { laserTimer = 2.0; playSound('bossHit'); }
+                    else if (item.type === 'magnet') { magnetTimer = 5.0 + (shopData.magnetLvl * 1.5); playSound('chime'); } // Apply shop upgrade
+                    else if (item.type === 'blast')  { laserTimer = 2.0; playSound('bossHit'); triggerShake(0.2, 5); }
                     else { playSound('bloop'); comboMult++; comboTimer = 3.0; baseSpeed += 1; }
                     
                     spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color);
@@ -561,62 +903,77 @@
             }
             if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) items.splice(i, 1);
         }
+        
         render(); 
         requestAnimationFrame(update);
     }
+
     function render() {
-        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT); // 1. Clear first
-    
-        ctx.save(); // 2. Save the clean state
+        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
         
-        if (shakeIntensity > 0) {
-            const dx = (Math.random() - 0.5) * shakeIntensity;
-            const dy = (Math.random() - 0.5) * shakeIntensity;
-            ctx.translate(dx, dy); // 3. Offset the entire world
+        ctx.save();
+        if (shakeTimer > 0) {
+            const dx = (Math.random() - 0.5) * shakeMag;
+            const dy = (Math.random() - 0.5) * shakeMag;
+            ctx.translate(dx, dy);
         }
-        
-        // Draw Bg Stars
+
         if(showBgStars) {
+            ctx.fillStyle = '#444466';
+            farStars.forEach(s => { ctx.globalAlpha = 0.5; ctx.fillRect(s.x, s.y, s.size, s.size); });
             ctx.fillStyle = '#ffffff';
             bgStars.forEach(s => { ctx.globalAlpha = 0.3; ctx.fillRect(s.x, s.y, s.size, s.size); });
             ctx.globalAlpha = 1.0;
         }
-        // Draw Laser
+
         if (laserTimer > 0 && gameState === 'PLAYING') {
             ctx.fillStyle = 'rgba(255, 68, 68, 0.8)'; ctx.fillRect(player.x + 8, 0, 16, player.y + 16);
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(player.x + 12, 0, 8, player.y + 16);
         }
-        // Draw Player Shield
+
         if (player.hasShield && gameState === 'PLAYING') {
             ctx.beginPath(); ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w/1.4, 0, Math.PI * 2);
             ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.stroke();
         }
-        // Draw Entities
-        drawPixelSprite(wizardSprite, player.x, player.y, player.w);
+
+        if (gameState === 'PLAYING') drawPixelSprite(getPlayerSprite(), player.x, player.y, player.w);
         items.forEach(item => drawPixelSprite(item.sprite, item.x, item.y, item.w));
+        
         if (bossActive && boss.y > -boss.h) {
             drawPixelSprite(bossSprites[boss.type], boss.x, boss.y, boss.w);
             ctx.fillStyle = '#333'; ctx.fillRect(boss.x, boss.y - 10, boss.w, 6);
             ctx.fillStyle = '#ff4444'; ctx.fillRect(boss.x, boss.y - 10, boss.w * (boss.hp / boss.maxHp), 6);
         }
-        // Particles
+
         particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life / 0.5); ctx.fillRect(p.x, p.y, 4, 4); });
         ctx.globalAlpha = 1.0;
+        
+        ctx.restore();
+
         // UI
         if(gameState === 'PLAYING') {
             ctx.fillStyle = "#fff"; ctx.font = "10px 'Press Start 2P', monospace"; ctx.textAlign = "left";
             ctx.shadowColor = "rgba(0, 0, 0, 0.8)"; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; 
             
-            ctx.fillText(`SCORE: ${score}`, 10, 25);
+            ctx.fillText(isBossRush ? `BOSS RUSH` : `SCORE: ${score}`, 10, 25);
+            if (isBossRush) ctx.fillText(`SCORE: ${score}`, 10, 45);
+
             if (comboMult > 1) {
-                ctx.fillStyle = comboMult > 4 ? '#ff4444' : '#ffd700';
-                ctx.fillText(`COMBO x${comboMult}`, 10, 45);
+                ctx.fillStyle = comboMult > (4 + shopData.comboLvl) ? '#ff4444' : '#ffd700';
+                ctx.fillText(`COMBO x${comboMult}`, 10, isBossRush ? 65 : 45);
             }
+
+            // Draw Shard Counter
+            if (!isBossRush) {
+                ctx.fillStyle = '#ff00ff';
+                ctx.textAlign = "right";
+                ctx.fillText(`♦ ${runShards}`, V_WIDTH - 10, 25);
+            }
+
             ctx.shadowColor = "transparent";
         }
-        ctx.restore();
     }
-    // Init Frame
+    
     requestAnimationFrame(update);
 </script>
 </body>
