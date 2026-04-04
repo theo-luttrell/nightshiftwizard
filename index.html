@@ -29,7 +29,7 @@
             display: block;
             image-rendering: pixelated;
             background: linear-gradient(to bottom, #050510 0%, #111128 100%);
-            cursor: none; /* Hides cursor over the game area */
+            cursor: none;
         }
 
         #ui-layer {
@@ -55,6 +55,22 @@
             border-radius: 8px;
         }
 
+        .boss-warning {
+            display: none;
+            position: absolute;
+            top: 40%;
+            color: #ff4444;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0000;
+            animation: blink 0.5s infinite alternate;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
         button {
             background-color: #5d275d;
             color: white;
@@ -78,6 +94,7 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui-layer">
+            <div id="bossWarning" class="boss-warning">WARNING: DRAGON APPROACHING!</div>
             <div id="gameOverScreen" class="game-over-screen">
                 <h1 style="color: #ff4444; margin: 0 0 10px 0;">CURSED!</h1>
                 <p id="finalScoreText" style="font-size: 1.2rem; margin: 0;">Score: 0</p>
@@ -91,14 +108,13 @@
     const ctx = canvas.getContext('2d');
     const gameOverScreen = document.getElementById('gameOverScreen');
     const finalScoreText = document.getElementById('finalScoreText');
+    const bossWarning = document.getElementById('bossWarning');
 
     // --- PIXEL ART DATA ---
     const colors = {
-        'tr': 'transparent', 
-        'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
-        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 
-        'or': '#ffa500', 'rd': '#ff4444', 'dr': '#8b0000', 
-        'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b'
+        'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
+        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
+        'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b'
     };
 
     const wizardSprite = [
@@ -118,67 +134,47 @@
         ['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']
     ];
 
-    const starSprite = [
-        ['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],
-        ['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],
-        ['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],
-        ['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],
-        ['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],
-        ['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],
-        ['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],
-        ['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],
-        ['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']
+    const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
+    const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
+    const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
+    const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
+    
+    // NEW HARD ENEMY: Phantom
+    const phantomSprite = [
+        ['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],
+        ['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],
+        ['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],
+        ['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],
+        ['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],
+        ['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],
+        ['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],
+        ['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],
+        ['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']
     ];
 
-    const skullSprite = [
-        ['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],
-        ['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],
-        ['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],
-        ['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],
-        ['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],
-        ['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],
-        ['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],
-        ['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']
+    // NEW BOSS & PROJECTILES
+    const dragonSprite = [
+        ['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],
+        ['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],
+        ['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],
+        ['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],
+        ['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],
+        ['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],
+        ['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],
+        ['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],
+        ['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],
+        ['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],
+        ['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],
+        ['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','tr','tr','dr','or','or','dr','tr','tr','tr','tr','tr','tr'],
+        ['tr','tr','tr','tr','tr','tr','tr','go','go','tr','tr','tr','tr','tr','tr','tr']
     ];
 
-    const cometSprite = [
-        ['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],
-        ['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],
-        ['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],
-        ['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],
-        ['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],
-        ['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],
-        ['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],
-        ['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']
-    ];
+    const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
+    const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
 
-    const potionSprite = [
-        ['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],
-        ['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],
-        ['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],
-        ['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],
-        ['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']
-    ];
-
-    // --- GAME SETTINGS & OVERDRIVE VARIABLES ---
+    // --- GAME SETTINGS ---
     const V_WIDTH = 320;
     const V_HEIGHT = 480;
     let score = 0;
@@ -186,31 +182,32 @@
     let mouseX = V_WIDTH / 2;
 
     const player = {
-        x: V_WIDTH / 2 - 16,
-        y: V_HEIGHT - 60,
-        w: 32,
-        h: 32,
-        speed: 300, // Pixels per second for smooth mouse snapping
-        hasShield: false
+        x: V_WIDTH / 2 - 16, y: V_HEIGHT - 60,
+        w: 32, h: 32, speed: 300, hasShield: false
     };
 
     let items = [];
     let particles = [];
     let spawnTimer = 0;
-    
     let lastTime = performance.now();
     let comboMult = 1;
     let comboTimer = 0;
-    let baseSpeed = 100; // Base falling speed in pixels per second
+    let baseSpeed = 150; // Increased for a faster start!
 
-    // --- PROCEDURAL AUDIO ---
+    // --- BOSS MECHANICS ---
+    let nextBossScore = 300; 
+    let bossActive = false;
+    let boss = { 
+        x: V_WIDTH / 2 - 32, y: -80, w: 64, h: 64, 
+        hp: 5, maxHp: 5, speed: 120, dir: 1, attackTimer: 0 
+    };
+
+    // --- AUDIO ---
     let audioCtx = null;
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    
-    // Ensure audio unlocks on first user interaction
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
@@ -219,13 +216,11 @@
         if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain); 
-        gain.connect(audioCtx.destination);
+        osc.connect(gain); gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
         
         if (type === 'bloop') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
             gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
             osc.start(now); osc.stop(now + 0.1);
         } else if (type === 'chime') {
@@ -233,22 +228,24 @@
             gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
             osc.start(now); osc.stop(now + 0.3);
         } else if (type === 'crunch') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(150, now);
-            osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+            osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
             gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
             osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'bossHit') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
         }
     }
 
     // --- UTILS ---
     function drawPixelSprite(sprite, x, y, size) {
-        const pixelSize = size / 16;
+        const pixelSize = size / 16; // Calculates based on grid size
         for (let r = 0; r < sprite.length; r++) {
             for (let c = 0; c < sprite[r].length; c++) {
                 const colorKey = sprite[r][c];
                 if (colorKey !== 'tr') {
                     ctx.fillStyle = colors[colorKey];
-                    // +0.5 to prevent gap bleeding
                     ctx.fillRect(x + (c * pixelSize), y + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
                 }
             }
@@ -257,128 +254,131 @@
 
     function resize() {
         const scale = Math.min(window.innerWidth / V_WIDTH, window.innerHeight / V_HEIGHT);
-        canvas.width = V_WIDTH * scale;
-        canvas.height = V_HEIGHT * scale;
-        ctx.scale(scale, scale);
+        canvas.width = V_WIDTH * scale; canvas.height = V_HEIGHT * scale; ctx.scale(scale, scale);
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // --- INPUT HANDLING ---
     function updatePointerPosition(clientX) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = V_WIDTH / rect.width;
-        mouseX = (clientX - rect.left) * scaleX - (player.w / 2);
+        mouseX = (clientX - rect.left) * (V_WIDTH / rect.width) - (player.w / 2);
     }
-
-    window.addEventListener('mousemove', e => {
-        updatePointerPosition(e.clientX);
-    });
-
-    canvas.addEventListener('touchstart', e => {
-        updatePointerPosition(e.touches[0].clientX);
-        e.preventDefault();
-    }, {passive: false});
-
-    canvas.addEventListener('touchmove', e => {
-        updatePointerPosition(e.touches[0].clientX);
-        e.preventDefault();
-    }, {passive: false});
+    window.addEventListener('mousemove', e => updatePointerPosition(e.clientX));
+    canvas.addEventListener('touchstart', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
 
     // --- LOGIC ---
     function spawnItem() {
         const rand = Math.random();
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
 
-        if (rand > 0.95) { type = 'potion'; sprite = potionSprite; sBase = 120; col = '#00ffff'; } 
+        if (rand > 0.95) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
         else if (rand > 0.85) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
-        else if (rand > 0.5) { type = 'star'; sprite = starSprite; sBase = 100; col = '#ffffff'; }
+        else if (rand > 0.60) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
+        else if (rand > 0.40) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
 
         items.push({
             x: Math.random() * (V_WIDTH - w), y: -30, w: w, h: h, 
-            type: type, sprite: sprite, speed: sBase * (baseSpeed / 100), color: col
+            type: type, sprite: sprite, speed: sBase * (baseSpeed / 100), color: col,
+            wave: Math.random() * Math.PI * 2 // Seed for phantom sine wave
         });
     }
 
     function spawnParticles(x, y, color) {
-        for(let i=0; i<8; i++) {
+        for(let i=0; i<10; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 100 + 50;
-            particles.push({ 
-                x: x, y: y, 
-                vx: Math.cos(angle) * speed, 
-                vy: Math.sin(angle) * speed, 
-                life: 0.5, 
-                color: color 
-            });
+            const speed = Math.random() * 120 + 50;
+            particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.5, color: color });
         }
     }
 
     function resetGame() {
-        score = 0;
-        items = [];
-        particles = [];
-        isGameOver = false;
-        player.x = V_WIDTH / 2 - 16;
-        mouseX = V_WIDTH / 2;
-        player.hasShield = false;
-        comboMult = 1;
-        comboTimer = 0;
-        baseSpeed = 100;
+        score = 0; items = []; particles = []; isGameOver = false;
+        player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
+        player.hasShield = false; comboMult = 1; comboTimer = 0;
+        baseSpeed = 150; 
         
-        gameOverScreen.style.display = 'none';
-        lastTime = performance.now(); // Reset time to avoid massive delta jumps
+        bossActive = false; nextBossScore = 300; boss.maxHp = 5;
+        bossWarning.style.display = 'none'; gameOverScreen.style.display = 'none';
+        
+        lastTime = performance.now();
         requestAnimationFrame(update);
     }
 
-    // --- MAIN GAME LOOP ---
     function update(timestamp) {
         if (isGameOver) return;
         
-        // Calculate Delta Time
         let dt = (timestamp - lastTime) / 1000 || 0.016; 
-        if (dt > 0.1) dt = 0.1; // Cap dt for lag spikes
+        if (dt > 0.1) dt = 0.1; 
         lastTime = timestamp;
 
-        // Smoothly move wizard towards mouse position
         player.x += (mouseX - player.x) * (player.speed/50) * dt;
-        
-        // Screen constraints
         if (player.x < 0) player.x = 0;
         if (player.x > V_WIDTH - player.w) player.x = V_WIDTH - player.w;
 
-        // Combo Timer Logic
         if (comboTimer > 0) {
             comboTimer -= dt;
-            if (comboTimer <= 0) comboMult = 1; // Reset combo if time runs out
+            if (comboTimer <= 0) comboMult = 1;
         }
 
-        // Spawn Spacing
-        spawnTimer += dt;
-        if (spawnTimer > Math.max(0.4, 1.2 - (score / 5000))) {
-            spawnItem();
-            spawnTimer = 0;
+        // BOSS LOGIC
+        if (score >= nextBossScore && !bossActive) {
+            bossActive = true;
+            boss.hp = boss.maxHp;
+            boss.y = -80; // Start off screen
+            bossWarning.style.display = 'block';
+            setTimeout(() => bossWarning.style.display = 'none', 2000);
+            playSound('bossHit');
         }
 
-        // Item Movement & Collision
+        if (bossActive) {
+            if (boss.y < 20) {
+                boss.y += 50 * dt; // Slide down
+            } else {
+                boss.x += boss.speed * boss.dir * dt;
+                if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1;
+
+                boss.attackTimer += dt;
+                if (boss.attackTimer > 0.7) {
+                    boss.attackTimer = 0;
+                    let isWeakness = Math.random() > 0.6; // 40% chance for a Holy Star
+                    items.push({
+                        x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24,
+                        type: isWeakness ? 'holyStar' : 'fireball',
+                        sprite: isWeakness ? holyStarSprite : fireballSprite,
+                        speed: isWeakness ? 130 : 220,
+                        color: isWeakness ? '#00ffff' : '#ff4444'
+                    });
+                }
+            }
+        } else {
+            // Normal Spawning (Faster start!)
+            spawnTimer += dt;
+            if (spawnTimer > Math.max(0.3, 0.8 - (score / 5000))) {
+                spawnItem();
+                spawnTimer = 0;
+            }
+        }
+
+        // ITEM LOGIC
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
             item.y += item.speed * dt;
 
-            // Hitboxes: magnetic for good items (-6 padding), forgiving for skulls (+6 padding)
-            let hitPad = (item.type === 'skull') ? 6 : -6;
-            let hit = { 
-                x: item.x + hitPad, 
-                y: item.y + hitPad, 
-                w: item.w - (hitPad * 2), 
-                h: item.h - (hitPad * 2) 
-            };
+            // Phantom Zig-Zag movement
+            if (item.type === 'phantom') {
+                item.wave += dt * 5;
+                item.x += Math.sin(item.wave) * 150 * dt;
+            }
 
-            // AABB Collision Detection
+            let hitPad = (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') ? 6 : -6;
+            let hit = { x: item.x + hitPad, y: item.y + hitPad, w: item.w - (hitPad*2), h: item.h - (hitPad*2) };
+
             if (player.x < hit.x + hit.w && player.x + player.w > hit.x &&
                 player.y < hit.y + hit.h && player.y + player.h > hit.y) {
                 
-                if (item.type === 'skull') {
+                // Bad Items
+                if (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') {
                     if (player.hasShield) {
                         player.hasShield = false;
                         playSound('crunch');
@@ -386,22 +386,34 @@
                         items.splice(i, 1);
                     } else {
                         playSound('crunch');
-                        endGame();
+                        isGameOver = true;
+                        gameOverScreen.style.display = 'block';
+                        finalScoreText.innerText = `Final Score: ${score}`;
                         return;
                     }
                 } else {
-                    // Collect Good Item
+                    // Good Items
                     if (item.type === 'star') score += 10 * comboMult;
                     if (item.type === 'comet') score += 50 * comboMult;
                     
-                    if (item.type === 'potion') { 
-                        player.hasShield = true; 
-                        playSound('chime'); 
+                    if (item.type === 'holyStar') {
+                        playSound('bossHit');
+                        boss.hp--;
+                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff');
+                        if (boss.hp <= 0) {
+                            bossActive = false;
+                            score += 500 * comboMult;
+                            nextBossScore += 1000;
+                            boss.maxHp += 2; // Boss gets harder next time
+                            baseSpeed += 20; // Game speeds up after boss
+                            playSound('chime');
+                            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700');
+                        }
+                    } else if (item.type === 'potion') { 
+                        player.hasShield = true; playSound('chime'); 
                     } else { 
                         playSound('bloop'); 
-                        comboMult++;
-                        comboTimer = 3.0; // 3 seconds to keep combo
-                        baseSpeed += 2; // Increase falling speed slightly
+                        comboMult++; comboTimer = 3.0; baseSpeed += 1; 
                     }
                     
                     spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color);
@@ -409,18 +421,14 @@
                 }
                 continue;
             }
-            // Remove items off-screen
-            if (item.y > V_HEIGHT) items.splice(i, 1);
+            if (item.y > V_HEIGHT || item.x < -50 || item.x > V_WIDTH + 50) items.splice(i, 1);
         }
 
-        // Particle Updates
+        // Particles
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
-            p.x += p.vx * dt; 
-            p.y += p.vy * dt;
-            p.vx *= 0.9; // Add friction
-            p.vy *= 0.9;
-            p.life -= dt;
+            p.x += p.vx * dt; p.y += p.vy * dt;
+            p.vx *= 0.9; p.vy *= 0.9; p.life -= dt;
             if (p.life <= 0) particles.splice(i, 1);
         }
 
@@ -428,31 +436,28 @@
         requestAnimationFrame(update);
     }
 
-    function endGame() {
-        isGameOver = true;
-        gameOverScreen.style.display = 'block';
-        finalScoreText.innerText = `Final Score: ${score}`;
-    }
-
     function render() {
         ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
 
-        // Draw Player Shield (Arcane bubble)
         if (player.hasShield) {
             ctx.beginPath();
             ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w/1.4, 0, Math.PI * 2);
-            ctx.strokeStyle = '#00ffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.stroke();
         }
 
-        // Draw Wizard
         drawPixelSprite(wizardSprite, player.x, player.y, player.w);
-        
-        // Draw Items
         items.forEach(item => drawPixelSprite(item.sprite, item.x, item.y, item.w));
 
-        // Draw Particles
+        // Draw Boss
+        if (bossActive && boss.y > -boss.h) {
+            drawPixelSprite(dragonSprite, boss.x, boss.y, boss.w);
+            // Health bar
+            ctx.fillStyle = '#333';
+            ctx.fillRect(boss.x, boss.y - 10, boss.w, 6);
+            ctx.fillStyle = '#ff4444';
+            ctx.fillRect(boss.x, boss.y - 10, boss.w * (boss.hp / boss.maxHp), 6);
+        }
+
         particles.forEach(p => {
             ctx.fillStyle = p.color; 
             ctx.globalAlpha = Math.max(0, p.life / 0.5);
@@ -460,27 +465,17 @@
         });
         ctx.globalAlpha = 1.0;
 
-        // Draw UI
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 16px 'Courier New'";
-        ctx.textAlign = "left";
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.shadowBlur = 2;
+        ctx.fillStyle = "#fff"; ctx.font = "bold 16px 'Courier New'"; ctx.textAlign = "left";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; ctx.shadowBlur = 2;
         
         ctx.fillText(`SCORE: ${score}`, 10, 25);
-        
-        // Draw Combo Text
         if (comboMult > 1) {
             ctx.fillStyle = comboMult > 4 ? '#ff4444' : '#ffd700';
             ctx.fillText(`COMBO x${comboMult}`, 10, 45);
         }
-        
         ctx.shadowColor = "transparent";
     }
 
-    // Init Frame
     requestAnimationFrame(update);
 
 </script>
