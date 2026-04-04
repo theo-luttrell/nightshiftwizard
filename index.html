@@ -530,8 +530,8 @@
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
                         items.splice(i, 1);
                         shake = 8;
-                    } else {
-                        triggerShake(15);
+                    } else if (!isInvincible) {
+                        triggerShake(20);
                         playSound('crunch'); gameState = 'MENU';
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
