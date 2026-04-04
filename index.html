@@ -563,14 +563,16 @@
         requestAnimationFrame(update);
     }
     function render() {
-        ctx.save();
+        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT); // 1. Clear first
+    
+        ctx.save(); // 2. Save the clean state
+        
         if (shakeIntensity > 0) {
-            // Randomly offset the entire canvas
             const dx = (Math.random() - 0.5) * shakeIntensity;
             const dy = (Math.random() - 0.5) * shakeIntensity;
-            ctx.translate(dx, dy);
+            ctx.translate(dx, dy); // 3. Offset the entire world
         }
-        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+        
         // Draw Bg Stars
         if(showBgStars) {
             ctx.fillStyle = '#ffffff';
