@@ -531,12 +531,13 @@
                         items.splice(i, 1);
                         shake = 8;
                     } else {
+                        triggerShake(15);
                         playSound('crunch'); gameState = 'MENU';
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
                         return;
                     }
-                    triggerShake(15);
+                    triggerShake(shake);
                 } else {
                     if (item.type === 'star') score += 10 * comboMult;
                     if (item.type === 'comet') score += 50 * comboMult;
