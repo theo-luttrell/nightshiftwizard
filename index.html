@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Night Shift Wizard: Arcane Overdrive</title>
+    <title>Night Shift Wizard: Arcane Overdrive v2.0</title>
     <style>
         body {
             margin: 0;
@@ -119,18 +119,24 @@
         'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff'
     };
 
+    // WIZARD & ITEMS
     const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
     const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
+    
+    // THE BESTIARY (ENEMIES)
     const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
     const phantomSprite = [['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']];
+    const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
+    const batSprite = [['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr'],['tr','bl','gy','gy','bl','tr','tr','tr','tr','bl','gy','gy','bl','tr','tr','tr'],['bl','gy','gy','gy','gy','bl','bl','bl','bl','gy','gy','gy','gy','bl','tr','tr'],['bl','gy','gy','bl','gy','gy','gy','gy','gy','gy','bl','gy','gy','bl','tr','tr'],['tr','bl','bl','tr','bl','gy','rd','gy','rd','gy','bl','tr','bl','bl','tr','tr'],['tr','tr','tr','tr','bl','gy','gy','gy','gy','gy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','gy','gy','gy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','bl','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
 
+    // POWERUP SPRITES (Watch removed)
     const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
     const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
-    const watchSprite = [['tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','go','go','lb','lb','lb','lb','go','go','tr','tr','tr','tr','tr'],['tr','tr','go','go','lb','wh','wh','lb','lb','lb','go','go','tr','tr','tr','tr'],['tr','tr','go','go','lb','wh','bl','lb','lb','lb','go','go','tr','tr','tr','tr'],['tr','tr','go','go','lb','lb','bl','bl','bl','lb','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','lb','lb','lb','lb','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','go','go','go','go','tr','tr','tr','tr','tr','tr']];
     const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
 
+    // BOSS SPRITES & PROJECTILES
     const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
     const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
 
@@ -165,7 +171,6 @@
     // POWERUP TIMERS
     let rocketTimer = 0;
     let magnetTimer = 0;
-    let freezeTimer = 0;
     let laserTimer = 0;
 
     // KEYBOARD INPUT STATE
@@ -243,12 +248,10 @@
         mouseX = (clientX - rect.left) * (V_WIDTH / rect.width) - (player.w / 2);
     }
     
-    // Mouse/Touch
     window.addEventListener('mousemove', e => updatePointerPosition(e.clientX));
     canvas.addEventListener('touchstart', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
     canvas.addEventListener('touchmove', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
 
-    // Keyboard
     window.addEventListener('keydown', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
@@ -264,19 +267,23 @@
         const rand = Math.random();
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
 
+        // Powerups
         if (rand > 0.98) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
         else if (rand > 0.96) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
-        else if (rand > 0.94) { type = 'watch'; sprite = watchSprite; sBase = 140; col = '#33ccff'; }
-        else if (rand > 0.92) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
-        else if (rand > 0.89) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
-        else if (rand > 0.80) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
-        else if (rand > 0.55) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
-        else if (rand > 0.40) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
+        else if (rand > 0.94) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
+        else if (rand > 0.90) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
+        // Good Items
+        else if (rand > 0.82) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
+        else if (rand > 0.65) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
+        // The Bestiary (New Threats)
+        else if (rand > 0.55) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; } // Slow tracking ghost
+        else if (rand > 0.45) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }        // Splitter bat
+        else if (rand > 0.30) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
 
         items.push({
             x: Math.random() * (V_WIDTH - w), y: -30, w: w, h: h, 
             type: type, sprite: sprite, speed: sBase * (baseSpeed / 100), color: col,
-            wave: Math.random() * Math.PI * 2, vx: 0
+            wave: Math.random() * Math.PI * 2, vx: 0, split: false
         });
     }
 
@@ -292,10 +299,10 @@
         score = 0; items = []; particles = []; isGameOver = false;
         player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
         player.hasShield = false; comboMult = 1; comboTimer = 0;
-        baseSpeed = 150; player.speed = NORMAL_SPEED;
+        baseSpeed = 150; 
         
-        rocketTimer = 0; magnetTimer = 0; freezeTimer = 0; laserTimer = 0;
-        keys = { left: false, right: false }; // Reset keys to prevent getting stuck
+        rocketTimer = 0; magnetTimer = 0; laserTimer = 0;
+        keys = { left: false, right: false }; 
         
         bossLevel = 0; bossActive = false; nextBossScore = 1500; 
         bossWarning.style.display = 'none'; gameOverScreen.style.display = 'none';
@@ -311,42 +318,34 @@
         if (dt > 0.1) dt = 0.1; 
         lastTime = timestamp;
 
-        // Decrease powerup timers
+        // --- ROCKET BOOTS TIME WARP ---
+        let worldDt = dt;
         if (rocketTimer > 0) {
             rocketTimer -= dt;
-            player.speed = NORMAL_SPEED * 10;
-            if (Math.random() > 0.3) spawnParticles(player.x + player.w/2, player.y + player.h, '#ff8c00');
-            if (rocketTimer <= 0) player.speed = NORMAL_SPEED;
+            worldDt = dt * 5; // Simulates 5x screen scrolling speed!
+            if (Math.random() > 0.3) spawnParticles(player.x + player.w/2, player.y + player.h, '#39ff14');
         }
-        if (magnetTimer > 0) magnetTimer -= dt;
-        if (freezeTimer > 0) freezeTimer -= dt;
-        if (laserTimer > 0) laserTimer -= dt;
 
-        // MOVEMENT: Prioritize keyboard if pressed, otherwise smooth follow mouse
+        // Other Timers
+        if (magnetTimer > 0) magnetTimer -= dt;
+        if (laserTimer > 0) laserTimer -= dt;
+        if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboMult = 1; }
+
+        // PLAYER MOVEMENT (Uses standard dt to stay controllable)
         if (keys.left) {
             player.x -= player.speed * dt;
-            mouseX = player.x; // Sync mouse position to prevent snapping back
+            mouseX = player.x; 
         } else if (keys.right) {
             player.x += player.speed * dt;
             mouseX = player.x;
         } else {
-            // Smooth mouse/touch follow
             player.x += (mouseX - player.x) * (player.speed/50) * dt;
         }
 
-        // Clamp player to screen edges
         if (player.x < 0) { player.x = 0; mouseX = 0; }
         if (player.x > V_WIDTH - player.w) { player.x = V_WIDTH - player.w; mouseX = V_WIDTH - player.w; }
 
-        // Decrement Combo
-        if (comboTimer > 0) {
-            comboTimer -= dt;
-            if (comboTimer <= 0) comboMult = 1;
-        }
-
-        let moveDt = (freezeTimer > 0) ? 0 : dt; 
-
-        // BOSS LOGIC
+        // BOSS LOGIC (Uses worldDt so they speed up during Rocket Boots)
         if (score >= nextBossScore && !bossActive) {
             bossActive = true; boss.type = bossLevel % 4; boss.maxHp = 5 + (bossLevel * 2); boss.hp = boss.maxHp;
             boss.y = -80; boss.wave = 0; boss.teleportTimer = 0;
@@ -356,14 +355,14 @@
 
         if (bossActive) {
             if (boss.y < 20) {
-                boss.y += 50 * moveDt; 
+                boss.y += 50 * worldDt; 
             } else {
-                if (boss.type === 0) { boss.x += boss.speed * boss.dir * moveDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
-                else if (boss.type === 1) { boss.wave += moveDt; boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
-                else if (boss.type === 2) { boss.x += boss.speed * 1.5 * boss.dir * moveDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += moveDt * 4; boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
-                else if (boss.type === 3) { boss.teleportTimer += moveDt; if (boss.teleportTimer > 2.5) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
+                if (boss.type === 0) { boss.x += boss.speed * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
+                else if (boss.type === 1) { boss.wave += worldDt; boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
+                else if (boss.type === 2) { boss.x += boss.speed * 1.5 * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * 4; boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
+                else if (boss.type === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > 2.5) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
 
-                boss.attackTimer += moveDt;
+                boss.attackTimer += worldDt;
                 let atkRate = Math.max(0.4, 0.8 - (bossLevel * 0.05));
                 if (boss.attackTimer > atkRate) {
                     boss.attackTimer = 0;
@@ -386,26 +385,46 @@
                 }
             }
         } else {
-            spawnTimer += moveDt;
+            spawnTimer += worldDt;
             if (spawnTimer > Math.max(0.3, 0.8 - (score / 5000))) { spawnItem(); spawnTimer = 0; }
         }
 
         // ITEM LOGIC
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
-            item.y += item.speed * moveDt;
-            item.x += (item.vx || 0) * moveDt;
+            
+            // Apply World Time Warp (worldDt)
+            item.y += item.speed * worldDt;
+            item.x += (item.vx || 0) * worldDt;
 
-            if (item.type === 'phantom') { item.wave += moveDt * 5; item.x += Math.sin(item.wave) * 150 * moveDt; }
+            // ENEMY PATTERNS
+            if (item.type === 'phantom') { 
+                item.wave += worldDt * 5; 
+                item.x += Math.sin(item.wave) * 150 * worldDt; 
+            }
+            if (item.type === 'specter') {
+                // Tracks player X smoothly
+                item.x += Math.sign(player.x - item.x) * 60 * worldDt;
+            }
+            if (item.type === 'bat' && item.y > V_HEIGHT * 0.35 && !item.split) {
+                // Splitter Bat burst into two fast small bats
+                items.push({ x: item.x, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: -100, color: item.color });
+                items.push({ x: item.x + 8, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: 100, color: item.color });
+                spawnParticles(item.x + 12, item.y + 12, '#ff4444');
+                items.splice(i, 1);
+                continue;
+            }
 
-            // Magnet effect 
+            // Magnet pulling good items (uses real dt so it pulls even if world is warped)
             if (magnetTimer > 0 && (item.type === 'star' || item.type === 'comet' || item.type === 'holyStar')) {
                 item.x += Math.sign(player.x - item.x) * 150 * dt; 
             }
 
-            // Laser Beam Destruction
+            let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
+
+            // Laser Blast Destroying Bad Items
             if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
-                if (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') {
+                if (isBad) {
                     spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444');
                     items.splice(i, 1);
                     score += 20 * comboMult;
@@ -413,14 +432,16 @@
                 }
             }
 
-            let hitPad = (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') ? 6 : -6;
+            let hitPad = isBad ? 6 : -6;
             let hit = { x: item.x + hitPad, y: item.y + hitPad, w: item.w - (hitPad*2), h: item.h - (hitPad*2) };
 
+            // COLLISION
             if (player.x < hit.x + hit.w && player.x + player.w > hit.x && player.y < hit.y + hit.h && player.y + player.h > hit.y) {
                 
-                if (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') {
+                if (isBad) {
                     if (rocketTimer > 0) {
-                        playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff8c00');
+                        // Rocket Boots Absolute Invincibility + Ramming Combo!
+                        playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, '#39ff14');
                         score += 50 * comboMult; items.splice(i, 1);
                     } else if (player.hasShield) {
                         player.hasShield = false; playSound('crunch');
@@ -441,10 +462,10 @@
                             bossLevel++; baseSpeed += 15; playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700');
                         }
                     } 
+                    // Powerups
                     else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
                     else if (item.type === 'rocket') { rocketTimer = 5.0; playSound('chime'); }
                     else if (item.type === 'magnet') { magnetTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'watch')  { freezeTimer = 3.0; playSound('chime'); }
                     else if (item.type === 'blast')  { laserTimer = 2.0; playSound('bossHit'); }
                     else { playSound('bloop'); comboMult++; comboTimer = 3.0; baseSpeed += 1; }
                     
@@ -456,8 +477,9 @@
             if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) items.splice(i, 1);
         }
 
+        // Particles speed up with World Time Warp
         for (let i = particles.length - 1; i >= 0; i--) {
-            let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.9; p.vy *= 0.9; p.life -= dt;
+            let p = particles[i]; p.x += p.vx * worldDt; p.y += p.vy * worldDt; p.vx *= 0.9; p.vy *= 0.9; p.life -= worldDt;
             if (p.life <= 0) particles.splice(i, 1);
         }
 
