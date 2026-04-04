@@ -172,6 +172,26 @@
     let gameState = 'MENU'; // 'MENU' or 'PLAYING'
     let isMuted = false;
     let showBgStars = true;
+
+    // --- NEW STATE VARIABLES ---
+    let highScore = localStorage.getItem('nsw_highScore') || 0;
+    let highCombo = localStorage.getItem('nsw_highCombo') || 0;
+    let maxComboThisRun = 1;
+    let isNewRecord = false;
+    
+    function saveProgress() {
+        isNewRecord = false;
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('nsw_highScore', highScore);
+            isNewRecord = true;
+        }
+        if (maxComboThisRun > highCombo) {
+            highCombo = maxComboThisRun;
+            localStorage.setItem('nsw_highCombo', highCombo);
+            isNewRecord = true;
+        }
+    }
     
     // SECRET DEV STATE
     let secretClicks = 0;
@@ -389,6 +409,12 @@
         lastTime = performance.now();
         gameState = 'PLAYING';
     }
+
+    let shakeIntensity = 0;
+
+    function triggerShake(intensity) {
+        shakeIntensity = intensity;
+    }
     // --- MAIN GAME LOOP ---
     function update(timestamp) {
         let dt = (timestamp - lastTime) / 1000 || 0.016; 
@@ -400,6 +426,9 @@
                 s.y += s.speed * dt * (rocketTimer > 0 ? 5 : 1);
                 if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; }
             });
+            if (shakeIntensity > 0) {
+                shakeIntensity -= dt * 15; // Smoothly reduce shake over time
+            }
         }
         // Particle Updates
         for (let i = particles.length - 1; i >= 0; i--) {
@@ -528,6 +557,13 @@
         requestAnimationFrame(update);
     }
     function render() {
+        ctx.save();
+        if (shakeIntensity > 0) {
+            // Randomly offset the entire canvas
+            const dx = (Math.random() - 0.5) * shakeIntensity;
+            const dy = (Math.random() - 0.5) * shakeIntensity;
+            ctx.translate(dx, dy);
+        }
         ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
         // Draw Bg Stars
         if(showBgStars) {
@@ -568,6 +604,7 @@
             }
             ctx.shadowColor = "transparent";
         }
+        ctx.restore();
     }
     // Init Frame
     requestAnimationFrame(update);
