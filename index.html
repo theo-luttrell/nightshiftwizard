@@ -264,21 +264,31 @@
 
     // --- LOGIC ---
     function spawnItem() {
-        const rand = Math.random();
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
+        
+        let categoryRoll = Math.random();
 
-        // Powerups
-        if (rand > 0.98) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
-        else if (rand > 0.96) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
-        else if (rand > 0.94) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
-        else if (rand > 0.90) { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } 
-        // Good Items
-        else if (rand > 0.82) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; } 
-        else if (rand > 0.65) { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
-        // The Bestiary (New Threats)
-        else if (rand > 0.55) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; } // Slow tracking ghost
-        else if (rand > 0.45) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }        // Splitter bat
-        else if (rand > 0.30) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
+        // 10% Chance for a Powerup
+        if (categoryRoll > 0.90) {
+            let pRoll = Math.random();
+            if (pRoll > 0.75 && score >= 3000) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
+            else if (pRoll > 0.50 && score >= 2000) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
+            else if (pRoll > 0.25 && score >= 800) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
+            else { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; } // Potion is the default early-game powerup
+        } 
+        // 25% Chance for Good Items (Points)
+        else if (categoryRoll > 0.65) {
+            if (Math.random() > 0.5 && score >= 200) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
+            else { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; } // Star is the default
+        } 
+        // 65% Chance for Hazards (Enemies)
+        else {
+            let eRoll = Math.random();
+            if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
+            else if (eRoll > 0.65 && score >= 1100) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; }
+            else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
+            else { type = 'skull'; sprite = skullSprite; sBase = 110; col = '#8b0000'; } // Skull is the default early-game enemy
+        }
 
         items.push({
             x: Math.random() * (V_WIDTH - w), y: -30, w: w, h: h, 
