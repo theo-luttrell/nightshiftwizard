@@ -426,11 +426,34 @@
                             }
                         } else if (boss.type === 2) { // Slime Zig-Zag
                             items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprite, speed: 160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' });
-                        } else if (boss.type === 3) { // Lich Bone Wall
+                        } else if (boss.type === 3) { // Lich Bone Wall (Staggered)
                             let gap = Math.floor(Math.random() * 5);
+                            
+                            // Pick a random stagger pattern: 0 = Diagonal Right, 1 = Diagonal Left, 2 = V-Shape
+                            let staggerPattern = Math.floor(Math.random() * 3); 
+                            
                             for(let k=0; k<5; k++) {
                                 if (k !== gap) {
-                                    items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: 150, vx: 0, color: '#a9a9a9' });
+                                    let yOffset = 0;
+                                    
+                                    // Calculate a vertical offset based on the skull's column (k)
+                                    if (staggerPattern === 0) yOffset = k * 28;             // Diagonal staircase down to the right
+                                    else if (staggerPattern === 1) yOffset = (4 - k) * 28;  // Diagonal staircase down to the left
+                                    else if (staggerPattern === 2) yOffset = Math.abs(2 - k) * 25; // Arrow / V-shape stagger
+                                    
+                                    // We SUBTRACT the offset so the skulls spawn further up the screen 
+                                    // and fall sequentially, creating a moving gap!
+                                    items.push({ 
+                                        x: (V_WIDTH/5) * k + 10, 
+                                        y: boss.y + boss.h - yOffset, 
+                                        w: 24, 
+                                        h: 24, 
+                                        type: 'skull', 
+                                        sprite: skullSprite, 
+                                        speed: 160, // Sped up slightly to compensate for the stagger
+                                        vx: 0, 
+                                        color: '#a9a9a9' 
+                                    });
                                 }
                             }
                         }
