@@ -116,39 +116,21 @@
         'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
         'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
         'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff' // NEW POWERUP COLORS
+        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff'
     };
 
-    const wizardSprite = [
-        ['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],
-        ['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],
-        ['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],
-        ['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],
-        ['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],
-        ['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],
-        ['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']
-    ];
-
+    const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
     const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
     const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
     const phantomSprite = [['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']];
 
-    // POWERUP SPRITES
     const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
     const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
     const watchSprite = [['tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','go','go','lb','lb','lb','lb','go','go','tr','tr','tr','tr','tr'],['tr','tr','go','go','lb','wh','wh','lb','lb','lb','go','go','tr','tr','tr','tr'],['tr','tr','go','go','lb','wh','bl','lb','lb','lb','go','go','tr','tr','tr','tr'],['tr','tr','go','go','lb','lb','bl','bl','bl','lb','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','lb','lb','lb','lb','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','go','go','go','go','tr','tr','tr','tr','tr','tr']];
     const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
 
-    // BOSS SPRITES & PROJECTILES
     const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
     const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
 
@@ -185,6 +167,9 @@
     let magnetTimer = 0;
     let freezeTimer = 0;
     let laserTimer = 0;
+
+    // KEYBOARD INPUT STATE
+    let keys = { left: false, right: false };
 
     // --- BOSS MECHANICS ---
     let bossLevel = 0;
@@ -238,7 +223,6 @@
             for (let c = 0; c < sprite[r].length; c++) {
                 const colorKey = sprite[r][c];
                 if (colorKey !== 'tr') {
-                    // Fallback to magenta if color is missing (safety)
                     ctx.fillStyle = colors[colorKey] || '#ff00ff';
                     ctx.fillRect(x + (c * pixelSize), y + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
                 }
@@ -253,13 +237,27 @@
     window.addEventListener('resize', resize);
     resize();
 
+    // --- INPUT ---
     function updatePointerPosition(clientX) {
         const rect = canvas.getBoundingClientRect();
         mouseX = (clientX - rect.left) * (V_WIDTH / rect.width) - (player.w / 2);
     }
+    
+    // Mouse/Touch
     window.addEventListener('mousemove', e => updatePointerPosition(e.clientX));
     canvas.addEventListener('touchstart', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
     canvas.addEventListener('touchmove', e => { updatePointerPosition(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
+
+    // Keyboard
+    window.addEventListener('keydown', e => {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+        initAudio();
+    });
+    window.addEventListener('keyup', e => {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    });
 
     // --- LOGIC ---
     function spawnItem() {
@@ -297,6 +295,8 @@
         baseSpeed = 150; player.speed = NORMAL_SPEED;
         
         rocketTimer = 0; magnetTimer = 0; freezeTimer = 0; laserTimer = 0;
+        keys = { left: false, right: false }; // Reset keys to prevent getting stuck
+        
         bossLevel = 0; bossActive = false; nextBossScore = 1500; 
         bossWarning.style.display = 'none'; gameOverScreen.style.display = 'none';
         
@@ -315,23 +315,36 @@
         if (rocketTimer > 0) {
             rocketTimer -= dt;
             player.speed = NORMAL_SPEED * 10;
-            if (Math.random() > 0.3) spawnParticles(player.x + player.w/2, player.y + player.h, '#ff8c00'); // Fire trail
+            if (Math.random() > 0.3) spawnParticles(player.x + player.w/2, player.y + player.h, '#ff8c00');
             if (rocketTimer <= 0) player.speed = NORMAL_SPEED;
         }
         if (magnetTimer > 0) magnetTimer -= dt;
         if (freezeTimer > 0) freezeTimer -= dt;
         if (laserTimer > 0) laserTimer -= dt;
 
-        player.x += (mouseX - player.x) * (player.speed/50) * dt;
-        if (player.x < 0) player.x = 0;
-        if (player.x > V_WIDTH - player.w) player.x = V_WIDTH - player.w;
+        // MOVEMENT: Prioritize keyboard if pressed, otherwise smooth follow mouse
+        if (keys.left) {
+            player.x -= player.speed * dt;
+            mouseX = player.x; // Sync mouse position to prevent snapping back
+        } else if (keys.right) {
+            player.x += player.speed * dt;
+            mouseX = player.x;
+        } else {
+            // Smooth mouse/touch follow
+            player.x += (mouseX - player.x) * (player.speed/50) * dt;
+        }
 
+        // Clamp player to screen edges
+        if (player.x < 0) { player.x = 0; mouseX = 0; }
+        if (player.x > V_WIDTH - player.w) { player.x = V_WIDTH - player.w; mouseX = V_WIDTH - player.w; }
+
+        // Decrement Combo
         if (comboTimer > 0) {
             comboTimer -= dt;
             if (comboTimer <= 0) comboMult = 1;
         }
 
-        let moveDt = (freezeTimer > 0) ? 0 : dt; // Freeze items and boss if watch is active
+        let moveDt = (freezeTimer > 0) ? 0 : dt; 
 
         // BOSS LOGIC
         if (score >= nextBossScore && !bossActive) {
@@ -385,7 +398,7 @@
 
             if (item.type === 'phantom') { item.wave += moveDt * 5; item.x += Math.sin(item.wave) * 150 * moveDt; }
 
-            // Magnet effect (pulls good items toward player)
+            // Magnet effect 
             if (magnetTimer > 0 && (item.type === 'star' || item.type === 'comet' || item.type === 'holyStar')) {
                 item.x += Math.sign(player.x - item.x) * 150 * dt; 
             }
@@ -407,7 +420,6 @@
                 
                 if (item.type === 'skull' || item.type === 'phantom' || item.type === 'fireball') {
                     if (rocketTimer > 0) {
-                        // Rocket Boots RAMMING
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff8c00');
                         score += 50 * comboMult; items.splice(i, 1);
                     } else if (player.hasShield) {
@@ -429,7 +441,6 @@
                             bossLevel++; baseSpeed += 15; playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700');
                         }
                     } 
-                    // Powerup Pickups
                     else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
                     else if (item.type === 'rocket') { rocketTimer = 5.0; playSound('chime'); }
                     else if (item.type === 'magnet') { magnetTimer = 5.0; playSound('chime'); }
@@ -456,7 +467,6 @@
     function render() {
         ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
 
-        // Draw Laser Blast Behind Player
         if (laserTimer > 0) {
             ctx.fillStyle = 'rgba(255, 68, 68, 0.8)';
             ctx.fillRect(player.x + 8, 0, 16, player.y + 16);
@@ -472,7 +482,6 @@
         drawPixelSprite(wizardSprite, player.x, player.y, player.w);
         items.forEach(item => drawPixelSprite(item.sprite, item.x, item.y, item.w));
 
-        // Draw Boss
         if (bossActive && boss.y > -boss.h) {
             drawPixelSprite(bossSprites[boss.type], boss.x, boss.y, boss.w);
             ctx.fillStyle = '#333'; ctx.fillRect(boss.x, boss.y - 10, boss.w, 6);
