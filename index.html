@@ -697,6 +697,12 @@
             ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.stroke();
         }
 
+        if (laserTimer > 0) {
+            ctx.fillStyle = 'rgba(255, 68, 68, 0.8)';
+            ctx.fillRect(player.x + 8, 0, 16, player.y + 16);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(player.x + 12, 0, 8, player.y + 16); // Laser Core
+        }
         drawPixelSprite(wizardSprite, player.x, player.y, player.w);
         items.forEach(item => drawPixelSprite(item.sprite, item.x, item.y, item.w));
 
