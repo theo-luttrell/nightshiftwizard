@@ -520,21 +520,23 @@
             // COLLISION
             if (player.x < hit.x + hit.w && player.x + player.w > hit.x && player.y < hit.y + hit.h && player.y + player.h > hit.y) {
                 if (isBad) {
+                    let shake = 15
                     if (rocketTimer > 0 || isInvincible) {
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, isInvincible ? '#a9a9a9' : '#39ff14');
                         score += 50 * comboMult; items.splice(i, 1);
+                        shake = 0;
                     } else if (player.hasShield) {
                         player.hasShield = false; playSound('crunch');
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
                         items.splice(i, 1);
-                        triggerShake(8);
+                        shake = 8;
                     } else {
                         playSound('crunch'); gameState = 'MENU';
-                        triggerShake(15);
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
                         return;
                     }
+                    triggerShake(15);
                 } else {
                     if (item.type === 'star') score += 10 * comboMult;
                     if (item.type === 'comet') score += 50 * comboMult;
