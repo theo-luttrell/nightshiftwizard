@@ -459,8 +459,12 @@
                 item.x += Math.sin(item.wave) * 150 * worldDt; 
             }
             if (item.type === 'specter') {
-                // Tracks player X smoothly
-                item.x += Math.sign(player.x - item.x) * 60 * worldDt;
+                // NERF: Specters only track you in the upper portion of the screen. 
+                // Once they get close (y > V_HEIGHT * 0.6), they lock their path so you can dodge!
+                if (item.y < V_HEIGHT * 0.6) {
+                    item.x += Math.sign(player.x - item.x) * 40 * worldDt; // Tracking speed reduced from 60 to 40
+                }
+            }
             }
             if (item.type === 'bat' && item.y > V_HEIGHT * 0.35 && !item.split) {
                 // Splitter Bat burst into two fast small bats
