@@ -364,30 +364,76 @@
         }
 
         if (bossActive) {
+            // ENRAGE TRIGGER: Boss drops to 2 HP
+            let isEnraged = boss.hp <= 2; 
+
             if (boss.y < 20) {
                 boss.y += 50 * worldDt; 
             } else {
-                if (boss.type === 0) { boss.x += boss.speed * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
-                else if (boss.type === 1) { boss.wave += worldDt; boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
-                else if (boss.type === 2) { boss.x += boss.speed * 1.5 * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * 4; boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
-                else if (boss.type === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > 2.5) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
+                // ENRAGED MOVEMENT PATTERNS
+                if (boss.type === 0) { 
+                    boss.x += boss.speed * (isEnraged ? 1.5 : 1) * boss.dir * worldDt; 
+                    if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; 
+                } 
+                else if (boss.type === 1) { 
+                    boss.wave += worldDt * (isEnraged ? 2.5 : 1.5); 
+                    boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; 
+                } 
+                else if (boss.type === 2) { 
+                    boss.x += boss.speed * (isEnraged ? 2.5 : 1.5) * boss.dir * worldDt; 
+                    if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; 
+                    // Slime bounces twice as fast!
+                    boss.wave += worldDt * (isEnraged ? 8 : 4); 
+                    boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; 
+                } 
+                else if (boss.type === 3) { 
+                    boss.teleportTimer += worldDt; 
+                    if (boss.teleportTimer > (isEnraged ? 1.5 : 2.5)) { 
+                        boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; 
+                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); 
+                    } 
+                }
 
                 boss.attackTimer += worldDt;
                 let atkRate = Math.max(0.4, 0.8 - (bossLevel * 0.05));
+                if (isEnraged) atkRate *= 0.75; // Bosses attack 25% faster when enraged
+
                 if (boss.attackTimer > atkRate) {
                     boss.attackTimer = 0;
+
+                    // BOSS MINIONS: 30% chance to spawn a standard skull at the top of the screen
+                    if (Math.random() > 0.70) {
+                        items.push({ x: Math.random() * (V_WIDTH - 24), y: -30, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: 110 * (baseSpeed / 100), vx: 0, color: '#8b0000', wave: 0 });
+                    }
+
                     let isWeakness = Math.random() > 0.85; 
-                    if (isWeakness) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'holyStar', sprite: holyStarSprite, speed: 130, vx: 0, color: '#00ffff' }); } 
+                    if (isWeakness) { 
+                        items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'holyStar', sprite: holyStarSprite, speed: 130, vx: 0, color: '#00ffff' }); 
+                    } 
                     else {
-                        if (boss.type === 0) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 0, color: '#ff4444' }); } 
-                        else if (boss.type === 1) { for(let j=-1; j<=1; j++) items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 200, vx: j * 80, color: '#8a2be2' }); } 
-                        else if (boss.type === 2) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprite, speed: 160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' }); } 
+                        if (boss.type === 0) { 
+                            if (isEnraged) {
+                                // Dragon shoots DOUBLE offset fireballs!
+                                items.push({ x: boss.x + boss.w/2 - 20, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: -30, color: '#ff4444' }); 
+                                items.push({ x: boss.x + boss.w/2 + 4, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 30, color: '#ff4444' }); 
+                            } else {
+                                items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 0, color: '#ff4444' }); 
+                            }
+                        } 
+                        else if (boss.type === 1) { 
+                            let spread = isEnraged ? 110 : 80;
+                            for(let j=-1; j<=1; j++) items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: isEnraged ? 250 : 200, vx: j * spread, color: '#8a2be2' }); 
+                        } 
+                        else if (boss.type === 2) { 
+                            items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprite, speed: isEnraged ? 200 : 160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' }); 
+                        } 
                         else if (boss.type === 3) { 
                             let gap = Math.floor(Math.random() * 5); let stagger = Math.floor(Math.random() * 3);
+                            let wallSpeed = isEnraged ? 260 : 160; // Lich walls drop MUCH faster!
                             for(let k=0; k<5; k++) { 
                                 if (k !== gap) {
                                     let yOff = (stagger===0) ? k*28 : (stagger===1) ? (4-k)*28 : Math.abs(2-k)*25;
-                                    items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h - yOff, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: 160, vx: 0, color: '#a9a9a9' }); 
+                                    items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h - yOff, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: wallSpeed, vx: 0, color: '#a9a9a9' }); 
                                 } 
                             } 
                         }
