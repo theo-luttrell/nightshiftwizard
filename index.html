@@ -527,7 +527,9 @@
                         player.hasShield = false; playSound('crunch');
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
                         items.splice(i, 1);
+                        triggerShake(8);
                     } else {
+                        triggerShake(15);
                         playSound('crunch'); gameState = 'MENU';
                         finalScoreText.innerText = `Final Score: ${score}`;
                         switchScreen('gameOverScreen');
@@ -537,6 +539,7 @@
                     if (item.type === 'star') score += 10 * comboMult;
                     if (item.type === 'comet') score += 50 * comboMult;
                     if (item.type === 'holyStar') {
+                        triggerShake(5);
                         playSound('bossHit'); boss.hp--; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff');
                         if (boss.hp <= 0) { bossActive = false; score += 500 * comboMult; nextBossScore = score + 1500; bossLevel++; baseSpeed += 15; playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); }
                     } 
