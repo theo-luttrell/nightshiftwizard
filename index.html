@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Night Shift Wizard: Arcane Overdrive</title>
+    <title>Night Shift Wizard: Arcane Overdrive (v5.0)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -21,7 +21,7 @@
         }
         #game-container {
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
             border: 4px solid #333;
             background-color: #050510;
         }
@@ -46,7 +46,7 @@
         .overlay-screen {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             text-align: center;
             background: rgba(5, 5, 16, 0.95);
@@ -56,7 +56,14 @@
             border-radius: 8px;
             width: 80%;
             max-width: 280px;
+            max-height: 85%;
+            overflow-y: auto;
         }
+        /* Custom scrollbar for shop */
+        .overlay-screen::-webkit-scrollbar { width: 8px; }
+        .overlay-screen::-webkit-scrollbar-track { background: #111; }
+        .overlay-screen::-webkit-scrollbar-thumb { background: #8a3a8a; border-radius: 4px; }
+
         .pixel-title {
             font-size: 20px;
             color: #ff00ff;
@@ -65,58 +72,46 @@
             line-height: 1.4;
             cursor: pointer;
         }
-        .subtitle {
-            font-size: 10px;
-            color: #00ffff;
-            margin-top: 0;
-            margin-bottom: 25px;
-        }
-        .menu-text {
-            font-size: 9px;
-            line-height: 1.8;
-            margin-bottom: 15px;
-            color: #e0e0e0;
-        }
+        .subtitle { font-size: 10px; color: #00ffff; margin-top: 0; margin-bottom: 20px; }
+        .menu-text { font-size: 9px; line-height: 1.8; margin-bottom: 15px; color: #e0e0e0; }
+        
         .boss-warning {
-            display: none;
-            position: absolute;
-            top: 35%;
-            color: #ff4444;
-            font-size: 14px;
-            text-shadow: 2px 2px 0px #000;
+            display: none; position: absolute; top: 35%; color: #ff4444;
+            font-size: 14px; text-shadow: 2px 2px 0px #000;
             animation: blink 0.4s infinite alternate;
         }
-        @keyframes blink {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0; } }
+        
         button {
-            background-color: #3e1a5f;
-            color: white;
-            border: 2px solid #8a3a8a;
-            padding: 12px;
-            font-size: 10px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-family: inherit;
-            width: 100%;
-            text-transform: uppercase;
-            transition: all 0.2s;
+            background-color: #3e1a5f; color: white; border: 2px solid #8a3a8a;
+            padding: 12px; font-size: 10px; cursor: pointer; margin-top: 10px;
+            font-family: inherit; width: 100%; text-transform: uppercase;
+            transition: all 0.2s; flex-shrink: 0;
         }
-        button:hover { background-color: #6a31a1; transform: scale(1.05); }
+        button:hover { background-color: #6a31a1; transform: scale(1.02); }
         button:active { background-color: #ff00ff; }
+        button:disabled { background-color: #222; border-color: #444; color: #666; cursor: not-allowed; transform: none; }
         
         label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
         input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
         
         .stats-box { background: rgba(0,0,0,0.5); border: 1px solid #3e1a5f; padding: 8px; margin-bottom: 10px; border-radius: 4px; width: 90%; }
+        .shard-display { color: #cc66ff; font-size: 12px; text-shadow: 1px 1px 0 #000; margin-bottom: 10px; }
         .new-record { display: none; color: #39ff14; font-size: 10px; margin-top: -5px; margin-bottom: 10px; animation: blink 0.3s infinite alternate; }
         button.special { background-color: #8b0000; border-color: #ff4444; }
         button.special:hover { background-color: #cc0000; }
+        button.shop-btn { background-color: #4a0e4e; border-color: #cc66ff; color: #ffd700; }
+        
+        /* Shop Styles */
+        .shop-item { background: rgba(20,20,40,0.8); border: 1px solid #8a3a8a; padding: 10px; margin-bottom: 10px; width: 100%; box-sizing: border-box; text-align: left;}
+        .shop-item h3 { margin: 0 0 5px 0; font-size: 10px; color: #00ffff; }
+        .shop-item p { margin: 0 0 10px 0; font-size: 8px; color: #aaa; line-height: 1.4; }
+        .shop-item-row { display: flex; justify-content: space-between; align-items: center; }
+        .shop-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 8px; }
         
         #pauseBtn {
             display: none; position: absolute; top: 10px; right: 10px; cursor: pointer; 
-            font-size: 32px; color: #fff; z-index: 100; pointer-events: auto;
+            font-size: 16px; color: #fff; z-index: 100; pointer-events: auto;
             text-shadow: 2px 2px 0 #000; transition: transform 0.2s;
         }
         #pauseBtn:hover { transform: scale(1.2); }
@@ -139,20 +134,96 @@
                         MAX COMBO: x<span id="menuMaxCombo">1</span>
                     </div>
                 </div>
+                <div class="shard-display">♦ <span id="menuShards">0</span> SHARDS</div>
 
                 <button onclick="startGame(false)">PLAY RUN</button>
+                <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
                 <button class="special" onclick="startGame(true)">BOSS RUSH</button>
                 <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
                 <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
+            </div>
+
+            <div id="shopScreen" class="overlay-screen" style="display: none;">
+                <h2 style="font-size: 14px; color: #cc66ff; margin-top:0;">THE ARCANE SHOP</h2>
+                <div class="shard-display" style="position:sticky; top:0; background:rgba(5,5,16,0.9); width:100%; padding:10px 0; z-index:10; border-bottom:1px solid #5d275d;">♦ <span id="shopShards">0</span></div>
+                
+                <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 10px 0;">UPGRADES</div>
+                
+                <div class="shop-item">
+                    <h3 style="color:#00ffff;">Shield Potion</h3>
+                    <p>Increases shield capacity (Absorbs +1 extra hit per level).</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Lv.<span id="lvlPotion">0</span></span>
+                        <button id="btnBuyPotion" onclick="buyUpgrade('potion', 10)">♦ <span id="costPotion">10</span></button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#39ff14;">Hermes Boots</h3>
+                    <p>Increases base duration of speed and ramming by 1.5s per level.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Lv.<span id="lvlBoots">0</span></span>
+                        <button id="btnBuyBoots" onclick="buyUpgrade('boots', 15)">♦ <span id="costBoots">15</span></button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#ff00ff;">Magnet Jewel</h3>
+                    <p>Increases base duration of item magnetism by 1.5s per level.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Lv.<span id="lvlMagnet">0</span></span>
+                        <button id="btnBuyMagnet" onclick="buyUpgrade('magnet', 15)">♦ <span id="costMagnet">15</span></button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#ff4444;">Laser Blast</h3>
+                    <p>Increases laser duration by 0.8s per level.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Lv.<span id="lvlBlast">0</span></span>
+                        <button id="btnBuyBlast" onclick="buyUpgrade('blast', 20)">♦ <span id="costBlast">20</span></button>
+                    </div>
+                </div>
+
+                <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 15px 0 10px 0;">WARDROBE</div>
+
+                <div class="shop-item">
+                    <h3 style="color:#a9a9a9;">Classic Wizard</h3>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Owned</span>
+                        <button id="btnEquipWizard" onclick="buySkin('wizard', 0)">EQUIP</button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#ff4444;">Pyromancer</h3>
+                    <p>Burn bright with infernal robes.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;" id="statusPyro">Locked</span>
+                        <button id="btnBuyPyro" onclick="buySkin('pyromancer', 100)">♦ 100</button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#39ff14;">Necromancer</h3>
+                    <p>Embrace the toxic depths.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;" id="statusNecro">Locked</span>
+                        <button id="btnBuyNecro" onclick="buySkin('necromancer', 100)">♦ 100</button>
+                    </div>
+                </div>
+
+                <button style="margin-top:20px;" onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
             </div>
 
             <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
                 <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
                 <div class="menu-text" style="text-align: left;">
                     <span style="color:#fff;">CATCH:</span> Stars & Comets<br><br>
+                    <span style="color:#cc66ff;">HOARD:</span> Purple Shards<br><br>
                     <span style="color:#ff4444;">DODGE:</span> Skulls & Phantoms<br><br>
                     <span style="color:#00ffff;">POTION:</span> Grants Shield<br><br>
-                    <span style="color:#39ff14;">BOOTS:</span> 10x Speed + Ramming<br><br>
+                    <span style="color:#39ff14;">BOOTS:</span> Speed + Ramming<br><br>
                     <span style="color:#ff00ff;">JEWEL:</span> Magnetizes Loot
                 </div>
                 <button onclick="switchScreen('mainMenuScreen')">BACK</button>
@@ -168,6 +239,7 @@
             <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
                 <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
                 <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
+                <button style="background-color: #8a2be2; border-color: #cc66ff;" onclick="arcaneShards+=1000; saveMeta(); updateShopUI();">ADD 1000 SHARDS</button>
                 <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
             </div>
 
@@ -186,7 +258,9 @@
                 <div class="stats-box">
                     <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0;">Score: 0</p>
                     <p id="finalComboText" style="font-size: 9px; color:#ffd700; margin: 0 0 10px 0;">Max Combo: x1</p>
+                    <p id="finalShardsText" style="font-size: 9px; color:#cc66ff; margin: 0 0 10px 0;">Shards Found: 0</p>
                 </div>
+                <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
                 <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
                 <button onclick="startGame(isBossRush)">RETRY</button>
             </div>
@@ -204,13 +278,15 @@
         'optionsScreen': document.getElementById('optionsScreen'),
         'devToolsScreen': document.getElementById('devToolsScreen'),
         'gameOverScreen': document.getElementById('gameOverScreen'),
-        'pauseScreen': document.getElementById('pauseScreen') 
+        'pauseScreen': document.getElementById('pauseScreen'),
+        'shopScreen': document.getElementById('shopScreen')
     };
     const pauseBtn = document.getElementById('pauseBtn');
     const gameOverTitle = document.getElementById('gameOverTitle');
     const bossWarning = document.getElementById('bossWarning');
     const finalScoreText = document.getElementById('finalScoreText');
     const finalComboText = document.getElementById('finalComboText');
+    const finalShardsText = document.getElementById('finalShardsText');
     const newRecordAlert = document.getElementById('newRecordAlert');
 
     // --- STATE VARIABLES ---
@@ -224,12 +300,36 @@
     // --- META-PROGRESSION & SAVES ---
     let highScore = parseInt(localStorage.getItem('nsw_highScore')) || 0;
     let maxComboAllTime = parseInt(localStorage.getItem('nsw_maxCombo')) || 1;
+    let arcaneShards = parseInt(localStorage.getItem('nsw_shards')) || 0;
+    
+    let upgrades = JSON.parse(localStorage.getItem('nsw_upgrades')) || { potion: 0, boots: 0, magnet: 0, blast: 0 };
+    let skins = JSON.parse(localStorage.getItem('nsw_skins')) || { wizard: true, pyromancer: false, necromancer: false };
+    let activeSkin = localStorage.getItem('nsw_activeSkin') || 'wizard';
     
     document.getElementById('menuHighScore').innerText = highScore;
     document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
+    document.getElementById('menuShards').innerText = arcaneShards;
+
+    // Save Helper
+    function saveMeta() {
+        localStorage.setItem('nsw_highScore', highScore);
+        localStorage.setItem('nsw_maxCombo', maxComboAllTime);
+        localStorage.setItem('nsw_shards', arcaneShards);
+        localStorage.setItem('nsw_upgrades', JSON.stringify(upgrades));
+        localStorage.setItem('nsw_skins', JSON.stringify(skins));
+        localStorage.setItem('nsw_activeSkin', activeSkin);
+        
+        document.getElementById('menuShards').innerText = arcaneShards;
+    }
+
+    // Cost Calculator (1.2x Multiplier)
+    function getUpgradeCost(baseCost, level) {
+        return Math.floor(baseCost * Math.pow(1.2, level));
+    }
 
     // --- ENGINE VARIABLES ---
     let maxComboRun = 1;
+    let runShards = 0;
     let shakeTimer = 0;
     let shakeMag = 0;
     let bossRushDelay = 0;
@@ -240,7 +340,6 @@
         farStars.push({ x: Math.random() * 320, y: Math.random() * 480, size: 1, speed: Math.random() * 10 + 2 });
     }
 
-    // Engine Helper Functions
     function triggerShake(duration, magnitude) {
         shakeTimer = duration; 
         shakeMag = magnitude;
@@ -252,9 +351,15 @@
         'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
         'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
         'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff'
+        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#111111'
     };
+    
     const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    const pyroSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr'],['tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr'],['tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr'],['tr','rd','or','rd','rd','rd','rd','rd','rd','rd','or','rd','tr','tr','tr','tr'],['tr','rd','or','rd','rd','rd','rd','rd','rd','rd','or','rd','tr','tr','tr','tr'],['tr','tr','tr','or','or','or','or','or','or','or','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    const necroSprite = [['tr','tr','tr','tr','tr','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','gy','gy','gy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','gy','dr','gy','dr','gy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','gy','gy','be','gy','gy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','lg','dg','dg','dg','dg','dg','dg','dg','lg','dg','tr','tr','tr','tr'],['tr','dg','lg','dg','dg','dg','dg','dg','dg','dg','lg','dg','tr','tr','tr','tr'],['tr','tr','tr','lg','lg','lg','lg','lg','lg','lg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    
+    const shardSprite = [['tr','tr','tr','tr','tr','tr','wh','vi','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','vi','vi','mg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','vi','vi','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','vi','vi','mg','mg','mg','mg','vi','tr','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','mg','mg','mg','mg','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','tr','vi','vi','mg','mg','mg','mg','vi','vi','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','vi','vi','mg','mg','vi','vi','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','vi','vi','vi','vi','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','vi','vi','tr','tr','tr','tr','tr','tr','tr','tr']];
+
     const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
     const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
@@ -267,6 +372,8 @@
     const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
     const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
     const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
+    
+    // Bosses
     const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
     const eyeSprite = [['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','vi','vi','bk','bk','cy','wh','wh','cy','cy','cy','bk','bk','vi','vi','tr'],['vi','vi','bk','bk','cy','wh','wh','cy','bk','bk','cy','cy','bk','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','bk','cy','cy','cy','bk','bk','bk','cy','cy','bk','bk','vi','vi'],['tr','vi','vi','bk','bk','cy','cy','cy','cy','cy','cy','bk','bk','vi','vi','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr']];
     const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
@@ -283,7 +390,7 @@
     
     const player = {
         x: V_WIDTH / 2 - 16, y: V_HEIGHT - 60,
-        w: 32, h: 32, speed: NORMAL_SPEED, hasShield: false
+        w: 32, h: 32, speed: NORMAL_SPEED, shieldHits: 0
     };
     let items = [];
     let particles = [];
@@ -324,7 +431,6 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     
-    // Setup initial event listeners
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
@@ -355,11 +461,78 @@
         }
     }
 
-    // --- UI CONTROLS ---
+    // --- UI CONTROLS & SHOP ---
     function switchScreen(screenId) {
         Object.values(screens).forEach(s => s.style.display = 'none');
         if(screenId) screens[screenId].style.display = 'flex';
     }
+
+    function updateShopUI() {
+        document.getElementById('shopShards').innerText = arcaneShards;
+        
+        ['potion', 'boots', 'magnet', 'blast'].forEach(type => {
+            let lvl = upgrades[type];
+            let cost = getUpgradeCost(type === 'potion' ? 10 : type === 'blast' ? 20 : 15, lvl);
+            document.getElementById('lvl' + type.charAt(0).toUpperCase() + type.slice(1)).innerText = lvl;
+            let btn = document.getElementById('btnBuy' + type.charAt(0).toUpperCase() + type.slice(1));
+            btn.innerHTML = `♦ ${cost}`;
+            btn.disabled = arcaneShards < cost;
+        });
+
+        // Wardrobe UI
+        document.getElementById('btnEquipWizard').innerText = activeSkin === 'wizard' ? 'EQUIPPED' : 'EQUIP';
+        document.getElementById('btnEquipWizard').disabled = activeSkin === 'wizard';
+
+        ['pyro', 'necro'].forEach(skin => {
+            let fullSkinName = skin === 'pyro' ? 'pyromancer' : 'necromancer';
+            let btn = document.getElementById('btnBuy' + skin.charAt(0).toUpperCase() + skin.slice(1));
+            let status = document.getElementById('status' + skin.charAt(0).toUpperCase() + skin.slice(1));
+            
+            if (skins[fullSkinName]) {
+                status.innerText = "Owned";
+                status.style.color = "#39ff14";
+                btn.innerText = activeSkin === fullSkinName ? 'EQUIPPED' : 'EQUIP';
+                btn.disabled = activeSkin === fullSkinName;
+                btn.onclick = () => buySkin(fullSkinName, 0);
+            } else {
+                status.innerText = "Locked";
+                status.style.color = "#ff4444";
+                btn.innerHTML = `♦ 100`;
+                btn.disabled = arcaneShards < 100;
+                btn.onclick = () => buySkin(fullSkinName, 100);
+            }
+        });
+    }
+
+    function openShop() {
+        updateShopUI();
+        switchScreen('shopScreen');
+    }
+
+    function buyUpgrade(type, baseCost) {
+        let cost = getUpgradeCost(baseCost, upgrades[type]);
+        if (arcaneShards >= cost) {
+            arcaneShards -= cost;
+            upgrades[type]++;
+            playSound('chime');
+            saveMeta();
+            updateShopUI();
+        }
+    }
+
+    function buySkin(skinId, cost) {
+        if (!skins[skinId] && arcaneShards >= cost) {
+            arcaneShards -= cost;
+            skins[skinId] = true;
+            playSound('chime');
+        }
+        if (skins[skinId]) {
+            activeSkin = skinId;
+        }
+        saveMeta();
+        updateShopUI();
+    }
+
     function registerSecretClick() {
         secretClicks++;
         if(secretClicks >= 5) {
@@ -382,7 +555,7 @@
             gameState = 'PLAYING';
             pauseBtn.style.display = 'block';
             switchScreen(null);
-            lastTime = performance.now(); // Prevent time teleportation after unpausing
+            lastTime = performance.now(); 
         }
     }
 
@@ -421,7 +594,7 @@
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
         if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen'); 
-        if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); // New pause bind
+        if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
         initAudio();
     });
     
@@ -435,8 +608,12 @@
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
         let categoryRoll = Math.random();
         
+        // 5% Chance Arcane Shard (Persistent Currency)
+        if (categoryRoll > 0.95) {
+            type = 'shard'; sprite = shardSprite; sBase = 120; col = '#8a2be2'; w = 20; h = 20;
+        }
         // 10% Chance Powerup
-        if (categoryRoll > 0.90) {
+        else if (categoryRoll > 0.85) {
             let pRoll = Math.random();
             if (pRoll > 0.75 && score >= 3000) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
             else if (pRoll > 0.50 && score >= 2000) { type = 'blast'; sprite = blastSprite; sBase = 140; col = '#ff4444'; }
@@ -444,11 +621,11 @@
             else { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; }
         } 
         // 25% Chance Good
-        else if (categoryRoll > 0.65) {
+        else if (categoryRoll > 0.60) {
             if (Math.random() > 0.5 && score >= 200) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
             else { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
         } 
-        // 65% Chance Hazard
+        // 60% Chance Hazard
         else {
             let eRoll = Math.random();
             if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
@@ -486,21 +663,14 @@
         let isNewRecord = false;
         
         if (!aborted) {
-            // Only count standard runs for global high score
             if (!isBossRush && score > highScore) { highScore = score; isNewRecord = true; }
             if (!isBossRush && maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
-            
-            try {
-                localStorage.setItem('nsw_highScore', highScore);
-                localStorage.setItem('nsw_maxCombo', maxComboAllTime);
-            } catch(e) {}
+            saveMeta(); // Save stats and newly acquired shards
         }
-        
-        document.getElementById('menuHighScore').innerText = highScore;
-        document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
         
         finalScoreText.innerText = `Final Score: ${score}`;
         finalComboText.innerText = `Max Combo: x${maxComboRun}`;
+        finalShardsText.innerText = `Shards Found: ${runShards}`;
         newRecordAlert.style.display = isNewRecord ? 'block' : 'none';
 
         switchScreen('gameOverScreen');
@@ -510,9 +680,10 @@
         initAudio(); 
         isBossRush = rushMode;
         score = 0; maxComboRun = 1; items = []; particles = [];
+        runShards = 0;
         
         player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
-        player.hasShield = false; comboMult = 1; comboTimer = 0; 
+        player.shieldHits = 0; comboMult = 1; comboTimer = 0; 
         baseSpeed = 150; player.speed = NORMAL_SPEED;
         
         rocketTimer = 0; magnetTimer = 0; laserTimer = 0; shakeTimer = 0; 
@@ -646,7 +817,7 @@
                 items.push({ x: item.x + 8, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: 100, color: item.color });
                 spawnParticles(item.x + 12, item.y + 12, '#ff4444'); items.splice(i, 1); continue;
             }
-            if (magnetTimer > 0 && ['star','comet','holyStar'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
+            if (magnetTimer > 0 && ['star','comet','holyStar','shard'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
             
             let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
             
@@ -664,18 +835,23 @@
                     if (rocketTimer > 0 || isInvincible) {
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, isInvincible ? '#a9a9a9' : '#39ff14');
                         score += 50 * comboMult; triggerShake(0.1, 3); items.splice(i, 1);
-                    } else if (player.hasShield) {
-                        player.hasShield = false; playSound('crunch');
+                    } else if (player.shieldHits > 0) {
+                        player.shieldHits--; playSound('crunch');
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
                         triggerShake(0.3, 8); items.splice(i, 1);
                     } else {
                         processGameOver();
-                        requestAnimationFrame(update); // <-- CRASH FIX: Keeps the engine alive!
+                        requestAnimationFrame(update); 
                         return;
                     }
                 } else {
                     if (item.type === 'star') score += 10 * comboMult;
                     if (item.type === 'comet') score += 50 * comboMult;
+                    if (item.type === 'shard') {
+                        runShards++; arcaneShards++; 
+                        playSound('chime'); score += 100 * comboMult;
+                        document.getElementById('menuShards').innerText = arcaneShards;
+                    }
                     if (item.type === 'holyStar') {
                         playSound('bossHit'); boss.hp--; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff'); triggerShake(0.1, 4);
                         if (boss.hp <= 0) { 
@@ -685,10 +861,11 @@
                             if (isBossRush) bossRushDelay = 2.5; else nextBossScore = score + 1500; 
                         }
                     } 
-                    else if (item.type === 'potion') { player.hasShield = true; playSound('chime'); } 
-                    else if (item.type === 'rocket') { rocketTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'magnet') { magnetTimer = 5.0; playSound('chime'); }
-                    else if (item.type === 'blast')  { laserTimer = 2.0; playSound('bossHit'); triggerShake(0.2, 5); }
+                    // APPLY UPGRADES SCALING
+                    else if (item.type === 'potion') { player.shieldHits = 1 + upgrades.potion; playSound('chime'); } 
+                    else if (item.type === 'rocket') { rocketTimer = 5.0 + (upgrades.boots * 1.5); playSound('chime'); }
+                    else if (item.type === 'magnet') { magnetTimer = 5.0 + (upgrades.magnet * 1.5); playSound('chime'); }
+                    else if (item.type === 'blast')  { laserTimer = 2.0 + (upgrades.blast * 0.8); playSound('bossHit'); triggerShake(0.2, 5); }
                     else { playSound('bloop'); comboMult++; comboTimer = 3.0; baseSpeed += 1; }
                     
                     spawnParticles(item.x + item.w/2, item.y + item.h/2, item.color);
@@ -697,7 +874,6 @@
                 continue;
             }
 
-            // Break combo if a good item falls off the bottom of the screen
             if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) {
                 if (item.y > V_HEIGHT && (item.type === 'star' || item.type === 'comet')) {
                     comboMult = 1;
@@ -715,14 +891,12 @@
         ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT); 
         ctx.save();
         
-        // Apply Camera Shake
         if (shakeTimer > 0) { 
             const dx = (Math.random() - 0.5) * shakeMag; 
             const dy = (Math.random() - 0.5) * shakeMag; 
             ctx.translate(dx, dy); 
         }
 
-        // Backgrounds
         if(showBgStars) {
             ctx.fillStyle = '#444466'; farStars.forEach(s => { ctx.globalAlpha = 0.5; ctx.fillRect(s.x, s.y, s.size, s.size); });
             ctx.fillStyle = '#ffffff'; bgStars.forEach(s => { ctx.globalAlpha = 0.3; ctx.fillRect(s.x, s.y, s.size, s.size); }); 
@@ -730,9 +904,19 @@
         }
 
         if (laserTimer > 0 && gameState === 'PLAYING') { ctx.fillStyle = 'rgba(255, 68, 68, 0.8)'; ctx.fillRect(player.x + 8, 0, 16, player.y + 16); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(player.x + 12, 0, 8, player.y + 16); }
-        if (player.hasShield && gameState === 'PLAYING') { ctx.beginPath(); ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w/1.4, 0, Math.PI * 2); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.stroke(); }
+        
+        if (player.shieldHits > 0 && gameState === 'PLAYING') { 
+            ctx.beginPath(); ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w/1.4, 0, Math.PI * 2); 
+            ctx.strokeStyle = player.shieldHits > 1 ? '#ff00ff' : '#00ffff'; 
+            ctx.lineWidth = 2 + (player.shieldHits - 1); ctx.stroke(); 
+        }
 
-        if (gameState === 'PLAYING') drawPixelSprite(wizardSprite, player.x, player.y, player.w);
+        // Apply Active Wardrobe Skin
+        let currentSprite = wizardSprite;
+        if (activeSkin === 'pyromancer') currentSprite = pyroSprite;
+        else if (activeSkin === 'necromancer') currentSprite = necroSprite;
+
+        if (gameState === 'PLAYING') drawPixelSprite(currentSprite, player.x, player.y, player.w);
         items.forEach(item => drawPixelSprite(item.sprite, item.x, item.y, item.w));
         
         if (bossActive && boss.y > -boss.h) {
@@ -744,7 +928,6 @@
         particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life / 0.5); ctx.fillRect(p.x, p.y, 4, 4); });
         ctx.globalAlpha = 1.0; 
         
-        // Restore before UI
         ctx.restore();
 
         if(gameState === 'PLAYING' || gameState === 'PAUSED') {
@@ -759,6 +942,11 @@
                 ctx.fillStyle = comboMult > 4 ? '#ff4444' : '#ffd700'; 
                 ctx.fillText(`COMBO x${comboMult}`, 10, isBossRush ? 65 : 45); 
             }
+            
+            // Display run shards
+            ctx.fillStyle = '#cc66ff';
+            ctx.fillText(`♦ ${runShards}`, V_WIDTH - 50, 25);
+
             ctx.shadowColor = "transparent";
         }
     }
