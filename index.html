@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Night Shift Wizard: Arcane Overdrive (v5.0)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             margin: 0;
@@ -95,6 +96,14 @@
         label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
         input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
         
+        input[type="text"] {
+            background: #111; color: #fff; border: 2px solid #8a3a8a;
+            padding: 10px; font-family: inherit; font-size: 10px;
+            text-transform: uppercase; width: 90%; text-align: center;
+            margin-bottom: 10px; box-sizing: border-box;
+        }
+        input[type="text"]:focus { outline: none; border-color: #00ffff; }
+        
         .stats-box { background: rgba(0,0,0,0.5); border: 1px solid #3e1a5f; padding: 8px; margin-bottom: 10px; border-radius: 4px; width: 90%; }
         .shard-display { color: #cc66ff; font-size: 12px; text-shadow: 1px 1px 0 #000; margin-bottom: 10px; }
         .new-record { display: none; color: #39ff14; font-size: 10px; margin-top: -5px; margin-bottom: 10px; animation: blink 0.3s infinite alternate; }
@@ -138,6 +147,7 @@
 
                 <button onclick="startGame(false)">PLAY RUN</button>
                 <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
+                <button onclick="openLeaderboard()">GLOBAL LEADERBOARD</button>
                 <button class="special" onclick="startGame(true)">BOSS RUSH</button>
                 <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
                 <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
@@ -216,6 +226,14 @@
                 <button style="margin-top:20px;" onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
             </div>
 
+            <div id="leaderboardScreen" class="overlay-screen" style="display: none;">
+                <h2 style="font-size: 14px; color: #00ffff; margin-top:0;">GLOBAL TOP 10</h2>
+                <div id="leaderboardList" class="menu-text" style="width: 100%; text-align: left; margin: 15px 0;">
+                    Loading...
+                </div>
+                <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
+            </div>
+
             <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
                 <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
                 <div class="menu-text" style="text-align: left;">
@@ -260,6 +278,10 @@
                     <p id="finalComboText" style="font-size: 9px; color:#ffd700; margin: 0 0 10px 0;">Max Combo: x1</p>
                     <p id="finalShardsText" style="font-size: 9px; color:#cc66ff; margin: 0 0 10px 0;">Shards Found: 0</p>
                 </div>
+                
+                <input type="text" id="playerNameInput" placeholder="ENTER NAME" maxlength="12" style="display: none;">
+                <button id="submitScoreBtn" style="display: none; background-color: #008b8b; border-color: #00ffff; margin-bottom: 10px;" onclick="submitScore()">SUBMIT TO GLOBAL</button>
+
                 <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
                 <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
                 <button onclick="startGame(isBossRush)">RETRY</button>
@@ -268,6 +290,14 @@
         </div>
     </div>
 <script>
+    /* Note: Ensure you have created a table named 'leaderboard' in your Supabase dashboard with columns: 
+    id (int), created_at (timestamptz), name (text), score (int8), max_combo (int8), and is_boss_rush (boolean). 
+    Set up RLS policies to allow anonymous inserts and selects. */
+    const supabaseUrl = 'https://dmpsaindnowmxybrwoem.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcHNhaW5kbm93bXh5YnJ3b2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTA5ODAsImV4cCI6MjA5MDg4Njk4MH0.dUULkS_k_T8rTHy7czQfrjWvoxhEllYWGtwtsGIk-5o';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+    let savedPlayerName = localStorage.getItem('nsw_playerName') || '';
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -279,7 +309,8 @@
         'devToolsScreen': document.getElementById('devToolsScreen'),
         'gameOverScreen': document.getElementById('gameOverScreen'),
         'pauseScreen': document.getElementById('pauseScreen'),
-        'shopScreen': document.getElementById('shopScreen')
+        'shopScreen': document.getElementById('shopScreen'),
+        'leaderboardScreen': document.getElementById('leaderboardScreen')
     };
     const pauseBtn = document.getElementById('pauseBtn');
     const gameOverTitle = document.getElementById('gameOverTitle');
@@ -465,6 +496,62 @@
     function switchScreen(screenId) {
         Object.values(screens).forEach(s => s.style.display = 'none');
         if(screenId) screens[screenId].style.display = 'flex';
+    }
+
+    async function openLeaderboard() {
+        switchScreen('leaderboardScreen');
+        const listElement = document.getElementById('leaderboardList');
+        listElement.innerHTML = '<div style="text-align:center; color:#aaa;">Summoning records...</div>';
+        
+        // Fetch top 10 scores for standard runs
+        const { data, error } = await supabaseClient
+            .from('leaderboard')
+            .select('name, score')
+            .eq('is_boss_rush', false)
+            .order('score', { ascending: false })
+            .limit(10);
+        
+        if (error) {
+            listElement.innerHTML = '<div style="color:#ff4444; text-align:center;">Failed to read arcane scrolls.</div>';
+            return;
+        }
+        
+        if (data.length === 0) {
+            listElement.innerHTML = '<div style="color:#aaa; text-align:center;">The scrolls are empty.</div>';
+            return;
+        }
+        
+        listElement.innerHTML = data.map((entry, i) => 
+            `<div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">
+                <span style="color:#fff;">${i+1}. ${entry.name || 'UNKNOWN'}</span>
+                <span style="color:#ffd700;">${entry.score}</span>
+            </div>`
+        ).join('');
+    }
+
+    async function submitScore() {
+        const nameInput = document.getElementById('playerNameInput').value.trim().toUpperCase();
+        if (!nameInput) return;
+        
+        localStorage.setItem('nsw_playerName', nameInput);
+        savedPlayerName = nameInput;
+        
+        const submitBtn = document.getElementById('submitScoreBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'SUBMITTING...';
+
+        const { error } = await supabaseClient.from('leaderboard').insert([
+            { name: nameInput, score: score, max_combo: maxComboRun, is_boss_rush: isBossRush }
+        ]);
+
+        if (error) {
+            submitBtn.innerText = 'ERROR! RETRY?';
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.innerText = 'SCORE SECURED!';
+            submitBtn.style.backgroundColor = '#39ff14';
+            submitBtn.style.borderColor = '#006400';
+        }
     }
 
     function updateShopUI() {
@@ -672,6 +759,23 @@
         finalComboText.innerText = `Max Combo: x${maxComboRun}`;
         finalShardsText.innerText = `Shards Found: ${runShards}`;
         newRecordAlert.style.display = isNewRecord ? 'block' : 'none';
+
+        const nameInput = document.getElementById('playerNameInput');
+        const submitBtn = document.getElementById('submitScoreBtn');
+        
+        // Only allow global submission if it's a standard run, not aborted, and > 0 score
+        if (!aborted && !isBossRush && score > 0) {
+            nameInput.style.display = 'block';
+            nameInput.value = savedPlayerName; 
+            submitBtn.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'SUBMIT TO GLOBAL';
+            submitBtn.style.backgroundColor = '#008b8b';
+            submitBtn.style.borderColor = '#00ffff';
+        } else {
+            nameInput.style.display = 'none';
+            submitBtn.style.display = 'none';
+        }
 
         switchScreen('gameOverScreen');
     }
