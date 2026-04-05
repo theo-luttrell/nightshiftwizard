@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Access Denied</title>
+    <style>
+        /* CSS STYLES */
+        html, body {
+            font-family: 'Lato', Arial, sans-serif;
+            font-size: 120%;
+            font-weight: 300;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .error {
+            align-items: center;
+            background: #B2EBF2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: center;
+            padding: 5rem 0;
+        }
+
+        .error__header {
+            font-size: 5rem;
+            font-weight: 900;
+            padding: 1.5rem 0 0.5rem 0;
+            margin: 0;
+            color: red;
+        }
+
+        .error__header--secondary {
+            font-size: 2.5rem;
+            padding: 0 0 1rem 0;
+            text-transform: uppercase;
+            color: darkred;
+        }
+
+        .error__description {
+            font-size: 1.85rem;
+            margin: 0;
+        }
+
+        .stage {
+            height: 18rem;
+            width: 8rem;
+        }
+
+        .key {
+            animation: squigglevision 0.35s infinite;
+            position: relative;
+            height: 100%;
+            width: 8rem;
+        }
+
+        .key__head {
+            background: #FDD835;
+            border-radius: 50%;
+            box-shadow: 0.85rem 0 0 #ccaf2a;
+            height: 8rem;
+            position: absolute;
+            width: 8rem;
+            z-index: 1;
+        }
+
+        .key__head::before {
+            background: #B2EBF2;
+            border-radius: 50%;
+            box-shadow: inset 0.5rem 0.1rem 0 #ccaf2a;
+            content: "";
+            display: block;
+            height: 1rem;
+            left: 3.5rem;
+            position: absolute;
+            width: 1rem;
+            top: 1.5rem;
+        }
+
+        .key__eye {
+            background-color: #111;
+            border-radius: 50%;
+            height: 0.75rem;
+            left: 1.5rem;
+            position: absolute;
+            top: 4.5rem;
+            width: 0.75rem;
+        }
+
+        .key__eye:nth-child(2) {
+            left: 5rem;
+        }
+
+        .key__eye::before, .key__eye::after {
+            background: white;
+            border-radius: 50%;
+            content: "";
+            display: block;
+            position: absolute;
+        }
+
+        .key__eye::before {
+            animation: scale 0.35s linear 0s infinite alternate;
+            height: 0.15rem;
+            left: 0.15rem;
+            width: 0.15rem;
+            top: 0.15rem;
+        }
+
+        .key__eye::after {
+            animation: scale 0.25s linear 0s infinite alternate;
+            height: 0.25rem;
+            left: 0.35rem;
+            width: 0.25rem;
+            top: 0.35rem;
+        }
+
+        .key__mouth {
+            animation: sniff 2s linear 0s infinite alternate;
+            border-radius: 50%;
+            border: 0.2rem solid #111111;
+            border-bottom-color: transparent;
+            border-left-color: transparent;
+            height: 1.25rem;
+            left: 2.85rem;
+            position: relative;
+            top: 5rem;
+            transform: rotate(-45deg);
+            width: 1.25rem;
+        }
+
+        .key__body {
+            background: #FDD835;
+            box-shadow: 1rem 0 0 #ccaf2a;
+            height: 9rem;
+            position: relative;
+            width: 3rem;
+            top: 7rem;
+            left: 2.5rem;
+        }
+
+        .key__body::before {
+            background: rgba(204, 175, 42, 0.5);
+            border-radius: 1rem;
+            content: "";
+            display: block;
+            height: 8.5rem;
+            left: 1rem;
+            position: absolute;
+            top: 2rem;
+            width: 0.45rem;
+            z-index: 2;
+        }
+
+        .key__body::after {
+            background: #FDD835;
+            border-radius: 0 0 80% 25%;
+            box-shadow: 1rem 0 0 #ccaf2a;
+            content: "";
+            display: block;
+            height: 2rem;
+            position: absolute;
+            top: 100%;
+            width: 3rem;
+        }
+
+        .key__arm {
+            border-radius: 50%;
+            border: 0.2rem solid #111111;
+            border-bottom-color: transparent;
+            border-top-color: transparent;
+            height: 4.55rem;
+            position: absolute;
+            width: 1.25rem;
+        }
+
+        .key__arm--left {
+            left: 1.9rem;
+            top: 1rem;
+            border-left-color: transparent;
+        }
+
+        .key__arm--right {
+            left: -0.5rem;
+            top: 1rem;
+            border-right-color: transparent;
+        }
+
+        .key__indentation {
+            background: #FDD835;
+            box-shadow: 0.5rem -0.5rem 0 #ccaf2a;
+            height: 2rem;
+            transform: rotate(45deg);
+            width: 2rem;
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+        }
+
+        .key__indentation:nth-child(2) {
+            top: 4.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .key__indentation:nth-child(3) {
+            top: 6rem;
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+
+        @keyframes scale {
+            from { transform: scale(1); }
+            to { transform: scale(1.4); }
+        }
+
+        @keyframes sniff {
+            0%, 70%, 100% { transform: translateY(0) rotate(-45deg); }
+            75% { transform: translateY(-5%) rotate(-45deg); }
+        }
+
+        .svg-defs {
+            display: none;
+        }
+
+        @keyframes squigglevision {
+            0% { filter: url('#squiggly-0'); }
+            25% { filter: url('#squiggly-1'); }
+            50% { filter: url('#squiggly-2'); }
+            75% { filter: url('#squiggly-3'); }
+            100% { filter: url('#squiggly-4'); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Filters for the Squigglevision effect -->
+    <svg class="svg-defs" xmlns="http://w3.org" version="1.1">
+        <defs>
+            <filter id="squiggly-0"><feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="0"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="2" /></filter>
+            <filter id="squiggly-1"><feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="1"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3" /></filter>
+            <filter id="squiggly-2"><feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="2"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="2" /></filter>
+            <filter id="squiggly-3"><feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="3"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3" /></filter>
+            <filter id="squiggly-4"><feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="4"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="1" /></filter>
+        </defs>
+    </svg>
+
+    <!-- Error Page Content -->
+    <section class="error">
+        <div class="stage">
+            <div class="key">
+                <div class="key__head">
+                    <div class="key__eye"></div>
+                    <div class="key__eye"></div>
+                    <div class="key__mouth"></div>
+                </div>
+                <div class="key__body">
+                    <div class="key__indentation"></div>
+                    <div class="key__indentation"></div>
+                    <div class="key__indentation"></div>
+                    <div class="key__arm key__arm--left"></div>
+                    <div class="key__arm key__arm--right"></div>
+                </div>
+            </div>
+        </div>
+        <h1 class="error__header">403</h1>
+        <h2 class="error__header--secondary">Access denied</h2>
+        <p class="error__description">Sorry, buddy, you really shouldn't be here.</p>
+    </section>
+
+</body>
+</html>
