@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Night Shift Wizard: Arcane Overdrive (v5.0)</title>
+    <title>Night Shift Wizard: Arcane Overdrive (v5.1)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -223,6 +223,35 @@
                     </div>
                 </div>
 
+                <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 15px 0 10px 0;">RELICS</div>
+
+                <div class="shop-item">
+                    <h3 style="color:#a9a9a9;">No Relic</h3>
+                    <p>Standard wizarding rules apply.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;">Owned</span>
+                        <button id="btnBuyRelic_none" onclick="buyRelic('none', 0)">EQUIP</button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#00ffff;">Glass Cannon</h3>
+                    <p>Doubles Score. Potions grant Score instead of Shields.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;" id="statusRelic_glass_cannon">Locked</span>
+                        <button id="btnBuyRelic_glass_cannon" onclick="buyRelic('glass_cannon', 10)">♦ 10</button>
+                    </div>
+                </div>
+
+                <div class="shop-item">
+                    <h3 style="color:#a9a9a9;">Lead Boots</h3>
+                    <p>-30% Speed. Crushing skulls yields score.</p>
+                    <div class="shop-item-row">
+                        <span style="font-size:9px;" id="statusRelic_lead_boots">Locked</span>
+                        <button id="btnBuyRelic_lead_boots" onclick="buyRelic('lead_boots', 10)">♦ 10</button>
+                    </div>
+                </div>
+
                 <button style="margin-top:20px;" onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
             </div>
 
@@ -290,9 +319,6 @@
         </div>
     </div>
 <script>
-    /* Note: Ensure you have created a table named 'leaderboard' in your Supabase dashboard with columns: 
-    id (int), created_at (timestamptz), name (text), score (int8), max_combo (int8), and is_boss_rush (boolean). 
-    Set up RLS policies to allow anonymous inserts and selects. */
     const supabaseUrl = 'https://dmpsaindnowmxybrwoem.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcHNhaW5kbm93bXh5YnJ3b2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTA5ODAsImV4cCI6MjA5MDg4Njk4MH0.dUULkS_k_T8rTHy7czQfrjWvoxhEllYWGtwtsGIk-5o';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -301,7 +327,7 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
-    // UI Elements
+    // --- UI ELEMENTS ---
     const screens = {
         'mainMenuScreen': document.getElementById('mainMenuScreen'),
         'howToPlayScreen': document.getElementById('howToPlayScreen'),
@@ -321,7 +347,7 @@
     const newRecordAlert = document.getElementById('newRecordAlert');
 
     // --- STATE VARIABLES ---
-    let gameState = 'MENU'; // 'MENU', 'PLAYING', or 'PAUSED'
+    let gameState = 'MENU'; 
     let isBossRush = false; 
     let isMuted = false;
     let showBgStars = true;
@@ -336,12 +362,14 @@
     let upgrades = JSON.parse(localStorage.getItem('nsw_upgrades')) || { potion: 0, boots: 0, magnet: 0, blast: 0 };
     let skins = JSON.parse(localStorage.getItem('nsw_skins')) || { wizard: true, pyromancer: false, necromancer: false };
     let activeSkin = localStorage.getItem('nsw_activeSkin') || 'wizard';
+
+    let relics = JSON.parse(localStorage.getItem('nsw_relics')) || { none: true, glass_cannon: false, lead_boots: false };
+    let activeRelic = localStorage.getItem('nsw_activeRelic') || 'none';
     
     document.getElementById('menuHighScore').innerText = highScore;
     document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
     document.getElementById('menuShards').innerText = arcaneShards;
 
-    // Save Helper
     function saveMeta() {
         localStorage.setItem('nsw_highScore', highScore);
         localStorage.setItem('nsw_maxCombo', maxComboAllTime);
@@ -349,70 +377,17 @@
         localStorage.setItem('nsw_upgrades', JSON.stringify(upgrades));
         localStorage.setItem('nsw_skins', JSON.stringify(skins));
         localStorage.setItem('nsw_activeSkin', activeSkin);
+        localStorage.setItem('nsw_relics', JSON.stringify(relics));
+        localStorage.setItem('nsw_activeRelic', activeRelic);
         
         document.getElementById('menuShards').innerText = arcaneShards;
     }
 
-    // Cost Calculator (1.2x Multiplier)
     function getUpgradeCost(baseCost, level) {
         return Math.floor(baseCost * Math.pow(1.2, level));
     }
 
-    // --- ENGINE VARIABLES ---
-    let maxComboRun = 1;
-    let runShards = 0;
-    let shakeTimer = 0;
-    let shakeMag = 0;
-    let bossRushDelay = 0;
-    let farStars = [];
-
-    // Initialize Parallax Far Stars
-    for(let i=0; i<40; i++) {
-        farStars.push({ x: Math.random() * 320, y: Math.random() * 480, size: 1, speed: Math.random() * 10 + 2 });
-    }
-
-    function triggerShake(duration, magnitude) {
-        shakeTimer = duration; 
-        shakeMag = magnitude;
-    }
-
-    // --- PIXEL ART DATA ---
-    const colors = {
-        'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
-        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
-        'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
-        'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#111111'
-    };
-    
-    const wizardSprite = [['tr','tr','tr','tr','tr','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','pu','dp','pu','pu','pu','pu','pu','pu','pu','dp','pu','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const pyroSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','sk','sk','sk','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','be','sk','sk','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr','tr'],['tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr'],['tr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','tr','tr','tr','tr'],['tr','rd','or','rd','rd','rd','rd','rd','rd','rd','or','rd','tr','tr','tr','tr'],['tr','rd','or','rd','rd','rd','rd','rd','rd','rd','or','rd','tr','tr','tr','tr'],['tr','tr','tr','or','or','or','or','or','or','or','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const necroSprite = [['tr','tr','tr','tr','tr','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','gy','gy','gy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','gy','dr','gy','dr','gy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','gy','gy','be','gy','gy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','be','be','be','be','be','be','be','tr','tr','tr','tr','tr','tr'],['tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','dg','lg','dg','dg','dg','dg','dg','dg','dg','lg','dg','tr','tr','tr','tr'],['tr','dg','lg','dg','dg','dg','dg','dg','dg','dg','lg','dg','tr','tr','tr','tr'],['tr','tr','tr','lg','lg','lg','lg','lg','lg','lg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    
-    const shardSprite = [['tr','tr','tr','tr','tr','tr','wh','vi','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','vi','vi','mg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','vi','vi','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','vi','vi','mg','mg','mg','mg','vi','tr','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','mg','mg','mg','mg','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','tr','vi','vi','mg','mg','mg','mg','vi','vi','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','vi','vi','mg','mg','vi','vi','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','vi','vi','vi','vi','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','vi','vi','tr','tr','tr','tr','tr','tr','tr','tr']];
-
-    const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
-    const skullSprite = [['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','bl','bl','bl','bl','sk','bl','bl','bl','bl','sk','sk','tr','tr','tr'],['tr','sk','sk','bl','bl','sk','sk','sk','bl','bl','sk','sk','sk','tr','tr','tr'],['tr','tr','sk','sk','sk','sk','rd','rd','sk','sk','sk','sk','tr','tr','tr','tr'],['tr','tr','tr','sk','sk','rd','rd','rd','rd','sk','sk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','sk','sk','sk','sk','sk','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','sk','bl','sk','bl','sk','bl','tr','tr','tr','tr','tr','tr']];
-    const phantomSprite = [['tr','tr','tr','tr','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr','tr','tr'],['tr','tr','dp','dp','dp','rd','rd','dp','dp','rd','rd','dp','tr','tr','tr','tr'],['tr','dp','dp','dp','dp','cy','wh','dp','dp','cy','wh','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dr','dr','dr','dr','dr','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','dp','tr','tr','tr'],['tr','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','dp','dp','tr','tr','tr'],['tr','tr','dp','tr','tr','tr','dp','tr','tr','dp','tr','tr','dp','tr','tr','tr']];
-    const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const batSprite = [['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr'],['tr','bl','gy','gy','bl','tr','tr','tr','tr','bl','gy','gy','bl','tr','tr','tr'],['bl','gy','gy','gy','gy','bl','bl','bl','bl','gy','gy','gy','gy','bl','tr','tr'],['bl','gy','gy','bl','gy','gy','gy','gy','gy','gy','bl','gy','gy','bl','tr','tr'],['tr','bl','bl','tr','bl','gy','rd','gy','rd','gy','bl','tr','bl','bl','tr','tr'],['tr','tr','tr','tr','bl','gy','gy','gy','gy','gy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','gy','gy','gy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','bl','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
-    const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
-    const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
-    
-    // Bosses
-    const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
-    const eyeSprite = [['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','vi','vi','bk','bk','cy','wh','wh','cy','cy','cy','bk','bk','vi','vi','tr'],['vi','vi','bk','bk','cy','wh','wh','cy','bk','bk','cy','cy','bk','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','cy','cy','cy','cy','bk','bk','bk','bk','cy','cy','bk','vi','vi'],['vi','vi','bk','bk','cy','cy','cy','bk','bk','bk','cy','cy','bk','bk','vi','vi'],['tr','vi','vi','bk','bk','cy','cy','cy','cy','cy','cy','bk','bk','vi','vi','tr'],['tr','vi','vi','vi','bk','bk','cy','cy','cy','cy','bk','bk','vi','vi','vi','tr'],['tr','tr','vi','vi','vi','vi','bk','bk','bk','bk','vi','vi','vi','vi','tr','tr'],['tr','tr','tr','tr','vi','vi','vi','vi','vi','vi','vi','vi','tr','tr','tr','tr']];
-    const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
-    const lichSprite = [['tr','tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','bk','dp','dp','dp','gy','gy','gy','gy','gy','gy','dp','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','bk','cy','bk','bk','cy','bk','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','dp','gy','gy','bk','bk','gy','gy','dp','dp','dp','bk','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr']];
-    
-    const bossSprites = [dragonSprite, eyeSprite, slimeSprite, lichSprite];
-    
-    // --- GAME CONSTANTS ---
+    // --- ENGINE CONSTANTS & VARIABLES ---
     const V_WIDTH = 320;
     const V_HEIGHT = 480;
     const NORMAL_SPEED = 300;
@@ -432,13 +407,21 @@
     let comboTimer = 0;
     let baseSpeed = 150; 
     
-    // POWERUP TIMERS
     let rocketTimer = 0;
     let magnetTimer = 0;
     let laserTimer = 0;
     let keys = { left: false, right: false };
-    
-    // BOSS STATE
+
+    let maxComboRun = 1;
+    let runShards = 0;
+    let shakeTimer = 0;
+    let shakeMag = 0;
+    let bossRushDelay = 0;
+    let farStars = [];
+
+    let itemHistory = [];
+    let synergyTimer = 0;
+
     let bossLevel = 0;
     let nextBossScore = 1500;
     let bossActive = false;
@@ -447,12 +430,37 @@
         hp: 5, maxHp: 5, speed: 100, dir: 1, attackTimer: 0, type: 0, wave: 0, teleportTimer: 0 
     };
 
-    // Initialize BG Stars
+    function triggerSynergy() {
+        playSound('bossHit');
+        triggerShake(1.0, 20);
+        synergyTimer = 1.5; 
+        
+        let scoreMult = activeRelic === 'glass_cannon' ? 2 : 1;
+        
+        for (let i = items.length - 1; i >= 0; i--) {
+            let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(items[i].type);
+            if (isBad) {
+                spawnParticles(items[i].x + items[i].w/2, items[i].y + items[i].h/2, '#00ffff');
+                score += 100 * comboMult * scoreMult;
+                items.splice(i, 1);
+            }
+        }
+        score += 1000 * comboMult * scoreMult;
+    }
+
+    for(let i=0; i<40; i++) {
+        farStars.push({ x: Math.random() * 320, y: Math.random() * 480, size: 1, speed: Math.random() * 10 + 2 });
+    }
     for(let i=0; i<30; i++) {
         bgStars.push({
             x: Math.random() * V_WIDTH, y: Math.random() * V_HEIGHT,
             size: Math.random() * 2 + 1, speed: Math.random() * 30 + 10
         });
+    }
+
+    function triggerShake(duration, magnitude) {
+        shakeTimer = duration; 
+        shakeMag = magnitude;
     }
 
     // --- AUDIO ---
@@ -461,7 +469,6 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
@@ -503,7 +510,6 @@
         const listElement = document.getElementById('leaderboardList');
         listElement.innerHTML = '<div style="text-align:center; color:#aaa;">Summoning records...</div>';
         
-        // Fetch top 10 scores for standard runs
         const { data, error } = await supabaseClient
             .from('leaderboard')
             .select('name, score')
@@ -566,7 +572,6 @@
             btn.disabled = arcaneShards < cost;
         });
 
-        // Wardrobe UI
         document.getElementById('btnEquipWizard').innerText = activeSkin === 'wizard' ? 'EQUIPPED' : 'EQUIP';
         document.getElementById('btnEquipWizard').disabled = activeSkin === 'wizard';
 
@@ -587,6 +592,23 @@
                 btn.innerHTML = `♦ 100`;
                 btn.disabled = arcaneShards < 100;
                 btn.onclick = () => buySkin(fullSkinName, 100);
+            }
+        });
+
+        ['none', 'glass_cannon', 'lead_boots'].forEach(relic => {
+            let btn = document.getElementById('btnBuyRelic_' + relic);
+            let status = document.getElementById('statusRelic_' + relic);
+            
+            if (relics[relic]) {
+                if (status) { status.innerText = "Owned"; status.style.color = "#39ff14"; }
+                btn.innerText = activeRelic === relic ? 'EQUIPPED' : 'EQUIP';
+                btn.disabled = activeRelic === relic;
+                btn.onclick = () => buyRelic(relic, 0);
+            } else {
+                if (status) { status.innerText = "Locked"; status.style.color = "#ff4444"; }
+                btn.innerHTML = `♦ 10`;
+                btn.disabled = arcaneShards < 10;
+                btn.onclick = () => buyRelic(relic, 10);
             }
         });
     }
@@ -620,6 +642,19 @@
         updateShopUI();
     }
 
+    function buyRelic(relicId, cost) {
+        if (!relics[relicId] && arcaneShards >= cost) {
+            arcaneShards -= cost;
+            relics[relicId] = true;
+            playSound('chime');
+        }
+        if (relics[relicId]) {
+            activeRelic = relicId;
+        }
+        saveMeta();
+        updateShopUI();
+    }
+
     function registerSecretClick() {
         secretClicks++;
         if(secretClicks >= 5) {
@@ -646,19 +681,230 @@
         }
     }
 
+    // --- RAW PIXEL ART DATA & SLICING ---
+    const colors = {
+        'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
+        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
+        'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
+        'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
+        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#111111'
+    };
+
+    const rawEyeBoss = [
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#f2bece', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent'],
+        ['transparent', '#f2bece', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent'],
+        ['#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff'],
+        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#181425', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'],
+        ['#ffccda', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#181425', '#181425', '#181425', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffccda'],
+        ['transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ff0044', '#ff0044', '#181425', '#ff0044', '#ff0044', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent'],
+        ['transparent', 'transparent', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
+    ];
+
+    const rawGhosts = [
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#67396c', 'transparent', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#2ce8f5', 'transparent', '#2ce8f5', 'transparent', 'transparent'],
+        ['transparent', '#814075', 'transparent', '#67396c', 'transparent', '#814075', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#2ce8f5', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
+    ];
+
+    const rawGhostBoss = [
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d08b45', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d08b45', '#d48d44', '#d48d44'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44'],
+        ['transparent', 'transparent', 'transparent', '#68386d', '#68386d', 'transparent', 'transparent', 'transparent', 'transparent', '#68386d', '#68386d', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4b92b1', '#4994b4', '#4b8aab', '#4b8aab', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b8aab', '#4b8aab', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', 'transparent', '#d48d44', '#d08b45', '#d48d44', '#cc8847', '#cc8847', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#cc8847', '#cc8847', '#d48d44', '#d08b45', '#d48d44', '#d08b45'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', 'transparent', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d08b45', '#d48d44', '#d08b45', '#d08b45', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
+    ];
+
+    const rawPlayer = [
+        ['transparent', 'transparent', 'transparent', '#844789', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#eb0c50', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#5cb947', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', '#68386c', '#844789', '#844789', '#844789', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#eb0c50', '#eb0c50', '#eb0c50', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#5cb947', '#5cb947', '#5cb947', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#5d3260', '#5d3260', '#5d3260', '#5d3260', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#f00040', '#f00040', '#f00040', '#f00040', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#5cb947', '#5cb947', '#5cb947', '#5cb947', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#68386c', '#5d3260', '#5d3260', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#f00040', '#f00040', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#5cb947', '#5cb947', '#63c74d', 'transparent', 'transparent', 'transparent'],
+        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', 'transparent', 'transparent'],
+        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157'],
+        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#63c74d', '#63c74d'],
+        ['#68386c', '#68386c', '#b55088', '#68386c', '#b55088', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#feae34', 'transparent', '#63c74d', '#63c74d', '#70e157', '#70e157', '#63c74d', '#63c74d', '#70e157', '#63c74d', '#70e157'],
+        ['#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', 'transparent', '#feae34', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#feae34', '#ff0044', '#feae34', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157', '#63c74d', '#63c74d', '#70e157'],
+        ['#b55088', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', 'transparent', 'transparent', '#feae34', '#ff0044', '#feae34', '#ff0044', '#feae34', '#ff0044', '#ff0044', '#feae34', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', 'transparent'],
+        ['transparent', '#b55088', '#68386c', '#b55088', '#68386c', '#68386c', '#b55088', '#b55088', 'transparent', 'transparent', 'transparent', '#feae34', '#ff0044', '#ff0044', '#ff0044', '#feae34', '#feae34', '#feae34', 'transparent', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157', '#70e157', 'transparent'],
+        ['transparent', '#b55088', '#b55088', '#68386c', '#b55088', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#feae34', '#feae34', '#feae34', '#feae34', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#70e157', '#70e157', '#70e157', '#70e157', '#181425', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
+    ];
+
+    const rawSkulls = [
+        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#eceff4', '#eceff4', 'transparent', 'transparent', 'transparent', '#fec647', '#fee761', '#fed855', '#fec647', '#fec647', 'transparent'],
+        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#eceff4', 'transparent', '#fec647', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fec647'],
+        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855'],
+        ['#ffffff', '#181425', '#181425', '#ffffff', '#181425', '#181425', '#ffffff', 'transparent', '#fee761', '#feae34', '#feae34', '#fee761', '#feae34', '#feae34', '#fee761'],
+        ['#ffffff', '#ffffff', '#ffffff', '#181425', '#ffffff', '#ffffff', '#ffffff', 'transparent', '#fee761', '#fee761', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761'],
+        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', 'transparent'],
+        ['transparent', '#ffffff', 'transparent', '#ffffff', 'transparent', '#ffffff', 'transparent', 'transparent', 'transparent', '#fee761', 'transparent', '#fee761', 'transparent', '#fee761', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#9c487f', '#9c487f', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#9c487f'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', '#b55088'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#68386c', '#b55088', '#b55088', '#b55088'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', 'transparent', '#b55088', 'transparent', '#b55088', 'transparent']
+    ];
+
+    const rawSkullBoss = [
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#cbcdce', '#ffffff', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#fff4e3', '#fff4e3', '#fff4e3', '#fff4e3', '#fff4e3', 'transparent', 'transparent'],
+        ['transparent', '#ffffff', '#c3c5c7', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fff4e3', 'transparent'],
+        ['transparent', '#ffffff', '#ffffff', '#cbcdce', '#ffffff', '#ffffff', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#fff4e3', 'transparent'],
+        ['#ffffff', '#ffffff', '#c3c5c7', '#ffffff', '#c3c5c7', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#ffffff', '#ffffff', '#fffbf5', '#fff4e3'],
+        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#fff4e3'],
+        ['#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#edf1f5', '#ffffff', '#ffffff', '#ffffff', '#edf1f5', '#181425', '#181425', '#fffbf5', '#ffffff', '#fff4e3'],
+        ['#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#181425', '#ffffff', '#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#181425', '#ffffff', '#ffffff'],
+        ['#fff4e3', '#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#ffffff', '#181425', '#ffffff', '#181425', '#181425', '#181425', '#ffffff', '#ffffff', '#ffffff'],
+        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#edf1f5', '#edf1f5', '#181425', '#181425', '#181425', '#edf1f5', '#edf1f5', '#ffffff', '#ffffff', '#ffffff', 'transparent'],
+        ['transparent', '#ffffff', '#fffbf5', '#ffffff', '#ffffff', '#ffffff', '#181425', '#edf1f5', '#181425', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fff4e3', 'transparent'],
+        ['transparent', '#fff4e3', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fff4e3', '#fff4e3', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#fff4e3', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#ffebcb', '#ffffff', 'transparent', '#ffebcb', '#fff4e3', '#ffffff', 'transparent', '#fff4e3', '#ffebcb', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', '#feae34', '#fee761', '#fee25d', '#fee761', '#fee25d', '#fee25d', '#fed855', '#fed855', '#fed855', '#fed855', '#fed855', 'transparent', 'transparent'],
+        ['transparent', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fee25d', '#fee25d', '#fee25d', '#fee25d', '#fed855', '#fed855', 'transparent'],
+        ['transparent', '#fee761', '#fee761', '#feae34', '#fee761', '#fee761', '#fee25d', '#fee761', '#fee25d', '#fed855', '#fee761', '#fed855', '#fee25d', '#fed855', 'transparent'],
+        ['#fee761', '#fee761', '#feae34', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee25d', '#fee761', '#fed855', '#fee25d', '#fed855'],
+        ['#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee25d', '#fed855'],
+        ['#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fed855', '#fee761', '#fee761', '#fee761', '#fed855', '#e99f30', '#e99f30', '#fed855', '#fee761', '#fed855'],
+        ['#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761'],
+        ['#fed855', '#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#e99f30', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761', '#fee761'],
+        ['transparent', '#fee761', '#fee761', '#fee761', '#fed855', '#fed855', '#e99f30', '#e99f30', '#e99f30', '#fed855', '#fed855', '#fee761', '#fee761', '#fee761', 'transparent'],
+        ['transparent', '#fee761', '#fed855', '#fee761', '#fee761', '#fee761', '#e99f30', '#fed855', '#e99f30', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', 'transparent'],
+        ['transparent', '#fed855', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fed855', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#fed855', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', '#fec647', '#fee761', 'transparent', '#fec647', '#fed855', '#fee761', 'transparent', '#fed855', '#fec647', 'transparent', 'transparent', 'transparent'],
+        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
+    ];
+
+    function sliceSheet(sheet, startRow, startCol, height, width) {
+        let frame = [];
+        for (let r = 0; r < height; r++) {
+            frame.push(sheet[startRow + r].slice(startCol, startCol + width));
+        }
+        return frame;
+    }
+
+    const eyeBossVariants = [rawEyeBoss];
+    const ghostVariants = [
+        sliceSheet(rawGhosts, 0, 0, 7, 7),
+        sliceSheet(rawGhosts, 0, 8, 7, 7),
+        sliceSheet(rawGhosts, 8, 0, 7, 7),
+        sliceSheet(rawGhosts, 8, 8, 7, 7)
+    ];
+    const ghostBossVariants = [
+        sliceSheet(rawGhostBoss, 0, 0, 15, 15),
+        sliceSheet(rawGhostBoss, 0, 16, 15, 15),
+        sliceSheet(rawGhostBoss, 0, 32, 15, 15)
+    ];
+    const playerVariants = [
+        sliceSheet(rawPlayer, 0, 0, 16, 9),
+        sliceSheet(rawPlayer, 0, 10, 16, 9),
+        sliceSheet(rawPlayer, 0, 20, 16, 9)
+    ];
+    const skullVariants = [
+        sliceSheet(rawSkulls, 0, 0, 7, 7),
+        sliceSheet(rawSkulls, 0, 8, 7, 7),
+        sliceSheet(rawSkulls, 8, 8, 7, 7)
+    ];
+    const skullBossVariants = [
+        sliceSheet(rawSkullBoss, 0, 0, 15, 15),
+        sliceSheet(rawSkullBoss, 16, 0, 15, 15)
+    ];
+
+    const wizardSprite = playerVariants[0];
+    const pyroSprite = playerVariants[1];
+    const necroSprite = playerVariants[2];
+
+    const skullSprites = skullVariants;
+    const phantomSprites = ghostVariants;
+    
+    // Legacy Entities
+    const shardSprite = [['tr','tr','tr','tr','tr','tr','wh','vi','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','vi','vi','mg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','vi','vi','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','vi','vi','mg','mg','mg','mg','vi','tr','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','mg','mg','mg','mg','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','tr','vi','vi','mg','mg','mg','mg','vi','vi','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','vi','vi','mg','mg','vi','vi','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','vi','vi','vi','vi','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','vi','vi','tr','tr','tr','tr','tr','tr','tr','tr']];
+    const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
+    const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
+    const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
+    const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
+    const batSprite = [['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr'],['tr','bl','gy','gy','bl','tr','tr','tr','tr','bl','gy','gy','bl','tr','tr','tr'],['bl','gy','gy','gy','gy','bl','bl','bl','bl','gy','gy','gy','gy','bl','tr','tr'],['bl','gy','gy','bl','gy','gy','gy','gy','gy','gy','bl','gy','gy','bl','tr','tr'],['tr','bl','bl','tr','bl','gy','rd','gy','rd','gy','bl','tr','bl','bl','tr','tr'],['tr','tr','tr','tr','bl','gy','gy','gy','gy','gy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','gy','gy','gy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','bl','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
+    const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
+    const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
+    const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
+    const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
+    const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
+    const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
+    const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
+
+    const bossSprites = [
+        dragonSprite,             
+        eyeBossVariants[0],       
+        slimeSprite,              
+        skullBossVariants[0],     
+        ghostBossVariants[0],     
+        skullBossVariants[1],     
+        ghostBossVariants[1],     
+        ghostBossVariants[2]      
+    ];
+    
     // --- CORE GRAPHICS ---
     function drawPixelSprite(sprite, x, y, size) {
-        const pixelSize = size / 16;
-        for (let r = 0; r < sprite.length; r++) {
-            for (let c = 0; c < sprite[r].length; c++) {
+        const rows = sprite.length;
+        if (rows === 0) return;
+        const cols = sprite[0].length;
+        const maxDim = Math.max(rows, cols);
+        const pixelSize = size / maxDim;
+        
+        const offsetX = x + (size - cols * pixelSize) / 2;
+        const offsetY = y + (size - rows * pixelSize) / 2;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
                 const colorKey = sprite[r][c];
-                if (colorKey !== 'tr') {
-                    ctx.fillStyle = colors[colorKey] || '#ff00ff';
-                    ctx.fillRect(x + (c * pixelSize), y + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
+                if (colorKey !== 'tr' && colorKey !== 'transparent') {
+                    ctx.fillStyle = colorKey.startsWith('#') ? colorKey : (colors[colorKey] || '#ff00ff');
+                    ctx.fillRect(offsetX + (c * pixelSize), offsetY + (r * pixelSize), pixelSize + 0.5, pixelSize + 0.5);
                 }
             }
         }
     }
+
     function resize() {
         const scale = Math.min(window.innerWidth / V_WIDTH, window.innerHeight / V_HEIGHT);
         canvas.width = V_WIDTH * scale; canvas.height = V_HEIGHT * scale; ctx.scale(scale, scale);
@@ -692,14 +938,12 @@
 
     // --- SPAWNING LOGIC ---
     function spawnItem() {
-        let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
+        let type = 'skull', sprite = skullSprites[Math.floor(Math.random()*skullSprites.length)], w = 24, h = 24, sBase = 110, col = '#8b0000';
         let categoryRoll = Math.random();
         
-        // 5% Chance Arcane Shard (Persistent Currency)
         if (categoryRoll > 0.95) {
             type = 'shard'; sprite = shardSprite; sBase = 120; col = '#8a2be2'; w = 20; h = 20;
         }
-        // 10% Chance Powerup
         else if (categoryRoll > 0.85) {
             let pRoll = Math.random();
             if (pRoll > 0.75 && score >= 3000) { type = 'rocket'; sprite = rocketSprite; sBase = 140; col = '#39ff14'; }
@@ -707,18 +951,16 @@
             else if (pRoll > 0.25 && score >= 800) { type = 'magnet'; sprite = magnetSprite; sBase = 140; col = '#ff00ff'; }
             else { type = 'potion'; sprite = potionSprite; sBase = 130; col = '#00ffff'; }
         } 
-        // 25% Chance Good
         else if (categoryRoll > 0.60) {
             if (Math.random() > 0.5 && score >= 200) { type = 'comet'; sprite = cometSprite; w = 28; h = 28; sBase = 220; col = '#ffd700'; }
             else { type = 'star'; sprite = starSprite; sBase = 120; col = '#ffffff'; }
         } 
-        // 60% Chance Hazard
         else {
             let eRoll = Math.random();
             if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
             else if (eRoll > 0.65 && score >= 1100) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; }
-            else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
-            else { type = 'skull'; sprite = skullSprite; sBase = 110; col = '#8b0000'; }
+            else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprites[Math.floor(Math.random()*phantomSprites.length)]; sBase = 100; col = '#6a31a1'; }
+            else { type = 'skull'; sprite = skullSprites[Math.floor(Math.random()*skullSprites.length)]; sBase = 110; col = '#8b0000'; }
         }
         
         items.push({
@@ -752,7 +994,7 @@
         if (!aborted) {
             if (!isBossRush && score > highScore) { highScore = score; isNewRecord = true; }
             if (!isBossRush && maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
-            saveMeta(); // Save stats and newly acquired shards
+            saveMeta(); 
         }
         
         finalScoreText.innerText = `Final Score: ${score}`;
@@ -763,7 +1005,6 @@
         const nameInput = document.getElementById('playerNameInput');
         const submitBtn = document.getElementById('submitScoreBtn');
         
-        // Only allow global submission if it's a standard run, not aborted, and > 0 score
         if (!aborted && !isBossRush && score > 0) {
             nameInput.style.display = 'block';
             nameInput.value = savedPlayerName; 
@@ -786,9 +1027,13 @@
         score = 0; maxComboRun = 1; items = []; particles = [];
         runShards = 0;
         
+        itemHistory = [];
+        synergyTimer = 0;
+        
         player.x = V_WIDTH / 2 - 16; mouseX = V_WIDTH / 2;
         player.shieldHits = 0; comboMult = 1; comboTimer = 0; 
-        baseSpeed = 150; player.speed = NORMAL_SPEED;
+        baseSpeed = 150; 
+        player.speed = activeRelic === 'lead_boots' ? NORMAL_SPEED * 0.7 : NORMAL_SPEED;
         
         rocketTimer = 0; magnetTimer = 0; laserTimer = 0; shakeTimer = 0; 
         keys = { left: false, right: false }; 
@@ -808,7 +1053,7 @@
 
     function spawnBoss() {
         bossActive = true; 
-        boss.type = bossLevel % 4; 
+        boss.type = bossLevel % bossSprites.length; 
         boss.maxHp = (isBossRush ? 8 : 5) + (bossLevel * 2); 
         boss.hp = boss.maxHp;
         boss.y = -80; boss.wave = 0; boss.teleportTimer = 0;
@@ -829,7 +1074,6 @@
             return;
         }
         
-        // Background Animation
         if (showBgStars) {
             let spaceSpeedMult = rocketTimer > 0 ? 5 : 1;
             farStars.forEach(s => { s.y += s.speed * dt * spaceSpeedMult; if (s.y > V_HEIGHT) { s.y = 0; s.x = Math.random() * V_WIDTH; } });
@@ -838,6 +1082,7 @@
         
         for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.9; p.vy *= 0.9; p.life -= dt; if (p.life <= 0) particles.splice(i, 1); }
         if (shakeTimer > 0) shakeTimer -= dt;
+        if (synergyTimer > 0) synergyTimer -= dt;
 
         if (gameState !== 'PLAYING') {
             render();
@@ -845,7 +1090,6 @@
             return; 
         }
 
-        // --- GAME LOGIC ---
         let worldDt = dt;
         if (rocketTimer > 0) {
             rocketTimer -= dt; worldDt = dt * 5; 
@@ -855,7 +1099,6 @@
         if (laserTimer > 0) laserTimer -= dt;
         if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboMult = 1; }
         
-        // PLAYER MOVEMENT
         if (keys.left) { player.x -= player.speed * dt; mouseX = player.x; } 
         else if (keys.right) { player.x += player.speed * dt; mouseX = player.x; } 
         else { player.x += (mouseX - player.x) * (player.speed/50) * dt; }
@@ -865,7 +1108,6 @@
         
         if (comboMult > maxComboRun) maxComboRun = comboMult;
 
-        // BOSS LOGIC
         if (isBossRush) {
             if (!bossActive) { bossRushDelay -= dt; if (bossRushDelay <= 0) spawnBoss(); }
         } else {
@@ -874,31 +1116,33 @@
 
         if (bossActive) {
             let isEnraged = boss.hp <= 2; 
+            let bBehavior = boss.type % 4; 
+            
             if (boss.y < 20) {
                 boss.y += 50 * worldDt; 
             } else {
-                if (boss.type === 0) { boss.x += boss.speed * (isEnraged?1.5:1) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
-                else if (boss.type === 1) { boss.wave += worldDt * (isEnraged?2.5:1.5); boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
-                else if (boss.type === 2) { boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * (isEnraged?8:4); boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
-                else if (boss.type === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > (isEnraged?1.5:2.5)) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
+                if (bBehavior === 0) { boss.x += boss.speed * (isEnraged?1.5:1) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
+                else if (bBehavior === 1) { boss.wave += worldDt * (isEnraged?2.5:1.5); boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
+                else if (bBehavior === 2) { boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * (isEnraged?8:4); boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
+                else if (bBehavior === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > (isEnraged?1.5:2.5)) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
                 boss.attackTimer += worldDt;
                 let atkRate = Math.max(0.4, 0.8 - (bossLevel * 0.05));
                 if (isEnraged) atkRate *= 0.75;
                 if (boss.attackTimer > atkRate) {
                     boss.attackTimer = 0;
-                    if (Math.random() > 0.70) items.push({ x: Math.random() * (V_WIDTH - 24), y: -30, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: 110 * (baseSpeed / 100), vx: 0, color: '#8b0000', wave: 0 });
+                    if (Math.random() > 0.70) items.push({ x: Math.random() * (V_WIDTH - 24), y: -30, w: 24, h: 24, type: 'skull', sprite: skullSprites[Math.floor(Math.random()*skullSprites.length)], speed: 110 * (baseSpeed / 100), vx: 0, color: '#8b0000', wave: 0 });
                     let isWeakness = Math.random() > 0.85; 
                     if (isWeakness) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'holyStar', sprite: holyStarSprite, speed: 130, vx: 0, color: '#00ffff' }); } 
                     else {
-                        if (boss.type === 0) { 
+                        if (bBehavior === 0) { 
                             if(isEnraged) { items.push({ x: boss.x + boss.w/2 - 20, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: -30, color: '#ff4444' }); items.push({ x: boss.x + boss.w/2 + 4, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 30, color: '#ff4444' }); }
                             else { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 0, color: '#ff4444' }); }
                         } 
-                        else if (boss.type === 1) { let spread = isEnraged?110:80; for(let j=-1; j<=1; j++) items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: isEnraged?250:200, vx: j * spread, color: '#8a2be2' }); } 
-                        else if (boss.type === 2) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprite, speed: isEnraged?200:160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' }); } 
-                        else if (boss.type === 3) { 
+                        else if (bBehavior === 1) { let spread = isEnraged?110:80; for(let j=-1; j<=1; j++) items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: isEnraged?250:200, vx: j * spread, color: '#8a2be2' }); } 
+                        else if (bBehavior === 2) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprites[Math.floor(Math.random()*phantomSprites.length)], speed: isEnraged?200:160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' }); } 
+                        else if (bBehavior === 3) { 
                             let gap = Math.floor(Math.random() * 5); let stagger = Math.floor(Math.random() * 3); let wSpd = isEnraged?260:160;
-                            for(let k=0; k<5; k++) { if (k !== gap) { let yOff = (stagger===0)?k*28:(stagger===1)?(4-k)*28:Math.abs(2-k)*25; items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h - yOff, w: 24, h: 24, type: 'skull', sprite: skullSprite, speed: wSpd, vx: 0, color: '#a9a9a9' }); } } 
+                            for(let k=0; k<5; k++) { if (k !== gap) { let yOff = (stagger===0)?k*28:(stagger===1)?(4-k)*28:Math.abs(2-k)*25; items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h - yOff, w: 24, h: 24, type: 'skull', sprite: skullSprites[Math.floor(Math.random()*skullSprites.length)], speed: wSpd, vx: 0, color: '#a9a9a9' }); } } 
                         }
                     }
                 }
@@ -908,7 +1152,6 @@
             if (spawnTimer > Math.max(0.3, 0.8 - (score / 5000))) { spawnItem(); spawnTimer = 0; }
         }
         
-        // ITEM MOVEMENT
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
             item.y += item.speed * worldDt;
@@ -924,21 +1167,24 @@
             if (magnetTimer > 0 && ['star','comet','holyStar','shard'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
             
             let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
-            
-            // Laser Destroys Bad
+            let scoreMult = activeRelic === 'glass_cannon' ? 2 : 1;
+
             if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
-                if (isBad) { spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444'); items.splice(i, 1); score += 20 * comboMult; continue; }
+                if (isBad) { spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444'); items.splice(i, 1); score += 20 * comboMult * scoreMult; continue; }
             }
             
             let hitPad = isBad ? 6 : -6;
             let hit = { x: item.x + hitPad, y: item.y + hitPad, w: item.w - (hitPad*2), h: item.h - (hitPad*2) };
             
-            // COLLISION
             if (player.x < hit.x + hit.w && player.x + player.w > hit.x && player.y < hit.y + hit.h && player.y + player.h > hit.y) {
                 if (isBad) {
-                    if (rocketTimer > 0 || isInvincible) {
+                    if (activeRelic === 'lead_boots' && item.type === 'skull') {
+                        playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, '#a9a9a9');
+                        score += 20 * comboMult * scoreMult; triggerShake(0.1, 2); items.splice(i, 1);
+                    }
+                    else if (rocketTimer > 0 || isInvincible) {
                         playSound('crunch'); spawnParticles(item.x + item.w/2, item.y + item.h/2, isInvincible ? '#a9a9a9' : '#39ff14');
-                        score += 50 * comboMult; triggerShake(0.1, 3); items.splice(i, 1);
+                        score += 50 * comboMult * scoreMult; triggerShake(0.1, 3); items.splice(i, 1);
                     } else if (player.shieldHits > 0) {
                         player.shieldHits--; playSound('crunch');
                         spawnParticles(item.x + item.w/2, item.y + item.h/2, '#00ffff');
@@ -949,24 +1195,36 @@
                         return;
                     }
                 } else {
-                    if (item.type === 'star') score += 10 * comboMult;
-                    if (item.type === 'comet') score += 50 * comboMult;
+                    if (['potion', 'star', 'magnet'].includes(item.type)) {
+                        itemHistory.push(item.type);
+                        if (itemHistory.length > 3) itemHistory.shift();
+                        if (itemHistory.join(',') === 'potion,star,magnet') {
+                            triggerSynergy();
+                            itemHistory = [];
+                        }
+                    }
+
+                    if (item.type === 'star') score += 10 * comboMult * scoreMult;
+                    if (item.type === 'comet') score += 50 * comboMult * scoreMult;
                     if (item.type === 'shard') {
                         runShards++; arcaneShards++; 
-                        playSound('chime'); score += 100 * comboMult;
+                        playSound('chime'); score += 100 * comboMult * scoreMult;
                         document.getElementById('menuShards').innerText = arcaneShards;
                     }
                     if (item.type === 'holyStar') {
                         playSound('bossHit'); boss.hp--; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffff'); triggerShake(0.1, 4);
                         if (boss.hp <= 0) { 
-                            bossActive = false; score += 500 * comboMult; bossLevel++; baseSpeed += 15; 
+                            bossActive = false; score += 500 * comboMult * scoreMult; bossLevel++; baseSpeed += 15; 
                             playSound('chime'); spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ffd700'); 
                             triggerShake(0.5, 12); 
                             if (isBossRush) bossRushDelay = 2.5; else nextBossScore = score + 1500; 
                         }
                     } 
-                    // APPLY UPGRADES SCALING
-                    else if (item.type === 'potion') { player.shieldHits = 1 + upgrades.potion; playSound('chime'); } 
+                    else if (item.type === 'potion') { 
+                        if (activeRelic !== 'glass_cannon') player.shieldHits = 1 + upgrades.potion; 
+                        else score += 50 * comboMult * scoreMult;
+                        playSound('chime'); 
+                    } 
                     else if (item.type === 'rocket') { rocketTimer = 5.0 + (upgrades.boots * 1.5); playSound('chime'); }
                     else if (item.type === 'magnet') { magnetTimer = 5.0 + (upgrades.magnet * 1.5); playSound('chime'); }
                     else if (item.type === 'blast')  { laserTimer = 2.0 + (upgrades.blast * 0.8); playSound('bossHit'); triggerShake(0.2, 5); }
@@ -1015,7 +1273,6 @@
             ctx.lineWidth = 2 + (player.shieldHits - 1); ctx.stroke(); 
         }
 
-        // Apply Active Wardrobe Skin
         let currentSprite = wizardSprite;
         if (activeSkin === 'pyromancer') currentSprite = pyroSprite;
         else if (activeSkin === 'necromancer') currentSprite = necroSprite;
@@ -1032,6 +1289,14 @@
         particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life / 0.5); ctx.fillRect(p.x, p.y, 4, 4); });
         ctx.globalAlpha = 1.0; 
         
+        if (synergyTimer > 0) {
+            ctx.fillStyle = `rgba(0, 255, 255, ${Math.min(0.8, synergyTimer)})`;
+            ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+            ctx.fillStyle = '#fff'; ctx.font = "16px 'Press Start 2P', monospace"; ctx.textAlign = "center";
+            ctx.fillText("SYNERGY", V_WIDTH/2, V_HEIGHT/2 - 10);
+            ctx.fillText("BURST!", V_WIDTH/2, V_HEIGHT/2 + 15);
+        }
+
         ctx.restore();
 
         if(gameState === 'PLAYING' || gameState === 'PAUSED') {
@@ -1047,7 +1312,6 @@
                 ctx.fillText(`COMBO x${comboMult}`, 10, isBossRush ? 65 : 45); 
             }
             
-            // Display run shards
             ctx.fillStyle = '#cc66ff';
             ctx.fillText(`♦ ${runShards}`, V_WIDTH - 50, 25);
 
@@ -1055,7 +1319,6 @@
         }
     }
     
-    // Init Frame
     requestAnimationFrame(update);
 </script>
 </body>
