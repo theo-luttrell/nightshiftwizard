@@ -39,11 +39,11 @@
 ## 🛠️ Downloading
 
 
-Web: You can play online at: nightshiftwizard.theoluttrell.dev
-Web Offline: You can download the web version at: <a target="_blank" href="https://raw.githubusercontent.com/theo-luttrell/nightshiftwizard/refs/heads/main/index.html" download="Night Shift Wizard">Download</a>
-.APK File: You can download the android app at: https://median.co/share/wepnmom#apk (will auto update)
-MacOS Application: Coming Soon
-Windows Executable: Coming Soon
+* Web: You can play online at: [nightshiftwizard.theoluttrell.dev](nightshiftwizard.theoluttrell.dev)
+* Web Offline: You can download the web version at: [nightshiftwizard.theoluttrell.dev/web/offline](nightshiftwizard.theoluttrell.dev/web/offline)
+* .APK File: You can download the android app at: [nightshiftwizard.theoluttrell.dev/apk](nightshiftwizard.theoluttrell.dev/apk)
+* MacOS Application: Coming Soon
+* Windows Executable: Coming Soon
 
 
 ## ⚖️ License & EULA
