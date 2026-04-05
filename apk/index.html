@@ -1,0 +1,11 @@
+<script>
+  window.onload = function() {
+    const link = document.createElement('a');
+    link.href = '../../static/index.apk'; // URL of the file
+    link.download = 'nightshiftwizard.apk';     // Optional: rename the file
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+</script>
+<p>If 'nightshiftwizard.apk' hasn't automaticaly started to download, you can manually download here: <a href="../../static/index.apk" download="nightshiftwizard">Manually Invoke Download</a></p>
