@@ -39,9 +39,9 @@
 ## 🛠️ Downloading
 
 
-* Web: You can play online at: [nightshiftwizard.theoluttrell.dev](nightshiftwizard.theoluttrell.dev)
-* Web Offline: You can download the web version at: [nightshiftwizard.theoluttrell.dev/web/offline](nightshiftwizard.theoluttrell.dev/web/offline)
-* .APK File: You can download the android app at: [nightshiftwizard.theoluttrell.dev/apk](nightshiftwizard.theoluttrell.dev/apk)
+* Web: You can play online at: [nightshiftwizard.theoluttrell.dev](https://nightshiftwizard.theoluttrell.dev)
+* Web Offline: You can download the web version at: [nightshiftwizard.theoluttrell.dev/web/offline](https://nightshiftwizard.theoluttrell.dev/web/offline)
+* .APK File: You can download the android app at: [nightshiftwizard.theoluttrell.dev/apk](https://nightshiftwizard.theoluttrell.dev/apk)
 * MacOS Application: Coming Soon
 * Windows Executable: Coming Soon
 
