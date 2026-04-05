@@ -1,0 +1,10 @@
+<script>
+  window.onload = function() {
+    const link = document.createElement('a');
+    link.href = '../../static/nightshiftwizard.apk'; // URL of the file
+    link.download = 'install.apk';     // Optional: rename the file
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+</script>
