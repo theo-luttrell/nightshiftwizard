@@ -63,7 +63,7 @@
             text-shadow: 3px 3px 0px #3e1a5f;
             margin-bottom: 5px;
             line-height: 1.4;
-            cursor: pointer; /* Hint for the secret */
+            cursor: pointer;
         }
         .subtitle {
             font-size: 10px;
@@ -105,21 +105,29 @@
         }
         button:hover { background-color: #6a31a1; transform: scale(1.05); }
         button:active { background-color: #ff00ff; }
-        /* Custom Checkbox for Settings */
+        
         label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
         input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
         
-        /* New Classes for Boss Rush & Stats */
         .stats-box { background: rgba(0,0,0,0.5); border: 1px solid #3e1a5f; padding: 8px; margin-bottom: 10px; border-radius: 4px; width: 90%; }
         .new-record { display: none; color: #39ff14; font-size: 10px; margin-top: -5px; margin-bottom: 10px; animation: blink 0.3s infinite alternate; }
         button.special { background-color: #8b0000; border-color: #ff4444; }
         button.special:hover { background-color: #cc0000; }
+        
+        #pauseBtn {
+            display: none; position: absolute; top: 10px; right: 10px; cursor: pointer; 
+            font-size: 16px; color: #fff; z-index: 100; pointer-events: auto;
+            text-shadow: 2px 2px 0 #000; transition: transform 0.2s;
+        }
+        #pauseBtn:hover { transform: scale(1.2); }
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui-layer">
+            
+            <div id="pauseBtn" onclick="togglePause()">⏸</div>
             
             <div id="mainMenuScreen" class="overlay-screen">
                 <h1 class="pixel-title" onclick="registerSecretClick()">NIGHT SHIFT WIZARD</h1>
@@ -162,11 +170,18 @@
                 <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
                 <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
             </div>
+
+            <div id="pauseScreen" class="overlay-screen" style="display: none;">
+                <h1 style="color: #ffd700; font-size: 20px; margin: 0 0 15px 0;">PAUSED</h1>
+                <button onclick="togglePause()">RESUME</button>
+                <button class="special" onclick="startGame(isBossRush)">RESTART RUN</button>
+                <button onclick="processGameOver(true)">QUIT TO MENU</button>
+            </div>
             
             <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
             
             <div id="gameOverScreen" class="overlay-screen" style="display: none;">
-                <h1 style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0;">CURSED!</h1>
+                <h1 id="gameOverTitle" style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0;">CURSED!</h1>
                 <p id="newRecordAlert" class="new-record">NEW RECORD!</p>
                 <div class="stats-box">
                     <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0;">Score: 0</p>
@@ -188,15 +203,18 @@
         'howToPlayScreen': document.getElementById('howToPlayScreen'),
         'optionsScreen': document.getElementById('optionsScreen'),
         'devToolsScreen': document.getElementById('devToolsScreen'),
-        'gameOverScreen': document.getElementById('gameOverScreen')
+        'gameOverScreen': document.getElementById('gameOverScreen'),
+        'pauseScreen': document.getElementById('pauseScreen') 
     };
+    const pauseBtn = document.getElementById('pauseBtn');
+    const gameOverTitle = document.getElementById('gameOverTitle');
     const bossWarning = document.getElementById('bossWarning');
     const finalScoreText = document.getElementById('finalScoreText');
     const finalComboText = document.getElementById('finalComboText');
     const newRecordAlert = document.getElementById('newRecordAlert');
 
     // --- STATE VARIABLES ---
-    let gameState = 'MENU'; 
+    let gameState = 'MENU'; // 'MENU', 'PLAYING', or 'PAUSED'
     let isBossRush = false; 
     let isMuted = false;
     let showBgStars = true;
@@ -210,7 +228,7 @@
     document.getElementById('menuHighScore').innerText = highScore;
     document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
 
-    // --- NEW ENGINE VARIABLES ---
+    // --- ENGINE VARIABLES ---
     let maxComboRun = 1;
     let shakeTimer = 0;
     let shakeMag = 0;
@@ -255,6 +273,7 @@
     const lichSprite = [['tr','tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','bk','dp','dp','dp','gy','gy','gy','gy','gy','gy','dp','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','bk','cy','bk','bk','cy','bk','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','gy','gy','bk','gy','gy','bk','gy','gy','dp','dp','bk','tr'],['tr','bk','dp','dp','dp','gy','gy','bk','bk','gy','gy','dp','dp','dp','bk','tr'],['tr','tr','bk','dp','dp','dp','gy','gy','gy','gy','dp','dp','dp','bk','tr','tr'],['tr','tr','tr','bk','dp','dp','dp','dp','dp','dp','dp','dp','bk','tr','tr','tr'],['tr','tr','tr','tr','bk','bk','bk','bk','bk','bk','bk','bk','tr','tr','tr','tr']];
     
     const bossSprites = [dragonSprite, eyeSprite, slimeSprite, lichSprite];
+    
     // --- GAME CONSTANTS ---
     const V_WIDTH = 320;
     const V_HEIGHT = 480;
@@ -280,6 +299,7 @@
     let magnetTimer = 0;
     let laserTimer = 0;
     let keys = { left: false, right: false };
+    
     // BOSS STATE
     let bossLevel = 0;
     let nextBossScore = 1500;
@@ -308,6 +328,7 @@
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
+    
     function playSound(type) {
         if (!audioCtx || isMuted) return;
         const osc = audioCtx.createOscillator();
@@ -350,6 +371,21 @@
     function toggleBg() { showBgStars = document.getElementById('bgToggle').checked; }
     function toggleInvincibility() { isInvincible = document.getElementById('invincibilityToggle').checked; }
 
+    function togglePause() {
+        if (gameState !== 'PLAYING' && gameState !== 'PAUSED') return;
+        
+        if (gameState === 'PLAYING') {
+            gameState = 'PAUSED';
+            pauseBtn.style.display = 'none';
+            switchScreen('pauseScreen');
+        } else {
+            gameState = 'PLAYING';
+            pauseBtn.style.display = 'block';
+            switchScreen(null);
+            lastTime = performance.now(); // Prevent time teleportation after unpausing
+        }
+    }
+
     // --- CORE GRAPHICS ---
     function drawPixelSprite(sprite, x, y, size) {
         const pixelSize = size / 16;
@@ -380,12 +416,15 @@
     window.addEventListener('mousemove', e => updatePointerPosition(e.clientX));
     canvas.addEventListener('touchstart', e => { updatePointerPosition(e.touches[0].clientX); if(e.target === canvas) e.preventDefault(); }, {passive: false});
     canvas.addEventListener('touchmove', e => { updatePointerPosition(e.touches[0].clientX); if(e.target === canvas) e.preventDefault(); }, {passive: false});
+    
     window.addEventListener('keydown', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-        if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen'); // Tilde Key
+        if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen'); 
+        if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); // New pause bind
         initAudio();
     });
+    
     window.addEventListener('keyup', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
@@ -395,6 +434,7 @@
     function spawnItem() {
         let type = 'skull', sprite = skullSprite, w = 24, h = 24, sBase = 110, col = '#8b0000';
         let categoryRoll = Math.random();
+        
         // 10% Chance Powerup
         if (categoryRoll > 0.90) {
             let pRoll = Math.random();
@@ -416,6 +456,7 @@
             else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprite; sBase = 100; col = '#6a31a1'; }
             else { type = 'skull'; sprite = skullSprite; sBase = 110; col = '#8b0000'; }
         }
+        
         items.push({
             x: Math.random() * (V_WIDTH - w), y: -30, w: w, h: h, 
             type: type, sprite: sprite, speed: sBase * (baseSpeed / 100), color: col,
@@ -431,25 +472,34 @@
         }
     }
 
-    function processGameOver() {
-        playSound('crunch'); 
-        triggerShake(0.4, 15);
+    function processGameOver(aborted = false) {
+        if (!aborted) {
+            playSound('crunch'); 
+            triggerShake(0.4, 15);
+        }
         gameState = 'MENU'; 
+        pauseBtn.style.display = 'none';
+
+        gameOverTitle.innerText = aborted ? "ABORTED" : "CURSED!";
+        gameOverTitle.style.color = aborted ? "#a9a9a9" : "#ff4444";
         
         let isNewRecord = false;
-        // Only count standard runs for global high score
-        if (!isBossRush && score > highScore) { highScore = score; isNewRecord = true; }
-        if (!isBossRush && maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
         
-        try {
-            localStorage.setItem('nsw_highScore', highScore);
-            localStorage.setItem('nsw_maxCombo', maxComboAllTime);
-        } catch(e) {}
+        if (!aborted) {
+            // Only count standard runs for global high score
+            if (!isBossRush && score > highScore) { highScore = score; isNewRecord = true; }
+            if (!isBossRush && maxComboRun > maxComboAllTime) { maxComboAllTime = maxComboRun; }
+            
+            try {
+                localStorage.setItem('nsw_highScore', highScore);
+                localStorage.setItem('nsw_maxCombo', maxComboAllTime);
+            } catch(e) {}
+        }
         
         document.getElementById('menuHighScore').innerText = highScore;
         document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
         
-        finalScoreText.innerText = `Score: ${score}`;
+        finalScoreText.innerText = `Final Score: ${score}`;
         finalComboText.innerText = `Max Combo: x${maxComboRun}`;
         newRecordAlert.style.display = isNewRecord ? 'block' : 'none';
 
@@ -473,6 +523,7 @@
         switchScreen(null); 
         bossWarning.style.display = 'none'; 
         newRecordAlert.style.display = 'none';
+        pauseBtn.style.display = 'block'; 
         
         if (isBossRush) bossRushDelay = 1.0;
 
@@ -480,7 +531,6 @@
         gameState = 'PLAYING';
     }
 
-    // Extracted Boss Spawner for Boss Rush compatibility
     function spawnBoss() {
         bossActive = true; 
         boss.type = bossLevel % 4; 
@@ -498,6 +548,11 @@
         let dt = (timestamp - lastTime) / 1000 || 0.016; 
         if (dt > 0.1) dt = 0.1; 
         lastTime = timestamp;
+
+        if (gameState === 'PAUSED') {
+            requestAnimationFrame(update);
+            return;
+        }
         
         // Background Animation
         if (showBgStars) {
@@ -512,7 +567,7 @@
         if (gameState !== 'PLAYING') {
             render();
             requestAnimationFrame(update);
-            return; // Skip game logic if in menu
+            return; 
         }
 
         // --- GAME LOGIC ---
@@ -529,6 +584,7 @@
         if (keys.left) { player.x -= player.speed * dt; mouseX = player.x; } 
         else if (keys.right) { player.x += player.speed * dt; mouseX = player.x; } 
         else { player.x += (mouseX - player.x) * (player.speed/50) * dt; }
+        
         if (player.x < 0) { player.x = 0; mouseX = 0; }
         if (player.x > V_WIDTH - player.w) { player.x = V_WIDTH - player.w; mouseX = V_WIDTH - player.w; }
         
@@ -582,6 +638,7 @@
             let item = items[i];
             item.y += item.speed * worldDt;
             item.x += (item.vx || 0) * worldDt;
+            
             if (item.type === 'phantom') { item.wave += worldDt * 5; item.x += Math.sin(item.wave) * 150 * worldDt; }
             if (item.type === 'specter' && item.y < V_HEIGHT * 0.6) { item.x += Math.sign(player.x - item.x) * 40 * worldDt; }
             if (item.type === 'bat' && item.y > V_HEIGHT * 0.35 && !item.split) {
@@ -592,10 +649,12 @@
             if (magnetTimer > 0 && ['star','comet','holyStar'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
             
             let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
+            
             // Laser Destroys Bad
             if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
                 if (isBad) { spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444'); items.splice(i, 1); score += 20 * comboMult; continue; }
             }
+            
             let hitPad = isBad ? 6 : -6;
             let hit = { x: item.x + hitPad, y: item.y + hitPad, w: item.w - (hitPad*2), h: item.h - (hitPad*2) };
             
@@ -611,6 +670,7 @@
                         triggerShake(0.3, 8); items.splice(i, 1);
                     } else {
                         processGameOver();
+                        requestAnimationFrame(update); // <-- CRASH FIX: Keeps the engine alive!
                         return;
                     }
                 } else {
@@ -636,8 +696,17 @@
                 }
                 continue;
             }
-            if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) items.splice(i, 1);
+
+            // Break combo if a good item falls off the bottom of the screen
+            if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) {
+                if (item.y > V_HEIGHT && (item.type === 'star' || item.type === 'comet')) {
+                    comboMult = 1;
+                    comboTimer = 0;
+                }
+                items.splice(i, 1);
+            }
         }
+        
         render(); 
         requestAnimationFrame(update);
     }
@@ -678,7 +747,7 @@
         // Restore before UI
         ctx.restore();
 
-        if(gameState === 'PLAYING') {
+        if(gameState === 'PLAYING' || gameState === 'PAUSED') {
             ctx.fillStyle = "#fff"; ctx.font = "10px 'Press Start 2P', monospace"; ctx.textAlign = "left"; 
             ctx.shadowColor = "rgba(0, 0, 0, 0.8)"; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; 
             
@@ -693,6 +762,7 @@
             ctx.shadowColor = "transparent";
         }
     }
+    
     // Init Frame
     requestAnimationFrame(update);
 </script>
