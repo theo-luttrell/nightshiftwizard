@@ -754,7 +754,6 @@ function update(timestamp) {
             if (isEnraged) atkRate *= 0.75;
             if (boss.attackTimer > atkRate) {
                 boss.attackTimer = 0;
-                if (Math.random() > 0.70) items.push({ x: Math.random() * (V_WIDTH - 24), y: -30, w: 24, h: 24, type: 'skull', sprite: skullSprites[Math.floor(Math.random()*skullSprites.length)], speed: 110 * (baseSpeed / 100), vx: 0, color: '#8b0000', wave: 0 });
                 let isWeakness = Math.random() > 0.85; 
                 if (isWeakness) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'holyStar', sprite: holyStarSprite, speed: 130, vx: 0, color: '#00ffff' }); } 
                 else {
