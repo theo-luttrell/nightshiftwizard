@@ -485,7 +485,7 @@
           class="overlay-screen"
           style="display: none"
         >
-          <h2 style="font-size: 14px; color: #00ffff; margin-top: 0">
+          <h2 id="lbTitle" style="font-size: 14px; color: #00ffff; margin-top: 0"></h2>
             GLOBAL TOP 10
           </h2>
           <div
@@ -495,6 +495,7 @@
           >
             Loading...
           </div>
+          <button id="btnLoadMoreLb" onclick="openLeaderboard(100)">SHOW TOP 100</button>
           <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
         </div>
 
