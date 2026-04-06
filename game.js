@@ -397,9 +397,15 @@ function agreeEula() {
   switchScreen("mainMenuScreen");
 }
 
-async function openLeaderboard() {
+async function openLeaderboard(limit = 10) {
   switchScreen("leaderboardScreen");
   const listElement = document.getElementById("leaderboardList");
+  const titleElement = document.getElementById("lbTitle");
+  const loadMoreBtn = document.getElementById("btnLoadMoreLb");
+
+  if (titleElement) titleElement.innerText = `GLOBAL TOP ${limit}`;
+  if (loadMoreBtn) loadMoreBtn.style.display = limit === 10 ? "block" : "none";
+
   listElement.innerHTML =
     '<div style="text-align:center; color:#aaa;">Summoning records...</div>';
 
@@ -408,7 +414,7 @@ async function openLeaderboard() {
     .select("name, score")
     .eq("is_boss_rush", false)
     .order("score", { ascending: false })
-    .limit(10);
+    .limit(limit);
 
   if (error) {
     listElement.innerHTML =
