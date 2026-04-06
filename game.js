@@ -21,6 +21,8 @@ const screens = {
   eulaScreen: document.getElementById("eulaScreen"),
   accountScreen: document.getElementById("accountScreen"),
   cloudConflictScreen: document.getElementById("cloudConflictScreen"),
+  tutorialIntroScreen: document.getElementById("tutorialIntroScreen"),
+  tutorialOutroScreen: document.getElementById("tutorialOutroScreen"),
 };
 const pauseBtn = document.getElementById("pauseBtn");
 const gameOverTitle = document.getElementById("gameOverTitle");
@@ -44,6 +46,14 @@ let shopkeeperClicks = 0;
 
 let isInvincible = false;
 let allowInvincibleLB = false;
+
+// --- TUTORIAL VARIABLES ---
+let hasSeenTutorial = localStorage.getItem("nsw_hasSeenTutorial") === "true";
+let isTutorial = false;
+let tutorialStep = 0;
+let tutorialTimer = 0;
+let tutorialMessage = "";
+let isReplayingTutorial = false;
 
 // --- META-PROGRESSION & SAVES ---
 let highScore = parseInt(localStorage.getItem("nsw_highScore")) || 0;
@@ -79,6 +89,16 @@ let companions = JSON.parse(localStorage.getItem("nsw_companions")) || {
 };
 let activeCompanion = localStorage.getItem("nsw_activeCompanion") || "none";
 
+let spells = JSON.parse(localStorage.getItem("nsw_spells")) || {
+  none: true,
+  blink: false,
+  pulse: false,
+};
+let activeSpell = localStorage.getItem("nsw_activeSpell") || "none";
+let spellCooldown = 0;
+let spellMaxCooldown = 1;
+let pulseEffectTimer = 0;
+
 let hasSeenShopTutorial = localStorage.getItem("nsw_shopTutorial") === "true";
 let shopDialogueIndex = 0;
 let isShopDialogueActive = false;
@@ -88,6 +108,7 @@ const shopTutorialLines = [
   "UPGRADES permanently enhance your potions and spells.",
   "WARDROBE alters your mystical appearance.",
   "RELICS drastically change the rules of a run.",
+  "SPELLS grant you an active ability.",
   "COMPANIONS will fight by your side.",
   "Choose wisely. The night is long...",
 ];
@@ -107,6 +128,8 @@ function saveLocalOnly() {
   localStorage.setItem("nsw_activeRelic", activeRelic);
   localStorage.setItem("nsw_companions", JSON.stringify(companions));
   localStorage.setItem("nsw_activeCompanion", activeCompanion);
+  localStorage.setItem("nsw_spells", JSON.stringify(spells));
+  localStorage.setItem("nsw_activeSpell", activeSpell);
   localStorage.setItem("nsw_shopTutorial", hasSeenShopTutorial);
   localStorage.setItem("nsw_lastSaved", new Date().toISOString());
 
@@ -281,6 +304,23 @@ function drawShopWizard() {
   drawPixelSpriteToCtx(shopCtx, rawShopkeeperHD, 0, 0, shopCanvas.width);
 }
 
+function drawMenuIcons() {
+  const icons = [
+    { id: "iconTrophy", sprite: rawTrophyIcon },
+    { id: "iconCloud", sprite: rawCloudIcon },
+    { id: "iconBook", sprite: rawBookIcon },
+    { id: "iconGear", sprite: rawGearIcon },
+  ];
+  icons.forEach((icon) => {
+    const canvas = document.getElementById(icon.id);
+    if (canvas) {
+      const iconCtx = canvas.getContext("2d");
+      iconCtx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPixelSpriteToCtx(iconCtx, icon.sprite, 0, 0, canvas.width);
+    }
+  });
+}
+
 function advanceShopDialogue() {
   if (!isShopDialogueActive) return;
 
@@ -394,6 +434,36 @@ function showEula(isFirstTime) {
 function agreeEula() {
   localStorage.setItem("nsw_shownEula", "true");
   shownEula = true;
+  if (!currentUser) {
+    openAccountScreen();
+  } else {
+    checkTutorialAndProceed();
+  }
+}
+
+function startTutorialIntro(isReplay = false) {
+  isReplayingTutorial = isReplay;
+  switchScreen("tutorialIntroScreen");
+  const tutCanvas = document.getElementById("tutorialWizardCanvas");
+  if (tutCanvas)
+    drawPixelSpriteToCtx(tutCanvas.getContext("2d"), rawShopkeeperHD, 0, 0, 64);
+}
+
+function startTutorialRun() {
+  switchScreen(null);
+  startGame(false);
+  isTutorial = true;
+  tutorialStep = 1;
+  tutorialTimer = 2.0;
+  tutorialMessage = "USE A/D OR ARROWS TO MOVE";
+}
+
+function endTutorial() {
+  if (!hasSeenTutorial && !isReplayingTutorial) {
+    hasSeenTutorial = true;
+    arcaneShards += 10;
+    saveMeta();
+  }
   switchScreen("mainMenuScreen");
 }
 
@@ -440,7 +510,7 @@ async function openLeaderboard(limit = 10) {
 }
 
 // --- AUTHENTICATION & CLOUD SYNC LOGIC ---
-async function pushToCloud(isManual = false) {
+async function pushToCloud() {
   if (!currentUser) return;
   const payload = {
     user_id: currentUser.id,
@@ -454,6 +524,9 @@ async function pushToCloud(isManual = false) {
     active_relic: activeRelic,
     companions: companions,
     active_companion: activeCompanion,
+    spells: spells,
+    active_spell: activeSpell,
+    has_seen_tutorial: hasSeenTutorial,
     last_synced: new Date().toISOString(),
   };
   const { error } = await supabaseClient
@@ -463,10 +536,6 @@ async function pushToCloud(isManual = false) {
     const authSyncDisplay = document.getElementById("authSyncDisplay");
     if (authSyncDisplay)
       authSyncDisplay.innerText = new Date().toLocaleString();
-    if (isManual) alert("Cloud save pushed successfully!");
-  } else {
-    console.error("Cloud Push Error:", error);
-    if (isManual) alert("Error saving to cloud: " + error.message);
   }
 }
 
@@ -513,6 +582,10 @@ function applyCloudData(data) {
   activeRelic = data.active_relic || "none";
   if (data.companions) companions = data.companions;
   if (data.active_companion) activeCompanion = data.active_companion;
+  if (data.spells) spells = data.spells;
+  if (data.active_spell) activeSpell = data.active_spell;
+  if (data.has_seen_tutorial !== undefined)
+    hasSeenTutorial = data.has_seen_tutorial;
 
   localStorage.setItem("nsw_lastSaved", data.last_synced);
   saveLocalOnly();
@@ -522,13 +595,21 @@ function applyCloudData(data) {
 function acceptCloudSave() {
   applyCloudData(window.pendingCloudData);
   window.pendingCloudData = null;
-  switchScreen("mainMenuScreen");
+  checkTutorialAndProceed();
 }
 
 function rejectCloudSave() {
   window.pendingCloudData = null;
   pushToCloud();
-  switchScreen("mainMenuScreen");
+  checkTutorialAndProceed();
+}
+
+function checkTutorialAndProceed() {
+  if (!hasSeenTutorial) {
+    startTutorialIntro(false);
+  } else {
+    switchScreen("mainMenuScreen");
+  }
 }
 
 async function manualPullFromCloud() {
@@ -555,8 +636,7 @@ function openAccountScreen() {
   if (currentUser) {
     document.getElementById("authLoggedOut").style.display = "none";
     document.getElementById("authLoggedIn").style.display = "block";
-    document.getElementById("authUsernameDisplay").innerText =
-      currentUser.user_metadata?.username || currentUser.email.split("@")[0];
+    document.getElementById("authEmailDisplay").innerText = currentUser.email;
   } else {
     document.getElementById("authLoggedOut").style.display = "block";
     document.getElementById("authLoggedIn").style.display = "none";
@@ -566,13 +646,7 @@ function openAccountScreen() {
 async function authLogin() {
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
-  if (!email || !password) {
-    document.getElementById("authError").innerText =
-      "Email and password cannot be empty.";
-    document.getElementById("authError").style.color = "#ff4444";
-    document.getElementById("authError").style.display = "block";
-    return;
-  }
+  if (!email || !password) return;
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
@@ -597,8 +671,7 @@ async function authRegister() {
   const password = document.getElementById("authPassword").value;
   if (!email || !usernameStr || !password) {
     document.getElementById("authError").innerText =
-      "Email, username, and password are required to create an account.";
-    document.getElementById("authError").style.color = "#ff4444";
+      "Email, username, and password are required.";
     document.getElementById("authError").style.display = "block";
     return;
   }
@@ -614,7 +687,7 @@ async function authRegister() {
     document.getElementById("authError").style.display = "block";
   } else {
     document.getElementById("authError").innerText =
-      "Account created! You can now log in.";
+      "Check email or try logging in!";
     document.getElementById("authError").style.color = "#39ff14";
     document.getElementById("authError").style.display = "block";
   }
@@ -627,18 +700,14 @@ async function authLogout() {
 }
 
 async function submitScore() {
-  const submitBtn = document.getElementById("submitScoreBtn");
-  if (!currentUser) {
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Log in to submit scores";
-    return;
-  }
+  if (!currentUser) return;
   const nameInput = (
     currentUser.user_metadata?.username || currentUser.email.split("@")[0]
   )
     .toUpperCase()
     .substring(0, 15);
 
+  const submitBtn = document.getElementById("submitScoreBtn");
   submitBtn.disabled = true;
   submitBtn.innerText = "SUBMITTING...";
 
@@ -754,6 +823,29 @@ function updateShopUI() {
       btn.onclick = () => buyCompanion(comp, cost);
     }
   });
+
+  ["none", "blink", "pulse"].forEach((spell) => {
+    let btn = document.getElementById("btnBuySpell_" + spell);
+    let status = document.getElementById("statusSpell_" + spell);
+
+    if (spells[spell]) {
+      if (status) {
+        status.innerText = "Owned";
+        status.style.color = "#39ff14";
+      }
+      btn.innerText = activeSpell === spell ? "EQUIPPED" : "EQUIP";
+      btn.disabled = activeSpell === spell;
+      btn.onclick = () => buySpell(spell, 0);
+    } else {
+      if (status) {
+        status.innerText = "Locked";
+        status.style.color = "#ff4444";
+      }
+      btn.innerHTML = `♦ 300`;
+      btn.disabled = arcaneShards < 300;
+      btn.onclick = () => buySpell(spell, 300);
+    }
+  });
 }
 
 function openShop() {
@@ -822,6 +914,19 @@ function buyCompanion(compId, cost) {
   }
   if (companions[compId]) {
     activeCompanion = compId;
+  }
+  saveMeta();
+  updateShopUI();
+}
+
+function buySpell(spellId, cost) {
+  if (!spells[spellId] && arcaneShards >= cost) {
+    arcaneShards -= cost;
+    spells[spellId] = true;
+    playSound("chime");
+  }
+  if (spells[spellId]) {
+    activeSpell = spellId;
   }
   saveMeta();
   updateShopUI();
@@ -929,12 +1034,89 @@ canvas.addEventListener(
   { passive: false },
 );
 
+function castSpell() {
+  if (activeSpell === "none" || spellCooldown > 0 || gameState !== "PLAYING")
+    return;
+
+  if (activeSpell === "blink") {
+    spellMaxCooldown = 3.0;
+    spellCooldown = spellMaxCooldown;
+
+    let dir = Math.sign(mouseX - (player.x + player.w / 2));
+    if (dir === 0) dir = 1;
+
+    for (let i = 0; i < 15; i++)
+      spawnParticles(
+        player.x + Math.random() * player.w,
+        player.y + Math.random() * player.h,
+        "#ff00ff",
+      );
+
+    player.x += dir * 100;
+    if (player.x < 0) player.x = 0;
+    if (player.x > V_WIDTH - player.w) player.x = V_WIDTH - player.w;
+    mouseX = player.x + player.w / 2;
+
+    for (let i = 0; i < 15; i++)
+      spawnParticles(
+        player.x + Math.random() * player.w,
+        player.y + Math.random() * player.h,
+        "#00ffff",
+      );
+
+    playSound("chime");
+    triggerShake(0.1, 3);
+  } else if (activeSpell === "pulse") {
+    spellMaxCooldown = 5.0;
+    spellCooldown = spellMaxCooldown;
+    pulseEffectTimer = 0.5;
+
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
+      let isBad = [
+        "skull",
+        "phantom",
+        "fireball",
+        "specter",
+        "bat",
+        "smallBat",
+      ].includes(item.type);
+      if (isBad) {
+        let dx = item.x + item.w / 2 - (player.x + player.w / 2);
+        let dy = item.y + item.h / 2 - (player.y + player.h / 2);
+        let dist = Math.sqrt(dx * dx + dy * Math.max(0, dy));
+
+        if (dist < 120) {
+          let pushX = dx / dist || Math.random() - 0.5;
+          let pushY = dy / dist || -1;
+          item.vx = pushX * 300;
+          item.speed = pushY * 300;
+        }
+      }
+    }
+
+    playSound("bossHit");
+    triggerShake(0.3, 8);
+  }
+}
+
+canvas.addEventListener("mousedown", (e) => {
+  if (gameState === "PLAYING") castSpell();
+});
+
 window.addEventListener("keydown", (e) => {
   if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
   if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
 
   if (e.code === "Backquote") {
     openDevTools(e.altKey);
+  }
+
+  if (e.code === "Space") {
+    if (gameState === "PLAYING") {
+      e.preventDefault();
+      castSpell();
+    }
   }
 
   if (e.code === "Escape" || e.code === "KeyP") togglePause();
@@ -1086,7 +1268,6 @@ function processGameOver(aborted = false) {
   newRecordAlert.style.display = isNewRecord ? "block" : "none";
 
   const submitBtn = document.getElementById("submitScoreBtn");
-  const loginPrompt = document.getElementById("loginPromptScore");
 
   if (
     !aborted &&
@@ -1094,20 +1275,13 @@ function processGameOver(aborted = false) {
     score > 0 &&
     (!isInvincible || allowInvincibleLB)
   ) {
-    if (currentUser) {
-      submitBtn.style.display = "block";
-      submitBtn.disabled = false;
-      submitBtn.innerText = "SUBMIT TO GLOBAL";
-      submitBtn.style.backgroundColor = "#008b8b";
-      submitBtn.style.borderColor = "#00ffff";
-      if (loginPrompt) loginPrompt.style.display = "none";
-    } else {
-      submitBtn.style.display = "none";
-      if (loginPrompt) loginPrompt.style.display = "block";
-    }
+    submitBtn.style.display = "block";
+    submitBtn.disabled = false;
+    submitBtn.innerText = "SUBMIT TO GLOBAL";
+    submitBtn.style.backgroundColor = "#008b8b";
+    submitBtn.style.borderColor = "#00ffff";
   } else {
     submitBtn.style.display = "none";
-    if (loginPrompt) loginPrompt.style.display = "none";
   }
 
   switchScreen("gameOverScreen");
@@ -1115,6 +1289,7 @@ function processGameOver(aborted = false) {
 
 function startGame(rushMode = false) {
   initAudio();
+  isTutorial = false;
   isBossRush = rushMode;
   score = 0;
   maxComboRun = 1;
@@ -1140,6 +1315,8 @@ function startGame(rushMode = false) {
   shakeTimer = 0;
   emberBatTimer = 0;
   allyProjectiles = [];
+  spellCooldown = 0;
+  pulseEffectTimer = 0;
   keys = { left: false, right: false };
 
   bossLevel = 0;
@@ -1211,6 +1388,8 @@ function update(timestamp) {
   }
   if (shakeTimer > 0) shakeTimer -= dt;
   if (synergyTimer > 0) synergyTimer -= dt;
+  if (spellCooldown > 0) spellCooldown -= dt;
+  if (pulseEffectTimer > 0) pulseEffectTimer -= dt;
 
   if (gameState !== "PLAYING") {
     render();
@@ -1456,10 +1635,111 @@ function update(timestamp) {
       }
     }
   } else {
-    spawnTimer += worldDt;
-    if (spawnTimer > Math.max(0.3, 0.8 - score / 5000)) {
-      spawnItem();
-      spawnTimer = 0;
+    if (isTutorial) {
+      if (tutorialTimer > 0) {
+        tutorialTimer -= worldDt;
+        if (tutorialTimer <= 0) {
+          if (tutorialStep === 1 || tutorialStep === 2) {
+            items.push({
+              x: V_WIDTH / 2 - 12,
+              y: -30,
+              w: 24,
+              h: 24,
+              type: "star",
+              sprite: starSprite,
+              speed: 100,
+              vx: 0,
+              color: "#ffffff",
+            });
+            tutorialStep = 1;
+          } else if (tutorialStep === 3) {
+            tutorialMessage = "DODGE THE CURSED";
+            tutorialTimer = 2;
+            tutorialStep = 4;
+          } else if (tutorialStep === 4 || tutorialStep === 5) {
+            items.push({
+              x: V_WIDTH / 2 - 12,
+              y: -30,
+              w: 24,
+              h: 24,
+              type: "skull",
+              sprite: skullSprites[0],
+              speed: 100,
+              vx: 0,
+              color: "#8b0000",
+            });
+            tutorialStep = 4;
+          } else if (tutorialStep === 6) {
+            tutorialMessage = "HOARD THE ARCANE";
+            tutorialTimer = 2;
+            tutorialStep = 7;
+          } else if (tutorialStep === 7 || tutorialStep === 8) {
+            items.push({
+              x: V_WIDTH / 2 - 10,
+              y: -30,
+              w: 20,
+              h: 20,
+              type: "shard",
+              sprite: shardSprite,
+              speed: 100,
+              vx: 0,
+              color: "#8a2be2",
+            });
+            tutorialStep = 7;
+          } else if (tutorialStep === 9) {
+            tutorialMessage = "SEIZE POWER";
+            tutorialTimer = 2;
+            tutorialStep = 10;
+          } else if (tutorialStep === 10 || tutorialStep === 11) {
+            items.push({
+              x: V_WIDTH / 2 - 12,
+              y: -30,
+              w: 24,
+              h: 24,
+              type: "potion",
+              sprite: potionSprite,
+              speed: 100,
+              vx: 0,
+              color: "#00ffff",
+            });
+            tutorialStep = 10;
+          } else if (tutorialStep === 12) {
+            for (let k = 0; k < V_WIDTH / 26; k++) {
+              items.push({
+                x: k * 26,
+                y: -30,
+                w: 24,
+                h: 24,
+                type: "skull",
+                sprite: skullSprites[0],
+                speed: 120,
+                vx: 0,
+                color: "#8b0000",
+              });
+            }
+          } else if (tutorialStep === 13) {
+            gameState = "MENU";
+            switchScreen("tutorialOutroScreen");
+            const tutOutCanvas = document.getElementById(
+              "tutorialWizardOutroCanvas",
+            );
+            if (tutOutCanvas)
+              drawPixelSpriteToCtx(
+                tutOutCanvas.getContext("2d"),
+                rawShopkeeperHD,
+                0,
+                0,
+                64,
+              );
+          }
+        }
+      }
+    } else {
+      spawnTimer += worldDt;
+      if (spawnTimer > Math.max(0.3, 0.8 - score / 5000)) {
+        spawnItem();
+        spawnTimer = 0;
+      }
     }
   }
 
@@ -1553,7 +1833,34 @@ function update(timestamp) {
       player.y + player.h > hit.y
     ) {
       if (isBad) {
-        if (activeRelic === "lead_boots" && item.type === "skull") {
+        if (isTutorial) {
+          if (tutorialStep === 4) {
+            tutorialMessage = "Try again. Dodge the cursed skull.";
+            spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#8b0000");
+            playSound("crunch");
+            items.splice(i, 1);
+            tutorialTimer = 2;
+            tutorialStep = 5;
+          } else if (tutorialStep === 12) {
+            if (player.shieldHits > 0) {
+              player.shieldHits--;
+              playSound("crunch");
+              spawnParticles(
+                item.x + item.w / 2,
+                item.y + item.h / 2,
+                "#00ffff",
+              );
+              triggerShake(0.3, 8);
+              items = [];
+              tutorialMessage =
+                "Potions grant a shield. Boots grant speed. Jewels magnetize loot. Lasers clear the screen.";
+              tutorialTimer = 5;
+              tutorialStep = 13;
+              break;
+            }
+          }
+          continue;
+        } else if (activeRelic === "lead_boots" && item.type === "skull") {
           playSound("crunch");
           spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#a9a9a9");
           score += 20 * comboMult * scoreMult;
@@ -1581,6 +1888,27 @@ function update(timestamp) {
           return;
         }
       } else {
+        if (isTutorial) {
+          if (item.type === "star" && tutorialStep === 1) {
+            tutorialMessage =
+              "Good. Stars build your score. Comets build your combo.";
+            tutorialTimer = 4;
+            tutorialStep = 3;
+          } else if (item.type === "shard" && tutorialStep === 7) {
+            tutorialMessage =
+              "Arcane Shards are permanent. Even if you fall, you keep them. Spend them in my Shop.";
+            tutorialTimer = 4;
+            tutorialStep = 9;
+          } else if (item.type === "potion" && tutorialStep === 10) {
+            player.shieldHits = 1;
+            tutorialMessage = "Now, survive this.";
+            tutorialTimer = 2;
+            tutorialStep = 12;
+          }
+          spawnParticles(item.x + item.w / 2, item.y + item.h / 2, item.color);
+          items.splice(i, 1);
+          continue;
+        }
         if (["potion", "star", "magnet"].includes(item.type)) {
           itemHistory.push(item.type);
           if (itemHistory.length > 3) itemHistory.shift();
@@ -1643,13 +1971,38 @@ function update(timestamp) {
       continue;
     }
 
-    if (item.y > V_HEIGHT || item.x < -100 || item.x > V_WIDTH + 100) {
+    if (
+      item.y > V_HEIGHT ||
+      item.y < -200 ||
+      item.x < -100 ||
+      item.x > V_WIDTH + 100
+    ) {
       if (
         item.y > V_HEIGHT &&
         (item.type === "star" || item.type === "comet")
       ) {
         comboMult = 1;
         comboTimer = 0;
+      }
+      if (isTutorial && item.y > V_HEIGHT) {
+        if (item.type === "star" && tutorialStep === 1) {
+          tutorialMessage = "Try again. Catch the star.";
+          tutorialTimer = 2;
+          tutorialStep = 2;
+        } else if (item.type === "skull" && tutorialStep === 4) {
+          tutorialMessage =
+            "Skulls will end your run instantly. Phantoms, Bats, and Specters will test your agility.";
+          tutorialTimer = 4;
+          tutorialStep = 6;
+        } else if (item.type === "shard" && tutorialStep === 7) {
+          tutorialMessage = "Try again. Catch the shard.";
+          tutorialTimer = 2;
+          tutorialStep = 8;
+        } else if (item.type === "potion" && tutorialStep === 10) {
+          tutorialMessage = "Try again. Catch the potion.";
+          tutorialTimer = 2;
+          tutorialStep = 11;
+        }
       }
       items.splice(i, 1);
     }
@@ -1738,6 +2091,38 @@ function render() {
     ctx.fillRect(boss.x, boss.y - 10, boss.w * (boss.hp / boss.maxHp), 6);
   }
 
+  if (pulseEffectTimer > 0) {
+    ctx.beginPath();
+    let radius = 120 * (1 - pulseEffectTimer / 0.5);
+    ctx.arc(
+      player.x + player.w / 2,
+      player.y + player.h / 2,
+      radius,
+      0,
+      Math.PI * 2,
+    );
+    ctx.strokeStyle = `rgba(0, 255, 255, ${pulseEffectTimer / 0.5})`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
+
+  if (activeSpell !== "none" && gameState === "PLAYING") {
+    ctx.fillStyle = "#333";
+    ctx.fillRect(player.x, player.y + player.h + 4, player.w, 4);
+    if (spellCooldown <= 0) {
+      ctx.fillStyle = "#00ffff";
+      ctx.fillRect(player.x, player.y + player.h + 4, player.w, 4);
+    } else {
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(
+        player.x,
+        player.y + player.h + 4,
+        player.w * (1 - spellCooldown / spellMaxCooldown),
+        4,
+      );
+    }
+  }
+
   particles.forEach((p) => {
     ctx.fillStyle = p.color;
     ctx.globalAlpha = Math.max(0, p.life / 0.5);
@@ -1753,6 +2138,38 @@ function render() {
     ctx.textAlign = "center";
     ctx.fillText("SYNERGY", V_WIDTH / 2, V_HEIGHT / 2 - 10);
     ctx.fillText("BURST!", V_WIDTH / 2, V_HEIGHT / 2 + 15);
+  }
+
+  if (isTutorial && tutorialMessage) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, V_HEIGHT / 2 - 35, V_WIDTH, 70);
+    ctx.fillStyle = "#fff";
+    ctx.font = "10px 'Press Start 2P', monospace";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "#000";
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    let words = tutorialMessage.split(" ");
+    let lines = [];
+    let currentLine = words[0];
+    for (let i = 1; i < words.length; i++) {
+      if (currentLine.length + words[i].length + 1 < 30) {
+        currentLine += " " + words[i];
+      } else {
+        lines.push(currentLine);
+        currentLine = words[i];
+      }
+    }
+    lines.push(currentLine);
+    for (let j = 0; j < lines.length; j++) {
+      ctx.fillText(
+        lines[j],
+        V_WIDTH / 2,
+        V_HEIGHT / 2 - lines.length * 6 + 12 + j * 16,
+      );
+    }
+    ctx.shadowColor = "transparent";
   }
 
   ctx.restore();
@@ -1794,8 +2211,9 @@ function render() {
       hasConflict = await checkCloudSync();
     }
     if (!hasConflict) {
-      switchScreen("mainMenuScreen");
+      checkTutorialAndProceed();
     }
   }
+  drawMenuIcons();
   requestAnimationFrame(update);
 })();

@@ -165,6 +165,49 @@
           </button>
         </div>
 
+        <div
+          id="tutorialIntroScreen"
+          class="overlay-screen"
+          style="display: none; border-color: #00ffff"
+        >
+          <canvas
+            id="tutorialWizardCanvas"
+            width="64"
+            height="64"
+            style="image-rendering: pixelated; margin-bottom: 15px"
+          ></canvas>
+          <div
+            class="dialogue-box"
+            style="width: 100%; text-align: left"
+            onclick="startTutorialRun()"
+          >
+            A new wizard... let us see if you have the reflexes to survive the
+            night shift.
+            <span>CLICK TO BEGIN INITIATION</span>
+          </div>
+        </div>
+
+        <div
+          id="tutorialOutroScreen"
+          class="overlay-screen"
+          style="display: none; border-color: #39ff14"
+        >
+          <canvas
+            id="tutorialWizardOutroCanvas"
+            width="64"
+            height="64"
+            style="image-rendering: pixelated; margin-bottom: 15px"
+          ></canvas>
+          <div
+            class="dialogue-box"
+            style="width: 100%; text-align: left"
+            onclick="endTutorial()"
+          >
+            You are ready. The night is yours.
+            <span>CLICK TO ENTER THE MENU</span>
+          </div>
+        </div>
+
         <div id="mainMenuScreen" class="overlay-screen">
           <h1 class="pixel-title" onclick="registerSecretClick()">
             NIGHT SHIFT WIZARD
@@ -181,13 +224,67 @@
             ♦ <span id="menuShards">0</span> SHARDS
           </div>
 
-          <button onclick="startGame(false)">PLAY RUN</button>
-          <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
-          <button onclick="openAccountScreen()">ACCOUNT / CLOUD</button>
-          <button onclick="openLeaderboard()">GLOBAL LEADERBOARD</button>
-          <button class="special" onclick="startGame(true)">BOSS RUSH</button>
-          <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
-          <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
+          <button class="play-btn" onclick="startGame(false)">PLAY RUN</button>
+
+          <div class="split-row">
+            <button class="shop-btn half-btn" onclick="openShop()">
+              WIZARD'S SHOP
+            </button>
+            <button class="special half-btn" onclick="startGame(true)">
+              BOSS RUSH
+            </button>
+          </div>
+
+          <div class="icon-row">
+            <button
+              class="icon-btn"
+              onclick="openLeaderboard()"
+              title="Global Leaderboard"
+            >
+              <canvas
+                id="iconTrophy"
+                width="32"
+                height="32"
+                style="image-rendering: pixelated"
+              ></canvas>
+            </button>
+            <button
+              class="icon-btn"
+              onclick="openAccountScreen()"
+              title="Account / Cloud"
+            >
+              <canvas
+                id="iconCloud"
+                width="32"
+                height="32"
+                style="image-rendering: pixelated"
+              ></canvas>
+            </button>
+            <button
+              class="icon-btn"
+              onclick="switchScreen('howToPlayScreen')"
+              title="How To Play"
+            >
+              <canvas
+                id="iconBook"
+                width="32"
+                height="32"
+                style="image-rendering: pixelated"
+              ></canvas>
+            </button>
+            <button
+              class="icon-btn"
+              onclick="switchScreen('optionsScreen')"
+              title="Options"
+            >
+              <canvas
+                id="iconGear"
+                width="32"
+                height="32"
+                style="image-rendering: pixelated"
+              ></canvas>
+            </button>
+          </div>
         </div>
 
         <div id="shopScreen" class="overlay-screen" style="display: none">
@@ -391,6 +488,55 @@
                 margin: 15px 0 10px 0;
               "
             >
+              SPELLS (SPACE / CLICK)
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #a9a9a9">None</h3>
+              <p>No active spell.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px">Owned</span>
+                <button id="btnBuySpell_none" onclick="buySpell('none', 0)">
+                  EQUIP
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #ff00ff">Blink</h3>
+              <p>Short-range teleport. (3s CD)</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusSpell_blink"
+                  >Locked</span
+                >
+                <button id="btnBuySpell_blink" onclick="buySpell('blink', 300)">
+                  ♦ 300
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #00ffff">Arcane Pulse</h3>
+              <p>Repels nearby hazards. (5s CD)</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusSpell_pulse"
+                  >Locked</span
+                >
+                <button id="btnBuySpell_pulse" onclick="buySpell('pulse', 300)">
+                  ♦ 300
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                width: 100%;
+                text-align: left;
+                color: #ffd700;
+                font-size: 10px;
+                margin: 15px 0 10px 0;
+              "
+            >
               COMPANIONS
             </div>
 
@@ -485,7 +631,10 @@
           class="overlay-screen"
           style="display: none"
         >
-          <h2 id="lbTitle" style="font-size: 14px; color: #00ffff; margin-top: 0"></h2>
+          <h2
+            id="lbTitle"
+            style="font-size: 14px; color: #00ffff; margin-top: 0"
+          >
             GLOBAL TOP 10
           </h2>
           <div
@@ -495,21 +644,50 @@
           >
             Loading...
           </div>
-          <button id="btnLoadMoreLb" onclick="openLeaderboard(100)">SHOW TOP 100</button>
+          <button id="btnLoadMoreLb" onclick="openLeaderboard(100)">
+            SHOW TOP 100
+          </button>
           <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
         </div>
 
         <div id="howToPlayScreen" class="overlay-screen" style="display: none">
           <h2 style="font-size: 12px; color: #ffd700">HOW TO PLAY</h2>
-          <div class="menu-text" style="text-align: left">
-            <span style="color: #fff">CATCH:</span> Stars & Comets<br /><br />
-            <span style="color: #cc66ff">HOARD:</span> Purple Shards<br /><br />
-            <span style="color: #ff4444">DODGE:</span> Skulls & Phantoms<br /><br />
-            <span style="color: #00ffff">POTION:</span> Grants Shield<br /><br />
-            <span style="color: #39ff14">BOOTS:</span> Speed + Ramming<br /><br />
-            <span style="color: #ff00ff">JEWEL:</span> Magnetizes Loot
+          <div
+            id="grimoireText"
+            class="menu-text"
+            style="text-align: left; display: none"
+          >
+            <span style="color: #fff">CATCH:</span> Stars & Comets<br />
+            <span style="color: #cc66ff">HOARD:</span> Purple Shards<br />
+            <span style="color: #ff4444">DODGE:</span> Skulls & Phantoms<br />
+            <span style="color: #00ffff">POTION:</span> Grants Shield<br />
+            <span style="color: #39ff14">BOOTS:</span> Speed + Ramming<br />
+            <span style="color: #ff00ff">JEWEL:</span> Magnetizes Loot<br />
+            <button
+              onclick="
+                document.getElementById('grimoireText').style.display = 'none';
+                document.getElementById('howToOptions').style.display = 'block';
+              "
+            >
+              BACK
+            </button>
           </div>
-          <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+          <div id="howToOptions" style="width: 100%">
+            <button
+              onclick="
+                document.getElementById('howToOptions').style.display = 'none';
+                document.getElementById('grimoireText').style.display = 'block';
+              "
+            >
+              READ THE GRIMOIRE
+            </button>
+            <button class="special" onclick="startTutorialIntro(true)">
+              ENTER THE INITIATION
+            </button>
+            <button onclick="switchScreen('mainMenuScreen')">
+              BACK TO MENU
+            </button>
+          </div>
         </div>
 
         <div id="optionsScreen" class="overlay-screen" style="display: none">
@@ -630,7 +808,7 @@
               LOGGED IN AS:
             </p>
             <p
-              id="authUsernameDisplay"
+              id="authEmailDisplay"
               style="font-size: 8px; color: #fff; margin-bottom: 15px"
             ></p>
             <p style="font-size: 8px; color: #aaa; margin-bottom: 5px">
@@ -646,10 +824,7 @@
             <button onclick="manualPullFromCloud()">FORCE PULL (LOAD)</button>
             <button onclick="authLogout()" class="special">LOG OUT</button>
           </div>
-          <button
-            onclick="switchScreen('mainMenuScreen')"
-            style="margin-top: 15px"
-          >
+          <button onclick="checkTutorialAndProceed()" style="margin-top: 15px">
             BACK TO MENU
           </button>
         </div>
