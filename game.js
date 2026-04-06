@@ -471,7 +471,11 @@ async function authLogin() {
 async function authRegister() {
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
-    if (!email || !password) return;
+    if (!email || !password) {
+        document.getElementById('authError').innerText = "Email and password cannot be empty.";
+        document.getElementById('authError').style.color = '#ff4444';
+        document.getElementById('authError').style.display = 'block';
+    };
     
     const { data, error } = await supabaseClient.auth.signUp({ email, password });
     if (error) {
