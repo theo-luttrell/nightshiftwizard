@@ -394,3 +394,9 @@ button.shop-btn {
 #pauseBtn:hover {
   transform: scale(1.2);
 }
+
+input[type="text"] {
+  -webkit-user-select: text; /* Restores the ability to highlight/type */
+  user-select: text;
+  cursor: text; /* Forces the I-beam cursor to appear */
+}
