@@ -1,342 +1,756 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Night Shift Wizard: Arcane Overdrive (v8.0)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@40,400,1,0&icon_names=pause" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@40,400,1,0&icon_names=pause"
+    />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="./style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
     <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui-layer">
-            
-            <div id="pauseBtn" onclick="togglePause()"><span class="material-symbols-outlined">pause</span></div>
-            
-            <div id="eulaScreen" class="overlay-screen" style="display: none; width: 90%; max-width: 320px; z-index: 1000;">
-                <h2 style="font-size: 14px; color: #ff00ff; margin-top:0;">LICENCE AGREEMENT</h2>
-                
-                <div id="eulaContent" style="width: 100%; max-height: 250px; overflow-y: auto; text-align: left; font-size: 8px; line-height: 1.6; color: #ccc; border: 1px solid #8a3a8a; padding: 10px; box-sizing: border-box; margin-bottom: 10px; background: rgba(0,0,0,0.7);">
-                    <span style="color: #ff4444;">IMPORTANT: PLEASE READ THIS AGREEMENT CAREFULLY BEFORE DOWNLOADING, INSTALLING, OR USING "Night Shift Wizard" (“THE WORK”).</span><br><br>
-                    
-                    <strong style="color: #fff;">1. GRANT OF LICENCE</strong><br>
-                    The Author grants you a personal, non-exclusive, non-transferable, and revocable licence to use the Work solely for personal, non-commercial purposes. All rights not expressly granted to you are reserved by the Author.<br><br>
-                    
-                    <strong style="color: #fff;">2. RESTRICTIONS ON USE</strong><br>
-                    You agree NOT to, and will not permit others to:<br>
-                    - No Redistribution/Reuploading: Reupload, mirror, host, or otherwise distribute the Work on any website, server, cloud storage, or file-sharing platform.<br>
-                    - Commercial Use: Use the Work for any commercial purpose, including but not limited to selling, leasing, or using it as part of a paid service.<br>
-                    - No Derivative Distribution: While you may modify the Work for private personal use, you may NOT distribute, publish, or otherwise make available any modified versions or derivative works.<br>
-                    - Attribution & Branding: You must retain all copyright, trademark, and attribution notices. You may not use the Author's name or trademarks to endorse or promote any products without express written permission.<br><br>
-                    
-                    <strong style="color: #fff;">3. OWNERSHIP AND THIRD-PARTY COMPONENTS</strong><br>
-                    The Author retains full title to the Work. If the Work includes third-party or open-source components, those specific components may be governed by their own respective licences. To the extent those licences conflict with this EULA, the third-party licence terms shall govern those specific components only.<br><br>
-                    
-                    <strong style="color: #fff;">4. NO WAIVER OF RIGHTS & RECORD KEEPING</strong><br>
-                    A waiver of any rights (including reuploading) is only valid if provided in a written document signed by the Author. The Author shall maintain a contemporaneous record of all authorised waivers, including the date, specific rights waived, and the legal identity of the recipient.<br><br>
-                    
-                    <strong style="color: #fff;">5. CONTACT FOR WAIVER REQUESTS</strong><br>
-                    For formal waiver requests, contact the Author at copyright@theoluttrell.dev<br><br>
-                    
-                    <strong style="color: #fff;">6. TERMINATION</strong><br>
-                    This licence terminates automatically if you fail to comply with any terms. Upon termination, you must cease all use and destroy all copies of the Work.<br><br>
-                    
-                    <strong style="color: #fff;">7. GOVERNING LAW AND JURISDICTION</strong><br>
-                    This EULA shall be governed by the laws of Australia. You agree that the courts of Victoria or Federal Courts of Australia shall have exclusive jurisdiction over any disputes.<br><br>
-                    
-                    <strong style="color: #fff;">8. LIMITATIONS OF LIABILITY</strong><br>
-                    The Work is provided "AS IS." To the maximum extent permitted by law, the Author’s total liability for any claims shall not exceed $1.00 AUD (or the amount paid for the licence).<br><br>
-                    
-                    <strong style="color: #fff;">9. REMEDIES FOR BREACH</strong><br>
-                    The Author reserves the right to seek injunctive relief, terminate the licence immediately, and pursue legal action for copyright infringement and damages in the event of a breach.<br><br>
-                    
-                    <strong style="color: #fff;">10. DISCLAIMER OF WARRANTY</strong><br>
-                    Use of the Work is at your own risk. The Author provides no warranties regarding the Work's performance or fitness for a particular purpose.<br><br>
-                    
-                    <strong style="color: #fff;">11. CONTRIBUTIONS BY OTHER USERS</strong><br>
-                    By submitting, merging, or providing any code, fixes, or content ("Contributions") to the primary codebase of the Work, you (the "Contributor") agree to the following:<br>
-                    - Licence Grant: You grant the Author a perpetual, irrevocable, worldwide, royalty-free, and non-exclusive licence to use, reproduce, modify, and distribute your Contributions as part of the Work.<br>
-                    - Sub-licensing: You authorize the Author to license your Contributions to other users under the terms of this EULA.<br>
-                    - No Reupload Right: Your status as a Contributor does NOT grant you a waiver of the "No Redistribution/Reuploading" rule for the primary codebase. You may maintain a personal copy of your own specific Contributions, but you may not reupload the integrated Work without a written waiver as per Section 4.<br>
-                    - Warrant of Originality: You warrant that your Contributions are your original work or that you have the legal right to submit them under these terms.
-                </div>
-                
-                <button id="btnAgreeEula" onclick="agreeEula()" disabled>SCROLL TO AGREE</button>
-                <button id="btnCloseEula" onclick="switchScreen('optionsScreen')" style="display: none;">CLOSE EULA</button>
-            </div>
-
-            <div id="mainMenuScreen" class="overlay-screen">
-                <h1 class="pixel-title" onclick="registerSecretClick()">NIGHT SHIFT WIZARD</h1>
-                <p class="subtitle">ARCANE OVERDRIVE</p>
-                
-                <div class="stats-box">
-                    <div class="menu-text" style="margin-bottom:0; color:#ffd700;">
-                        HIGH SCORE: <span id="menuHighScore">0</span><br><br>
-                        MAX COMBO: x<span id="menuMaxCombo">1</span>
-                    </div>
-                </div>
-                <div class="shard-display">♦ <span id="menuShards">0</span> SHARDS</div>
-
-                <button onclick="startGame(false)">PLAY RUN</button>
-                <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
-                <button onclick="openAccountScreen()">ACCOUNT / CLOUD</button>
-                <button onclick="openLeaderboard()">GLOBAL LEADERBOARD</button>
-                <button class="special" onclick="startGame(true)">BOSS RUSH</button>
-                <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
-                <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
-            </div>
-
-            <div id="shopScreen" class="overlay-screen" style="display: none;">
-                <div id="shopLeftPanel">
-                    <h2 style="font-size: 14px; color: #cc66ff; margin-top:0; width:100%; text-align:center;">THE ARCANE SHOP</h2>
-                    <div class="shard-display" style="position:sticky; top:0; background:rgba(5,5,16,0.95); width:100%; padding:10px 0; z-index:10; border-bottom:1px solid #5d275d; text-align:center;">♦ <span id="shopShards">0</span></div>
-                    
-                    <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 10px 0;">UPGRADES</div>
-                    
-                    <div class="shop-item">
-                        <h3 style="color:#00ffff;">Shield Potion</h3>
-                        <p>Increases shield capacity (+1 hit per level).</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Lv.<span id="lvlPotion">0</span></span>
-                            <button id="btnBuyPotion" onclick="buyUpgrade('potion', 10)">♦ <span id="costPotion">10</span></button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#39ff14;">Hermes Boots</h3>
-                        <p>Base duration of speed/ramming +1.5s per level.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Lv.<span id="lvlBoots">0</span></span>
-                            <button id="btnBuyBoots" onclick="buyUpgrade('boots', 15)">♦ <span id="costBoots">15</span></button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#ff00ff;">Magnet Jewel</h3>
-                        <p>Base duration of magnetism +1.5s per level.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Lv.<span id="lvlMagnet">0</span></span>
-                            <button id="btnBuyMagnet" onclick="buyUpgrade('magnet', 15)">♦ <span id="costMagnet">15</span></button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#ff4444;">Laser Blast</h3>
-                        <p>Increases laser duration by 0.8s per level.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Lv.<span id="lvlBlast">0</span></span>
-                            <button id="btnBuyBlast" onclick="buyUpgrade('blast', 20)">♦ <span id="costBlast">20</span></button>
-                        </div>
-                    </div>
-
-                    <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 15px 0 10px 0;">WARDROBE</div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#a9a9a9;">Classic Wizard</h3>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Owned</span>
-                            <button id="btnEquipWizard" onclick="buySkin('wizard', 0)">EQUIP</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#ff4444;">Pyromancer</h3>
-                        <p>Burn bright with infernal robes.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusPyro">Locked</span>
-                            <button id="btnBuyPyro" onclick="buySkin('pyromancer', 100)">♦ 100</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#39ff14;">Necromancer</h3>
-                        <p>Embrace the toxic depths.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusNecro">Locked</span>
-                            <button id="btnBuyNecro" onclick="buySkin('necromancer', 100)">♦ 100</button>
-                        </div>
-                    </div>
-
-                    <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 15px 0 10px 0;">RELICS</div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#a9a9a9;">No Relic</h3>
-                        <p>Standard wizarding rules apply.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Owned</span>
-                            <button id="btnBuyRelic_none" onclick="buyRelic('none', 0)">EQUIP</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#00ffff;">Glass Cannon</h3>
-                        <p>Doubles Score. Potions grant Score instead of Shields.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusRelic_glass_cannon">Locked</span>
-                            <button id="btnBuyRelic_glass_cannon" onclick="buyRelic('glass_cannon', 10)">♦ 10</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#a9a9a9;">Lead Boots</h3>
-                        <p>-30% Speed. Crushing skulls yields score.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusRelic_lead_boots">Locked</span>
-                            <button id="btnBuyRelic_lead_boots" onclick="buyRelic('lead_boots', 10)">♦ 10</button>
-                        </div>
-                    </div>
-                    
-                    <div style="width:100%; text-align:left; color:#ffd700; font-size:10px; margin: 15px 0 10px 0;">COMPANIONS</div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#a9a9a9;">None</h3>
-                        <p>Fly solo.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;">Owned</span>
-                            <button id="btnBuyComp_none" onclick="buyCompanion('none', 0)">EQUIP</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#cc66ff;">Void Wisp</h3>
-                        <p>Automatically seeks out Arcane Shards.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusComp_void_wisp">Locked</span>
-                            <button id="btnBuyComp_void_wisp" onclick="buyCompanion('void_wisp', 250)">♦ 250</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#ff4444;">Ember Bat</h3>
-                        <p>Shoots upward to destroy hazards.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusComp_ember_bat">Locked</span>
-                            <button id="btnBuyComp_ember_bat" onclick="buyCompanion('ember_bat', 500)">♦ 500</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <h3 style="color:#39ff14;">Chrono-Snail</h3>
-                        <p>Slows the descent of incoming hazards.</p>
-                        <div class="shop-item-row">
-                            <span style="font-size:9px;" id="statusComp_chrono_snail">Locked</span>
-                            <button id="btnBuyComp_chrono_snail" onclick="buyCompanion('chrono_snail', 750)">♦ 750</button>
-                        </div>
-                    </div>
-
-                    <button style="margin-top:20px; width:100%;" onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
-                </div>
-                
-                <div id="shopRightPanel">
-                    <div id="shopDialogue" class="dialogue-box" onclick="advanceShopDialogue()">
-                        Welcome, initiate...
-                        <span>CLICK TO CONTINUE</span>
-                    </div>
-                    <canvas id="shopWizardCanvas" width="64" height="64" style="image-rendering: pixelated;" onclick="registerShopkeeperClick()"></canvas>
-                </div>
-            </div>
-
-            <div id="leaderboardScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 14px; color: #00ffff; margin-top:0;">GLOBAL TOP 10</h2>
-                <div id="leaderboardList" class="menu-text" style="width: 100%; text-align: left; margin: 15px 0;">
-                    Loading...
-                </div>
-                <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
-            </div>
-
-            <div id="howToPlayScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">HOW TO PLAY</h2>
-                <div class="menu-text" style="text-align: left;">
-                    <span style="color:#fff;">CATCH:</span> Stars & Comets<br><br>
-                    <span style="color:#cc66ff;">HOARD:</span> Purple Shards<br><br>
-                    <span style="color:#ff4444;">DODGE:</span> Skulls & Phantoms<br><br>
-                    <span style="color:#00ffff;">POTION:</span> Grants Shield<br><br>
-                    <span style="color:#39ff14;">BOOTS:</span> Speed + Ramming<br><br>
-                    <span style="color:#ff00ff;">JEWEL:</span> Magnetizes Loot
-                </div>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-            
-            <div id="optionsScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 12px; color: #ffd700;">OPTIONS</h2>
-                <button style="background-color: #5d275d; border-color: #8a3a8a; margin-bottom: 10px;" onclick="showEula(false)">VIEW LICENCE (EULA)</button>
-                <label><input type="checkbox" id="muteToggle" onchange="toggleMute()"> Mute Sound</label>
-                <label><input type="checkbox" id="bgToggle" checked onchange="toggleBg()"> Show Stars</label>
-                <button onclick="switchScreen('mainMenuScreen')">BACK</button>
-            </div>
-            
-            <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
-                <h2 id="devToolsTitle" style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
-                <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
-                <button style="background-color: #8a2be2; border-color: #cc66ff;" onclick="arcaneShards+=1000; saveMeta(); updateShopUI();">ADD 1000 SHARDS</button>
-                
-                <label id="secretLbLabel" style="color: #ff4444; display: none; margin-top: 15px;">
-                    <input type="checkbox" id="allowInvincibleLBToggle" onchange="toggleAllowInvincibleLB()"> ALLOW INVINCIBLE LB
-                </label>
-                
-                <button style="background-color: #006400; border-color: #39ff14; margin-top: 15px;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
-            </div>
-
-            <div id="accountScreen" class="overlay-screen" style="display: none;">
-                <h2 style="font-size: 14px; color: #00ffff; margin-top:0;">WIZARD ACCOUNT</h2>
-                <div id="authLoggedOut" style="width: 100%;">
-                    <input type="email" id="authEmail" placeholder="EMAIL">
-                    <input type="password" id="authPassword" placeholder="PASSWORD">
-                    <p id="authError" style="color:#ff4444; font-size:8px; display:none; margin-bottom:10px;"></p>
-                    <button onclick="authLogin()">LOGIN</button>
-                    <button onclick="authRegister()" class="special">CREATE ACCOUNT</button>
-                </div>
-                <div id="authLoggedIn" style="display: none; width: 100%;">
-                    <p style="font-size: 10px; color: #39ff14; margin-bottom:5px;">LOGGED IN AS:</p>
-                    <p id="authEmailDisplay" style="font-size: 8px; color: #fff; margin-bottom: 15px;"></p>
-                    <p style="font-size: 8px; color: #aaa; margin-bottom:5px;">LAST CLOUD SYNC:</p>
-                    <p id="authSyncDisplay" style="font-size: 8px; color: #fff; margin-bottom: 15px;">Never</p>
-                    <button onclick="pushToCloud()">FORCE PUSH (SAVE)</button>
-                    <button onclick="manualPullFromCloud()">FORCE PULL (LOAD)</button>
-                    <button onclick="authLogout()" class="special">LOG OUT</button>
-                </div>
-                <button onclick="switchScreen('mainMenuScreen')" style="margin-top: 15px;">BACK TO MENU</button>
-            </div>
-
-            <div id="cloudConflictScreen" class="overlay-screen" style="display: none; border-color: #ff00ff;">
-                <h2 style="font-size: 14px; color: #ff00ff; margin-top:0;">CLOUD CONFLICT</h2>
-                <p style="font-size: 8px; color: #ccc; line-height: 1.6; margin-bottom: 15px;">A newer or richer save was found in the astral cloud. Overwrite your local progress?</p>
-                <button onclick="acceptCloudSave()" style="background-color: #008b8b; border-color: #00ffff; margin-bottom: 10px;">DOWNLOAD CLOUD SAVE</button>
-                <button onclick="rejectCloudSave()" class="special">KEEP LOCAL SAVE</button>
-            </div>
-
-            <div id="pauseScreen" class="overlay-screen" style="display: none;">
-                <h1 style="color: #ffd700; font-size: 20px; margin: 0 0 15px 0;">PAUSED</h1>
-                <button onclick="togglePause()">RESUME</button>
-                <button class="special" onclick="startGame(isBossRush)">RESTART RUN</button>
-                <button onclick="processGameOver(true)">QUIT TO MENU</button>
-            </div>
-            
-            <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
-            
-            <div id="gameOverScreen" class="overlay-screen" style="display: none;">
-                <h1 id="gameOverTitle" style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0;">CURSED!</h1>
-                <p id="newRecordAlert" class="new-record">NEW RECORD!</p>
-                <div class="stats-box">
-                    <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0;">Score: 0</p>
-                    <p id="finalComboText" style="font-size: 9px; color:#ffd700; margin: 0 0 10px 0;">Max Combo: x1</p>
-                    <p id="finalShardsText" style="font-size: 9px; color:#cc66ff; margin: 0 0 10px 0;">Shards Found: 0</p>
-                </div>
-                
-                <p id="loginPromptScore" style="font-size: 8px; color: #ff4444; margin-bottom: 10px; display: none;">LOG IN TO SUBMIT SCORES</p>
-                <button id="submitScoreBtn" style="display: none; background-color: #008b8b; border-color: #00ffff; margin-bottom: 10px;" onclick="submitScore()">SUBMIT TO GLOBAL</button>
-
-                <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
-                <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
-                <button onclick="startGame(isBossRush)">RETRY</button>
-            </div>
-            
+      <canvas id="gameCanvas"></canvas>
+      <div id="ui-layer">
+        <div id="pauseBtn" onclick="togglePause()">
+          <span class="material-symbols-outlined">pause</span>
         </div>
+
+        <div
+          id="eulaScreen"
+          class="overlay-screen"
+          style="display: none; width: 90%; max-width: 320px; z-index: 1000"
+        >
+          <h2 style="font-size: 14px; color: #ff00ff; margin-top: 0">
+            LICENCE AGREEMENT
+          </h2>
+
+          <div
+            id="eulaContent"
+            style="
+              width: 100%;
+              max-height: 250px;
+              overflow-y: auto;
+              text-align: left;
+              font-size: 8px;
+              line-height: 1.6;
+              color: #ccc;
+              border: 1px solid #8a3a8a;
+              padding: 10px;
+              box-sizing: border-box;
+              margin-bottom: 10px;
+              background: rgba(0, 0, 0, 0.7);
+            "
+          >
+            <span style="color: #ff4444"
+              >IMPORTANT: PLEASE READ THIS AGREEMENT CAREFULLY BEFORE
+              DOWNLOADING, INSTALLING, OR USING "Night Shift Wizard" (“THE
+              WORK”).</span
+            ><br /><br />
+
+            <strong style="color: #fff">1. GRANT OF LICENCE</strong><br />
+            The Author grants you a personal, non-exclusive, non-transferable,
+            and revocable licence to use the Work solely for personal,
+            non-commercial purposes. All rights not expressly granted to you are
+            reserved by the Author.<br /><br />
+
+            <strong style="color: #fff">2. RESTRICTIONS ON USE</strong><br />
+            You agree NOT to, and will not permit others to:<br />
+            - No Redistribution/Reuploading: Reupload, mirror, host, or
+            otherwise distribute the Work on any website, server, cloud storage,
+            or file-sharing platform.<br />
+            - Commercial Use: Use the Work for any commercial purpose, including
+            but not limited to selling, leasing, or using it as part of a paid
+            service.<br />
+            - No Derivative Distribution: While you may modify the Work for
+            private personal use, you may NOT distribute, publish, or otherwise
+            make available any modified versions or derivative works.<br />
+            - Attribution & Branding: You must retain all copyright, trademark,
+            and attribution notices. You may not use the Author's name or
+            trademarks to endorse or promote any products without express
+            written permission.<br /><br />
+
+            <strong style="color: #fff"
+              >3. OWNERSHIP AND THIRD-PARTY COMPONENTS</strong
+            ><br />
+            The Author retains full title to the Work. If the Work includes
+            third-party or open-source components, those specific components may
+            be governed by their own respective licences. To the extent those
+            licences conflict with this EULA, the third-party licence terms
+            shall govern those specific components only.<br /><br />
+
+            <strong style="color: #fff"
+              >4. NO WAIVER OF RIGHTS & RECORD KEEPING</strong
+            ><br />
+            A waiver of any rights (including reuploading) is only valid if
+            provided in a written document signed by the Author. The Author
+            shall maintain a contemporaneous record of all authorised waivers,
+            including the date, specific rights waived, and the legal identity
+            of the recipient.<br /><br />
+
+            <strong style="color: #fff">5. CONTACT FOR WAIVER REQUESTS</strong
+            ><br />
+            For formal waiver requests, contact the Author at
+            copyright@theoluttrell.dev<br /><br />
+
+            <strong style="color: #fff">6. TERMINATION</strong><br />
+            This licence terminates automatically if you fail to comply with any
+            terms. Upon termination, you must cease all use and destroy all
+            copies of the Work.<br /><br />
+
+            <strong style="color: #fff"
+              >7. GOVERNING LAW AND JURISDICTION</strong
+            ><br />
+            This EULA shall be governed by the laws of Australia. You agree that
+            the courts of Victoria or Federal Courts of Australia shall have
+            exclusive jurisdiction over any disputes.<br /><br />
+
+            <strong style="color: #fff">8. LIMITATIONS OF LIABILITY</strong
+            ><br />
+            The Work is provided "AS IS." To the maximum extent permitted by
+            law, the Author’s total liability for any claims shall not exceed
+            $1.00 AUD (or the amount paid for the licence).<br /><br />
+
+            <strong style="color: #fff">9. REMEDIES FOR BREACH</strong><br />
+            The Author reserves the right to seek injunctive relief, terminate
+            the licence immediately, and pursue legal action for copyright
+            infringement and damages in the event of a breach.<br /><br />
+
+            <strong style="color: #fff">10. DISCLAIMER OF WARRANTY</strong
+            ><br />
+            Use of the Work is at your own risk. The Author provides no
+            warranties regarding the Work's performance or fitness for a
+            particular purpose.<br /><br />
+
+            <strong style="color: #fff">11. CONTRIBUTIONS BY OTHER USERS</strong
+            ><br />
+            By submitting, merging, or providing any code, fixes, or content
+            ("Contributions") to the primary codebase of the Work, you (the
+            "Contributor") agree to the following:<br />
+            - Licence Grant: You grant the Author a perpetual, irrevocable,
+            worldwide, royalty-free, and non-exclusive licence to use,
+            reproduce, modify, and distribute your Contributions as part of the
+            Work.<br />
+            - Sub-licensing: You authorize the Author to license your
+            Contributions to other users under the terms of this EULA.<br />
+            - No Reupload Right: Your status as a Contributor does NOT grant you
+            a waiver of the "No Redistribution/Reuploading" rule for the primary
+            codebase. You may maintain a personal copy of your own specific
+            Contributions, but you may not reupload the integrated Work without
+            a written waiver as per Section 4.<br />
+            - Warrant of Originality: You warrant that your Contributions are
+            your original work or that you have the legal right to submit them
+            under these terms.
+          </div>
+
+          <button id="btnAgreeEula" onclick="agreeEula()" disabled>
+            SCROLL TO AGREE
+          </button>
+          <button
+            id="btnCloseEula"
+            onclick="switchScreen('optionsScreen')"
+            style="display: none"
+          >
+            CLOSE EULA
+          </button>
+        </div>
+
+        <div id="mainMenuScreen" class="overlay-screen">
+          <h1 class="pixel-title" onclick="registerSecretClick()">
+            NIGHT SHIFT WIZARD
+          </h1>
+          <p class="subtitle">ARCANE OVERDRIVE</p>
+
+          <div class="stats-box">
+            <div class="menu-text" style="margin-bottom: 0; color: #ffd700">
+              HIGH SCORE: <span id="menuHighScore">0</span><br /><br />
+              MAX COMBO: x<span id="menuMaxCombo">1</span>
+            </div>
+          </div>
+          <div class="shard-display">
+            ♦ <span id="menuShards">0</span> SHARDS
+          </div>
+
+          <button onclick="startGame(false)">PLAY RUN</button>
+          <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
+          <button onclick="openAccountScreen()">ACCOUNT / CLOUD</button>
+          <button onclick="openLeaderboard()">GLOBAL LEADERBOARD</button>
+          <button class="special" onclick="startGame(true)">BOSS RUSH</button>
+          <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
+          <button onclick="switchScreen('optionsScreen')">OPTIONS</button>
+        </div>
+
+        <div id="shopScreen" class="overlay-screen" style="display: none">
+          <div id="shopLeftPanel">
+            <h2
+              style="
+                font-size: 14px;
+                color: #cc66ff;
+                margin-top: 0;
+                width: 100%;
+                text-align: center;
+              "
+            >
+              THE ARCANE SHOP
+            </h2>
+            <div
+              class="shard-display"
+              style="
+                position: sticky;
+                top: 0;
+                background: rgba(5, 5, 16, 0.95);
+                width: 100%;
+                padding: 10px 0;
+                z-index: 10;
+                border-bottom: 1px solid #5d275d;
+                text-align: center;
+              "
+            >
+              ♦ <span id="shopShards">0</span>
+            </div>
+
+            <div
+              style="
+                width: 100%;
+                text-align: left;
+                color: #ffd700;
+                font-size: 10px;
+                margin: 10px 0;
+              "
+            >
+              UPGRADES
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #00ffff">Shield Potion</h3>
+              <p>Increases shield capacity (+1 hit per level).</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px"
+                  >Lv.<span id="lvlPotion">0</span></span
+                >
+                <button id="btnBuyPotion" onclick="buyUpgrade('potion', 10)">
+                  ♦ <span id="costPotion">10</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #39ff14">Hermes Boots</h3>
+              <p>Base duration of speed/ramming +1.5s per level.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px"
+                  >Lv.<span id="lvlBoots">0</span></span
+                >
+                <button id="btnBuyBoots" onclick="buyUpgrade('boots', 15)">
+                  ♦ <span id="costBoots">15</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #ff00ff">Magnet Jewel</h3>
+              <p>Base duration of magnetism +1.5s per level.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px"
+                  >Lv.<span id="lvlMagnet">0</span></span
+                >
+                <button id="btnBuyMagnet" onclick="buyUpgrade('magnet', 15)">
+                  ♦ <span id="costMagnet">15</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #ff4444">Laser Blast</h3>
+              <p>Increases laser duration by 0.8s per level.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px"
+                  >Lv.<span id="lvlBlast">0</span></span
+                >
+                <button id="btnBuyBlast" onclick="buyUpgrade('blast', 20)">
+                  ♦ <span id="costBlast">20</span>
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                width: 100%;
+                text-align: left;
+                color: #ffd700;
+                font-size: 10px;
+                margin: 15px 0 10px 0;
+              "
+            >
+              WARDROBE
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #a9a9a9">Classic Wizard</h3>
+              <div class="shop-item-row">
+                <span style="font-size: 9px">Owned</span>
+                <button id="btnEquipWizard" onclick="buySkin('wizard', 0)">
+                  EQUIP
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #ff4444">Pyromancer</h3>
+              <p>Burn bright with infernal robes.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusPyro">Locked</span>
+                <button id="btnBuyPyro" onclick="buySkin('pyromancer', 100)">
+                  ♦ 100
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #39ff14">Necromancer</h3>
+              <p>Embrace the toxic depths.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusNecro">Locked</span>
+                <button id="btnBuyNecro" onclick="buySkin('necromancer', 100)">
+                  ♦ 100
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                width: 100%;
+                text-align: left;
+                color: #ffd700;
+                font-size: 10px;
+                margin: 15px 0 10px 0;
+              "
+            >
+              RELICS
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #a9a9a9">No Relic</h3>
+              <p>Standard wizarding rules apply.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px">Owned</span>
+                <button id="btnBuyRelic_none" onclick="buyRelic('none', 0)">
+                  EQUIP
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #00ffff">Glass Cannon</h3>
+              <p>Doubles Score. Potions grant Score instead of Shields.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusRelic_glass_cannon"
+                  >Locked</span
+                >
+                <button
+                  id="btnBuyRelic_glass_cannon"
+                  onclick="buyRelic('glass_cannon', 10)"
+                >
+                  ♦ 10
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #a9a9a9">Lead Boots</h3>
+              <p>-30% Speed. Crushing skulls yields score.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusRelic_lead_boots"
+                  >Locked</span
+                >
+                <button
+                  id="btnBuyRelic_lead_boots"
+                  onclick="buyRelic('lead_boots', 10)"
+                >
+                  ♦ 10
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                width: 100%;
+                text-align: left;
+                color: #ffd700;
+                font-size: 10px;
+                margin: 15px 0 10px 0;
+              "
+            >
+              COMPANIONS
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #a9a9a9">None</h3>
+              <p>Fly solo.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px">Owned</span>
+                <button id="btnBuyComp_none" onclick="buyCompanion('none', 0)">
+                  EQUIP
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #cc66ff">Void Wisp</h3>
+              <p>Automatically seeks out Arcane Shards.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusComp_void_wisp"
+                  >Locked</span
+                >
+                <button
+                  id="btnBuyComp_void_wisp"
+                  onclick="buyCompanion('void_wisp', 250)"
+                >
+                  ♦ 250
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #ff4444">Ember Bat</h3>
+              <p>Shoots upward to destroy hazards.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusComp_ember_bat"
+                  >Locked</span
+                >
+                <button
+                  id="btnBuyComp_ember_bat"
+                  onclick="buyCompanion('ember_bat', 500)"
+                >
+                  ♦ 500
+                </button>
+              </div>
+            </div>
+
+            <div class="shop-item">
+              <h3 style="color: #39ff14">Chrono-Snail</h3>
+              <p>Slows the descent of incoming hazards.</p>
+              <div class="shop-item-row">
+                <span style="font-size: 9px" id="statusComp_chrono_snail"
+                  >Locked</span
+                >
+                <button
+                  id="btnBuyComp_chrono_snail"
+                  onclick="buyCompanion('chrono_snail', 750)"
+                >
+                  ♦ 750
+                </button>
+              </div>
+            </div>
+
+            <button
+              style="margin-top: 20px; width: 100%"
+              onclick="switchScreen('mainMenuScreen')"
+            >
+              BACK TO MENU
+            </button>
+          </div>
+
+          <div id="shopRightPanel">
+            <div
+              id="shopDialogue"
+              class="dialogue-box"
+              onclick="advanceShopDialogue()"
+            >
+              Welcome, initiate...
+              <span>CLICK TO CONTINUE</span>
+            </div>
+            <canvas
+              id="shopWizardCanvas"
+              width="64"
+              height="64"
+              style="image-rendering: pixelated"
+              onclick="registerShopkeeperClick()"
+            ></canvas>
+          </div>
+        </div>
+
+        <div
+          id="leaderboardScreen"
+          class="overlay-screen"
+          style="display: none"
+        >
+          <h2 style="font-size: 14px; color: #00ffff; margin-top: 0">
+            GLOBAL TOP 10
+          </h2>
+          <div
+            id="leaderboardList"
+            class="menu-text"
+            style="width: 100%; text-align: left; margin: 15px 0"
+          >
+            Loading...
+          </div>
+          <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
+        </div>
+
+        <div id="howToPlayScreen" class="overlay-screen" style="display: none">
+          <h2 style="font-size: 12px; color: #ffd700">HOW TO PLAY</h2>
+          <div class="menu-text" style="text-align: left">
+            <span style="color: #fff">CATCH:</span> Stars & Comets<br /><br />
+            <span style="color: #cc66ff">HOARD:</span> Purple Shards<br /><br />
+            <span style="color: #ff4444">DODGE:</span> Skulls & Phantoms<br /><br />
+            <span style="color: #00ffff">POTION:</span> Grants Shield<br /><br />
+            <span style="color: #39ff14">BOOTS:</span> Speed + Ramming<br /><br />
+            <span style="color: #ff00ff">JEWEL:</span> Magnetizes Loot
+          </div>
+          <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+        </div>
+
+        <div id="optionsScreen" class="overlay-screen" style="display: none">
+          <h2 style="font-size: 12px; color: #ffd700">OPTIONS</h2>
+          <button
+            style="
+              background-color: #5d275d;
+              border-color: #8a3a8a;
+              margin-bottom: 10px;
+            "
+            onclick="showEula(false)"
+          >
+            VIEW LICENCE (EULA)
+          </button>
+          <label
+            ><input type="checkbox" id="muteToggle" onchange="toggleMute()" />
+            Mute Sound</label
+          >
+          <label
+            ><input
+              type="checkbox"
+              id="bgToggle"
+              checked
+              onchange="toggleBg()"
+            />
+            Show Stars</label
+          >
+          <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+        </div>
+
+        <div
+          id="devToolsScreen"
+          class="overlay-screen"
+          style="display: none; border-color: #39ff14"
+        >
+          <h2
+            id="devToolsTitle"
+            style="
+              font-size: 14px;
+              color: #39ff14;
+              text-shadow: 2px 2px 0px #000;
+            "
+          >
+            DEV TOOLS
+          </h2>
+          <label style="color: #39ff14"
+            ><input
+              type="checkbox"
+              id="invincibilityToggle"
+              onchange="toggleInvincibility()"
+            />
+            INVINCIBILITY</label
+          >
+          <button
+            style="background-color: #8a2be2; border-color: #cc66ff"
+            onclick="
+              arcaneShards += 1000;
+              saveMeta();
+              updateShopUI();
+            "
+          >
+            ADD 1000 SHARDS
+          </button>
+
+          <label
+            id="secretLbLabel"
+            style="color: #ff4444; display: none; margin-top: 15px"
+          >
+            <input
+              type="checkbox"
+              id="allowInvincibleLBToggle"
+              onchange="toggleAllowInvincibleLB()"
+            />
+            ALLOW INVINCIBLE LB
+          </label>
+
+          <button
+            style="
+              background-color: #006400;
+              border-color: #39ff14;
+              margin-top: 15px;
+            "
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            CLOSE MENU
+          </button>
+        </div>
+
+        <div id="accountScreen" class="overlay-screen" style="display: none">
+          <h2 style="font-size: 14px; color: #00ffff; margin-top: 0">
+            WIZARD ACCOUNT
+          </h2>
+          <div id="authLoggedOut" style="width: 100%">
+            <input type="email" id="authEmail" placeholder="EMAIL" />
+            <input type="password" id="authPassword" placeholder="PASSWORD" />
+            <p
+              id="authError"
+              style="
+                color: #ff4444;
+                font-size: 8px;
+                display: none;
+                margin-bottom: 10px;
+              "
+            ></p>
+            <button onclick="authLogin()">LOGIN</button>
+            <button onclick="authRegister()" class="special">
+              CREATE ACCOUNT
+            </button>
+          </div>
+          <div id="authLoggedIn" style="display: none; width: 100%">
+            <p style="font-size: 10px; color: #39ff14; margin-bottom: 5px">
+              LOGGED IN AS:
+            </p>
+            <p
+              id="authEmailDisplay"
+              style="font-size: 8px; color: #fff; margin-bottom: 15px"
+            ></p>
+            <p style="font-size: 8px; color: #aaa; margin-bottom: 5px">
+              LAST CLOUD SYNC:
+            </p>
+            <p
+              id="authSyncDisplay"
+              style="font-size: 8px; color: #fff; margin-bottom: 15px"
+            >
+              Never
+            </p>
+            <button onclick="pushToCloud()">FORCE PUSH (SAVE)</button>
+            <button onclick="manualPullFromCloud()">FORCE PULL (LOAD)</button>
+            <button onclick="authLogout()" class="special">LOG OUT</button>
+          </div>
+          <button
+            onclick="switchScreen('mainMenuScreen')"
+            style="margin-top: 15px"
+          >
+            BACK TO MENU
+          </button>
+        </div>
+
+        <div
+          id="cloudConflictScreen"
+          class="overlay-screen"
+          style="display: none; border-color: #ff00ff"
+        >
+          <h2 style="font-size: 14px; color: #ff00ff; margin-top: 0">
+            CLOUD CONFLICT
+          </h2>
+          <p
+            style="
+              font-size: 8px;
+              color: #ccc;
+              line-height: 1.6;
+              margin-bottom: 15px;
+            "
+          >
+            A newer or richer save was found in the astral cloud. Overwrite your
+            local progress?
+          </p>
+          <button
+            onclick="acceptCloudSave()"
+            style="
+              background-color: #008b8b;
+              border-color: #00ffff;
+              margin-bottom: 10px;
+            "
+          >
+            DOWNLOAD CLOUD SAVE
+          </button>
+          <button onclick="rejectCloudSave()" class="special">
+            KEEP LOCAL SAVE
+          </button>
+        </div>
+
+        <div id="pauseScreen" class="overlay-screen" style="display: none">
+          <h1 style="color: #ffd700; font-size: 20px; margin: 0 0 15px 0">
+            PAUSED
+          </h1>
+          <button onclick="togglePause()">RESUME</button>
+          <button class="special" onclick="startGame(isBossRush)">
+            RESTART RUN
+          </button>
+          <button onclick="processGameOver(true)">QUIT TO MENU</button>
+        </div>
+
+        <div id="bossWarning" class="boss-warning">BOSS APPROACHING!</div>
+
+        <div id="gameOverScreen" class="overlay-screen" style="display: none">
+          <h1
+            id="gameOverTitle"
+            style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0"
+          >
+            CURSED!
+          </h1>
+          <p id="newRecordAlert" class="new-record">NEW RECORD!</p>
+          <div class="stats-box">
+            <p id="finalScoreText" style="font-size: 12px; margin: 0 0 10px 0">
+              Score: 0
+            </p>
+            <p
+              id="finalComboText"
+              style="font-size: 9px; color: #ffd700; margin: 0 0 10px 0"
+            >
+              Max Combo: x1
+            </p>
+            <p
+              id="finalShardsText"
+              style="font-size: 9px; color: #cc66ff; margin: 0 0 10px 0"
+            >
+              Shards Found: 0
+            </p>
+          </div>
+
+          <p
+            id="loginPromptScore"
+            style="
+              font-size: 8px;
+              color: #ff4444;
+              margin-bottom: 10px;
+              display: none;
+            "
+          >
+            LOG IN TO SUBMIT SCORES
+          </p>
+          <button
+            id="submitScoreBtn"
+            style="
+              display: none;
+              background-color: #008b8b;
+              border-color: #00ffff;
+              margin-bottom: 10px;
+            "
+            onclick="submitScore()"
+          >
+            SUBMIT TO GLOBAL
+          </button>
+
+          <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
+          <button onclick="switchScreen('mainMenuScreen')">MAIN MENU</button>
+          <button onclick="startGame(isBossRush)">RETRY</button>
+        </div>
+      </div>
     </div>
-<script src="./sprites.js"></script>
-<script src="./game.js"></script>
-</body>
+    <script src="./sprites.js"></script>
+    <script src="./game.js"></script>
+  </body>
 </html>
