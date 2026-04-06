@@ -434,7 +434,7 @@ async function openLeaderboard() {
 }
 
 // --- AUTHENTICATION & CLOUD SYNC LOGIC ---
-async function pushToCloud() {
+async function pushToCloud(isManual = false) {
   if (!currentUser) return;
   const payload = {
     user_id: currentUser.id,
@@ -457,6 +457,10 @@ async function pushToCloud() {
     const authSyncDisplay = document.getElementById("authSyncDisplay");
     if (authSyncDisplay)
       authSyncDisplay.innerText = new Date().toLocaleString();
+    if (isManual) alert("Cloud save pushed successfully!");
+  } else {
+    console.error("Cloud Push Error:", error);
+    if (isManual) alert("Error saving to cloud: " + error.message);
   }
 }
 
@@ -545,7 +549,8 @@ function openAccountScreen() {
   if (currentUser) {
     document.getElementById("authLoggedOut").style.display = "none";
     document.getElementById("authLoggedIn").style.display = "block";
-    document.getElementById("authEmailDisplay").innerText = currentUser.email;
+    document.getElementById("authUsernameDisplay").innerText =
+      currentUser.user_metadata?.username || currentUser.email.split("@")[0];
   } else {
     document.getElementById("authLoggedOut").style.display = "block";
     document.getElementById("authLoggedIn").style.display = "none";
@@ -555,7 +560,13 @@ function openAccountScreen() {
 async function authLogin() {
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
-  if (!email || !password) return;
+  if (!email || !password) {
+    document.getElementById("authError").innerText =
+      "Email and password cannot be empty.";
+    document.getElementById("authError").style.color = "#ff4444";
+    document.getElementById("authError").style.display = "block";
+    return;
+  }
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
@@ -576,22 +587,28 @@ async function authLogin() {
 
 async function authRegister() {
   const email = document.getElementById("authEmail").value.trim();
+  const usernameStr = document.getElementById("authUsername").value.trim();
   const password = document.getElementById("authPassword").value;
-  if (!email || !password) {
+  if (!email || !usernameStr || !password) {
     document.getElementById("authError").innerText =
-      "Email and password cannot be empty.";
+      "Email, username, and password are required to create an account.";
     document.getElementById("authError").style.color = "#ff4444";
     document.getElementById("authError").style.display = "block";
+    return;
   }
 
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { data: { username: usernameStr } },
+  });
   if (error) {
     document.getElementById("authError").innerText = error.message;
     document.getElementById("authError").style.color = "#ff4444";
     document.getElementById("authError").style.display = "block";
   } else {
     document.getElementById("authError").innerText =
-      "Check email or try logging in!";
+      "Account created! You can now log in.";
     document.getElementById("authError").style.color = "#39ff14";
     document.getElementById("authError").style.display = "block";
   }
@@ -604,29 +621,29 @@ async function authLogout() {
 }
 
 async function submitScore() {
+  const submitBtn = document.getElementById("submitScoreBtn");
   if (!currentUser) {
     submitBtn.disabled = true;
     submitBtn.innerText = "Log in to submit scores";
+    return;
   }
-  const nameInput = currentUser.email
-    .split("@")[0]
+  const nameInput = (
+    currentUser.user_metadata?.username || currentUser.email.split("@")[0]
+  )
     .toUpperCase()
-    .substring(0, 12);
+    .substring(0, 15);
 
-  const submitBtn = document.getElementById("submitScoreBtn");
   submitBtn.disabled = true;
   submitBtn.innerText = "SUBMITTING...";
 
-  const { error } = await supabaseClient
-    .from("leaderboard")
-    .insert([
-      {
-        name: nameInput,
-        score: score,
-        max_combo: maxComboRun,
-        is_boss_rush: isBossRush,
-      },
-    ]);
+  const { error } = await supabaseClient.from("leaderboard").insert([
+    {
+      name: nameInput,
+      score: score,
+      max_combo: maxComboRun,
+      is_boss_rush: isBossRush,
+    },
+  ]);
 
   if (error) {
     submitBtn.innerText = "ERROR! RETRY?";

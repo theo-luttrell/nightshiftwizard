@@ -603,6 +603,12 @@
           </h2>
           <div id="authLoggedOut" style="width: 100%">
             <input type="email" id="authEmail" placeholder="EMAIL" />
+            <input
+              type="text"
+              id="authUsername"
+              placeholder="USERNAME (NEW ACCOUNTS)"
+              maxlength="15"
+            />
             <input type="password" id="authPassword" placeholder="PASSWORD" />
             <p
               id="authError"
@@ -623,7 +629,7 @@
               LOGGED IN AS:
             </p>
             <p
-              id="authEmailDisplay"
+              id="authUsernameDisplay"
               style="font-size: 8px; color: #fff; margin-bottom: 15px"
             ></p>
             <p style="font-size: 8px; color: #aaa; margin-bottom: 5px">
