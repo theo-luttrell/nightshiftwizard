@@ -82,6 +82,7 @@
 
                 <button onclick="startGame(false)">PLAY RUN</button>
                 <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>
+                <button onclick="openAccountScreen()">ACCOUNT / CLOUD</button>
                 <button onclick="openLeaderboard()">GLOBAL LEADERBOARD</button>
                 <button class="special" onclick="startGame(true)">BOSS RUSH</button>
                 <button onclick="switchScreen('howToPlayScreen')">HOW TO PLAY</button>
@@ -279,6 +280,34 @@
                 <button style="background-color: #006400; border-color: #39ff14; margin-top: 15px;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
             </div>
 
+            <div id="accountScreen" class="overlay-screen" style="display: none;">
+                <h2 style="font-size: 14px; color: #00ffff; margin-top:0;">WIZARD ACCOUNT</h2>
+                <div id="authLoggedOut" style="width: 100%;">
+                    <input type="email" id="authEmail" placeholder="EMAIL">
+                    <input type="password" id="authPassword" placeholder="PASSWORD">
+                    <p id="authError" style="color:#ff4444; font-size:8px; display:none; margin-bottom:10px;"></p>
+                    <button onclick="authLogin()">LOGIN</button>
+                    <button onclick="authRegister()" class="special">CREATE ACCOUNT</button>
+                </div>
+                <div id="authLoggedIn" style="display: none; width: 100%;">
+                    <p style="font-size: 10px; color: #39ff14; margin-bottom:5px;">LOGGED IN AS:</p>
+                    <p id="authEmailDisplay" style="font-size: 8px; color: #fff; margin-bottom: 15px;"></p>
+                    <p style="font-size: 8px; color: #aaa; margin-bottom:5px;">LAST CLOUD SYNC:</p>
+                    <p id="authSyncDisplay" style="font-size: 8px; color: #fff; margin-bottom: 15px;">Never</p>
+                    <button onclick="pushToCloud()">FORCE PUSH (SAVE)</button>
+                    <button onclick="manualPullFromCloud()">FORCE PULL (LOAD)</button>
+                    <button onclick="authLogout()" class="special">LOG OUT</button>
+                </div>
+                <button onclick="switchScreen('mainMenuScreen')" style="margin-top: 15px;">BACK TO MENU</button>
+            </div>
+
+            <div id="cloudConflictScreen" class="overlay-screen" style="display: none; border-color: #ff00ff;">
+                <h2 style="font-size: 14px; color: #ff00ff; margin-top:0;">CLOUD CONFLICT</h2>
+                <p style="font-size: 8px; color: #ccc; line-height: 1.6; margin-bottom: 15px;">A newer or richer save was found in the astral cloud. Overwrite your local progress?</p>
+                <button onclick="acceptCloudSave()" style="background-color: #008b8b; border-color: #00ffff; margin-bottom: 10px;">DOWNLOAD CLOUD SAVE</button>
+                <button onclick="rejectCloudSave()" class="special">KEEP LOCAL SAVE</button>
+            </div>
+
             <div id="pauseScreen" class="overlay-screen" style="display: none;">
                 <h1 style="color: #ffd700; font-size: 20px; margin: 0 0 15px 0;">PAUSED</h1>
                 <button onclick="togglePause()">RESUME</button>
@@ -297,7 +326,7 @@
                     <p id="finalShardsText" style="font-size: 9px; color:#cc66ff; margin: 0 0 10px 0;">Shards Found: 0</p>
                 </div>
                 
-                <input type="text" id="playerNameInput" placeholder="ENTER NAME" maxlength="12" style="display: none;">
+                <p id="loginPromptScore" style="font-size: 8px; color: #ff4444; margin-bottom: 10px; display: none;">LOG IN TO SUBMIT SCORES</p>
                 <button id="submitScoreBtn" style="display: none; background-color: #008b8b; border-color: #00ffff; margin-bottom: 10px;" onclick="submitScore()">SUBMIT TO GLOBAL</button>
 
                 <button class="shop-btn" onclick="openShop()">WIZARD'S SHOP</button>

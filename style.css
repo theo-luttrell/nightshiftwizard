@@ -91,7 +91,9 @@ button:disabled { background-color: #222 !important; border-color: #444 !importa
 label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
 input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
 
-input[type="text"] {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
     background: #111; color: #fff; border: 2px solid #8a3a8a;
     padding: 10px; font-family: inherit; font-size: 10px;
     text-transform: uppercase; width: 90%; text-align: center;

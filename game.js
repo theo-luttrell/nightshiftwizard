@@ -2,7 +2,7 @@
 const supabaseUrl = 'https://dmpsaindnowmxybrwoem.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcHNhaW5kbm93bXh5YnJ3b2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTA5ODAsImV4cCI6MjA5MDg4Njk4MH0.dUULkS_k_T8rTHy7czQfrjWvoxhEllYWGtwtsGIk-5o';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-let savedPlayerName = localStorage.getItem('nsw_playerName') || '';
+let currentUser = null;
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -17,7 +17,9 @@ const screens = {
     'pauseScreen': document.getElementById('pauseScreen'),
     'shopScreen': document.getElementById('shopScreen'),
     'leaderboardScreen': document.getElementById('leaderboardScreen'),
-    'eulaScreen': document.getElementById('eulaScreen')
+    'eulaScreen': document.getElementById('eulaScreen'),
+    'accountScreen': document.getElementById('accountScreen'),
+    'cloudConflictScreen': document.getElementById('cloudConflictScreen')
 };
 const pauseBtn = document.getElementById('pauseBtn');
 const gameOverTitle = document.getElementById('gameOverTitle');
@@ -76,7 +78,7 @@ document.getElementById('menuHighScore').innerText = highScore;
 document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
 document.getElementById('menuShards').innerText = arcaneShards;
 
-function saveMeta() {
+function saveLocalOnly() {
     localStorage.setItem('nsw_highScore', highScore);
     localStorage.setItem('nsw_maxCombo', maxComboAllTime);
     localStorage.setItem('nsw_shards', arcaneShards);
@@ -88,8 +90,18 @@ function saveMeta() {
     localStorage.setItem('nsw_companions', JSON.stringify(companions));
     localStorage.setItem('nsw_activeCompanion', activeCompanion);
     localStorage.setItem('nsw_shopTutorial', hasSeenShopTutorial);
+    localStorage.setItem('nsw_lastSaved', new Date().toISOString());
     
     document.getElementById('menuShards').innerText = arcaneShards;
+    document.getElementById('menuHighScore').innerText = highScore;
+    document.getElementById('menuMaxCombo').innerText = maxComboAllTime;
+}
+
+function saveMeta() {
+    saveLocalOnly();
+    if (currentUser) {
+        pushToCloud();
+    }
 }
 
 function getUpgradeCost(baseCost, level) {
@@ -335,12 +347,153 @@ async function openLeaderboard() {
     ).join('');
 }
 
-async function submitScore() {
-    const nameInput = document.getElementById('playerNameInput').value.trim().toUpperCase();
-    if (!nameInput) return;
+// --- AUTHENTICATION & CLOUD SYNC LOGIC ---
+async function pushToCloud() {
+    if (!currentUser) return;
+    const payload = {
+        user_id: currentUser.id,
+        high_score: highScore,
+        max_combo: maxComboAllTime,
+        arcane_shards: arcaneShards,
+        upgrades: upgrades,
+        skins: skins,
+        relics: relics,
+        active_skin: activeSkin,
+        active_relic: activeRelic,
+        companions: companions,
+        active_companion: activeCompanion,
+        last_synced: new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('player_saves').upsert(payload, { onConflict: 'user_id' });
+    if (!error) {
+        const authSyncDisplay = document.getElementById('authSyncDisplay');
+        if (authSyncDisplay) authSyncDisplay.innerText = new Date().toLocaleString();
+    }
+}
+
+async function checkCloudSync() {
+    const { data, error } = await supabaseClient.from('player_saves').select('*').eq('user_id', currentUser.id).single();
+    if (data) {
+        const authSyncDisplay = document.getElementById('authSyncDisplay');
+        if (authSyncDisplay) authSyncDisplay.innerText = new Date(data.last_synced).toLocaleString();
+        
+        const cloudTime = new Date(data.last_synced).getTime();
+        const localTimeStr = localStorage.getItem('nsw_lastSaved');
+        const localTime = localTimeStr ? new Date(localTimeStr).getTime() : 0;
+
+        if (cloudTime > localTime) {
+            window.pendingCloudData = data;
+            switchScreen('cloudConflictScreen');
+            return true;
+        } else if (localTime > cloudTime) {
+            pushToCloud();
+        }
+    } else {
+        pushToCloud();
+    }
+    return false;
+}
+
+function applyCloudData(data) {
+    highScore = data.high_score || 0;
+    maxComboAllTime = data.max_combo || 1;
+    arcaneShards = data.arcane_shards || 0;
+    upgrades = data.upgrades || { potion: 0, boots: 0, magnet: 0, blast: 0 };
+    skins = data.skins || { wizard: true, pyromancer: false, necromancer: false };
+    relics = data.relics || { none: true, glass_cannon: false, lead_boots: false };
+    activeSkin = data.active_skin || 'wizard';
+    activeRelic = data.active_relic || 'none';
+    if (data.companions) companions = data.companions;
+    if (data.active_companion) activeCompanion = data.active_companion;
     
-    localStorage.setItem('nsw_playerName', nameInput);
-    savedPlayerName = nameInput;
+    localStorage.setItem('nsw_lastSaved', data.last_synced);
+    saveLocalOnly();
+    updateShopUI();
+}
+
+function acceptCloudSave() {
+    applyCloudData(window.pendingCloudData);
+    window.pendingCloudData = null;
+    switchScreen('mainMenuScreen');
+}
+
+function rejectCloudSave() {
+    window.pendingCloudData = null;
+    pushToCloud();
+    switchScreen('mainMenuScreen');
+}
+
+async function manualPullFromCloud() {
+    if (!currentUser) return;
+    const { data, error } = await supabaseClient.from('player_saves').select('*').eq('user_id', currentUser.id).single();
+    if (data) {
+        applyCloudData(data);
+        const authSyncDisplay = document.getElementById('authSyncDisplay');
+        if (authSyncDisplay) authSyncDisplay.innerText = new Date(data.last_synced).toLocaleString();
+        alert("Cloud save pulled successfully!");
+    } else {
+        alert("No cloud save found.");
+    }
+}
+
+function openAccountScreen() {
+    switchScreen('accountScreen');
+    document.getElementById('authError').style.display = 'none';
+    if (currentUser) {
+        document.getElementById('authLoggedOut').style.display = 'none';
+        document.getElementById('authLoggedIn').style.display = 'block';
+        document.getElementById('authEmailDisplay').innerText = currentUser.email;
+    } else {
+        document.getElementById('authLoggedOut').style.display = 'block';
+        document.getElementById('authLoggedIn').style.display = 'none';
+    }
+}
+
+async function authLogin() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) return;
+    
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+        document.getElementById('authError').innerText = error.message;
+        document.getElementById('authError').style.color = '#ff4444';
+        document.getElementById('authError').style.display = 'block';
+    } else {
+        currentUser = data.user;
+        const hasConflict = await checkCloudSync();
+        if (!hasConflict) {
+            openAccountScreen();
+        }
+    }
+}
+
+async function authRegister() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) return;
+    
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) {
+        document.getElementById('authError').innerText = error.message;
+        document.getElementById('authError').style.color = '#ff4444';
+        document.getElementById('authError').style.display = 'block';
+    } else {
+        document.getElementById('authError').innerText = "Check email or try logging in!";
+        document.getElementById('authError').style.color = "#39ff14";
+        document.getElementById('authError').style.display = 'block';
+    }
+}
+
+async function authLogout() {
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    openAccountScreen();
+}
+
+async function submitScore() {
+    if (!currentUser) return;
+    const nameInput = currentUser.email.split('@')[0].toUpperCase().substring(0, 12);
     
     const submitBtn = document.getElementById('submitScoreBtn');
     submitBtn.disabled = true;
@@ -661,20 +814,24 @@ function processGameOver(aborted = false) {
     finalShardsText.innerText = `Shards Found: ${runShards}`;
     newRecordAlert.style.display = isNewRecord ? 'block' : 'none';
 
-    const nameInput = document.getElementById('playerNameInput');
     const submitBtn = document.getElementById('submitScoreBtn');
+    const loginPrompt = document.getElementById('loginPromptScore');
     
     if (!aborted && !isBossRush && score > 0 && (!isInvincible || allowInvincibleLB)) {
-        nameInput.style.display = 'block';
-        nameInput.value = savedPlayerName; 
-        submitBtn.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'SUBMIT TO GLOBAL';
-        submitBtn.style.backgroundColor = '#008b8b';
-        submitBtn.style.borderColor = '#00ffff';
+         if (currentUser) {
+                submitBtn.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'SUBMIT TO GLOBAL';
+                submitBtn.style.backgroundColor = '#008b8b';
+                submitBtn.style.borderColor = '#00ffff';
+                if(loginPrompt) loginPrompt.style.display = 'none';
+            } else {
+                submitBtn.style.display = 'none';
+                if(loginPrompt) loginPrompt.style.display = 'block';
+            }
     } else {
-        nameInput.style.display = 'none';
         submitBtn.style.display = 'none';
+        if(loginPrompt) loginPrompt.style.display = 'none';
     }
 
     switchScreen('gameOverScreen');
@@ -1028,11 +1185,21 @@ function render() {
     }
 }
 
-if (!shownEula) {
-    document.getElementById('mainMenuScreen').style.display = 'none';
-    showEula(true);
-} else {
-    switchScreen('mainMenuScreen');
-}
-
-requestAnimationFrame(update);
+(async function initGame() {
+    const { data } = await supabaseClient.auth.getSession();
+    currentUser = data?.session?.user || null;
+    
+    if (!shownEula) {
+        document.getElementById('mainMenuScreen').style.display = 'none';
+        showEula(true);
+    } else {
+        let hasConflict = false;
+        if (currentUser) {
+            hasConflict = await checkCloudSync();
+        }
+        if (!hasConflict) {
+            switchScreen('mainMenuScreen');
+        }
+    }
+    requestAnimationFrame(update);
+})();
