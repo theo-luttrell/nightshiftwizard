@@ -55,6 +55,10 @@ let activeSkin = localStorage.getItem('nsw_activeSkin') || 'wizard';
 let relics = JSON.parse(localStorage.getItem('nsw_relics')) || { none: true, glass_cannon: false, lead_boots: false };
 let activeRelic = localStorage.getItem('nsw_activeRelic') || 'none';
 
+
+let companions = JSON.parse(localStorage.getItem('nsw_companions')) || { none: true, void_wisp: false, ember_bat: false, chrono_snail: false };
+let activeCompanion = localStorage.getItem('nsw_activeCompanion') || 'none';
+
 let hasSeenShopTutorial = localStorage.getItem('nsw_shopTutorial') === 'true';
 let shopDialogueIndex = 0;
 let isShopDialogueActive = false;
@@ -64,6 +68,7 @@ const shopTutorialLines = [
     "UPGRADES permanently enhance your potions and spells.",
     "WARDROBE alters your mystical appearance.",
     "RELICS drastically change the rules of a run.",
+    "COMPANIONS will fight by your side.",
     "Choose wisely. The night is long..."
 ];
 
@@ -80,6 +85,8 @@ function saveMeta() {
     localStorage.setItem('nsw_activeSkin', activeSkin);
     localStorage.setItem('nsw_relics', JSON.stringify(relics));
     localStorage.setItem('nsw_activeRelic', activeRelic);
+    localStorage.setItem('nsw_companions', JSON.stringify(companions));
+    localStorage.setItem('nsw_activeCompanion', activeCompanion);
     localStorage.setItem('nsw_shopTutorial', hasSeenShopTutorial);
     
     document.getElementById('menuShards').innerText = arcaneShards;
@@ -112,6 +119,8 @@ let baseSpeed = 150;
 let rocketTimer = 0;
 let magnetTimer = 0;
 let laserTimer = 0;
+let emberBatTimer = 0;
+let allyProjectiles = [];
 let keys = { left: false, right: false };
 
 let maxComboRun = 1;
@@ -402,6 +411,24 @@ function updateShopUI() {
             btn.onclick = () => buyRelic(relic, 10);
         }
     });
+    
+    ['none', 'void_wisp', 'ember_bat', 'chrono_snail'].forEach(comp => {
+        let btn = document.getElementById('btnBuyComp_' + comp);
+        let status = document.getElementById('statusComp_' + comp);
+        
+        if (companions[comp]) {
+            if (status) { status.innerText = "Owned"; status.style.color = "#39ff14"; }
+            btn.innerText = activeCompanion === comp ? 'EQUIPPED' : 'EQUIP';
+            btn.disabled = activeCompanion === comp;
+            btn.onclick = () => buyCompanion(comp, 0);
+        } else {
+            if (status) { status.innerText = "Locked"; status.style.color = "#ff4444"; }
+            let cost = comp === 'void_wisp' ? 250 : comp === 'ember_bat' ? 500 : 750;
+            btn.innerHTML = `♦ ${cost}`;
+            btn.disabled = arcaneShards < cost;
+            btn.onclick = () => buyCompanion(comp, cost);
+        }
+    });
 }
 
 function openShop() {
@@ -455,6 +482,19 @@ function buyRelic(relicId, cost) {
     }
     if (relics[relicId]) {
         activeRelic = relicId;
+    }
+    saveMeta();
+    updateShopUI();
+}
+
+function buyCompanion(compId, cost) {
+    if (!companions[compId] && arcaneShards >= cost) {
+        arcaneShards -= cost;
+        companions[compId] = true;
+        playSound('chime');
+    }
+    if (companions[compId]) {
+        activeCompanion = compId;
     }
     saveMeta();
     updateShopUI();
@@ -654,8 +694,9 @@ function startGame(rushMode = false) {
     baseSpeed = 150; 
     player.speed = activeRelic === 'lead_boots' ? NORMAL_SPEED * 0.7 : NORMAL_SPEED;
     
-    rocketTimer = 0; magnetTimer = 0; laserTimer = 0; shakeTimer = 0; 
-    keys = { left: false, right: false }; 
+    rocketTimer = 0; magnetTimer = 0; laserTimer = 0; shakeTimer = 0;
+    emberBatTimer = 0; allyProjectiles = [];
+    keys = { left: false, right: false };
     
     bossLevel = 0; bossActive = false; nextBossScore = 1500; 
     
@@ -714,6 +755,34 @@ function update(timestamp) {
         rocketTimer -= dt; worldDt = dt * 5; 
         if (Math.random() > 0.3) spawnParticles(player.x + player.w/2, player.y + player.h, '#39ff14');
     }
+    
+    if (activeCompanion === 'ember_bat' && gameState === 'PLAYING') {
+        emberBatTimer += worldDt;
+        if (emberBatTimer > 2.5) {
+            emberBatTimer = 0;
+            allyProjectiles.push({ x: player.x - 16, y: player.y, w: 12, h: 12, speed: 250, sprite: allyFireballSprite });
+            playSound('bloop');
+        }
+    }
+    
+    for (let i = allyProjectiles.length - 1; i >= 0; i--) {
+        let p = allyProjectiles[i];
+        p.y -= p.speed * worldDt;
+        let hitHazard = false;
+        for (let j = items.length - 1; j >= 0; j--) {
+            let item = items[j];
+            let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
+            if (isBad && p.x < item.x + item.w && p.x + p.w > item.x && p.y < item.y + item.h && p.y + p.h > item.y) {
+                spawnParticles(item.x + item.w/2, item.y + item.h/2, '#ff4444');
+                score += 20 * comboMult * (activeRelic === 'glass_cannon' ? 2 : 1);
+                items.splice(j, 1);
+                hitHazard = true;
+                break;
+            }
+        }
+        if (hitHazard || p.y < -50) allyProjectiles.splice(i, 1);
+    }
+
     if (magnetTimer > 0) magnetTimer -= dt;
     if (laserTimer > 0) laserTimer -= dt;
     if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboMult = 1; }
@@ -780,11 +849,18 @@ function update(timestamp) {
     
     for (let i = items.length - 1; i >= 0; i--) {
         let item = items[i];
-        item.y += item.speed * worldDt;
-        item.x += (item.vx || 0) * worldDt;
+        let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
+        let speedMult = (activeCompanion === 'chrono_snail' && isBad) ? 0.75 : 1;
+        
+        item.y += item.speed * worldDt * speedMult;
+        item.x += (item.vx || 0) * worldDt * speedMult;
         
         if (item.type === 'phantom') { item.wave += worldDt * 5; item.x += Math.sin(item.wave) * 150 * worldDt; }
         if (item.type === 'specter' && item.y < V_HEIGHT * 0.6) { item.x += Math.sign(player.x - item.x) * 40 * worldDt; }
+        if (activeCompanion === 'void_wisp' && item.type === 'shard') {
+            item.x += Math.sign(player.x - item.x) * 120 * dt;
+            item.y += Math.sign(player.y - item.y) * 120 * dt;
+        }
         if (item.type === 'bat' && item.y > V_HEIGHT * 0.35 && !item.split) {
             items.push({ x: item.x, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: -100, color: item.color });
             items.push({ x: item.x + 8, y: item.y, w: 16, h: 16, type: 'smallBat', sprite: batSprite, speed: item.speed * 1.3, vx: 100, color: item.color });
@@ -792,7 +868,6 @@ function update(timestamp) {
         }
         if (magnetTimer > 0 && ['star','comet','holyStar','shard'].includes(item.type)) item.x += Math.sign(player.x - item.x) * 150 * dt; 
         
-        let isBad = ['skull', 'phantom', 'fireball', 'specter', 'bat', 'smallBat'].includes(item.type);
         let scoreMult = activeRelic === 'glass_cannon' ? 2 : 1;
 
         if (laserTimer > 0 && item.x < player.x + 20 && item.x + item.w > player.x + 12 && item.y < player.y) {
@@ -905,6 +980,14 @@ function render() {
 
     if (gameState === 'PLAYING') drawPixelSpriteToCtx(ctx, currentSprite, player.x, player.y, player.w);
     items.forEach(item => drawPixelSpriteToCtx(ctx, item.sprite, item.x, item.y, item.w));
+
+    allyProjectiles.forEach(p => drawPixelSpriteToCtx(ctx, p.sprite, p.x, p.y, p.w));
+        if (activeCompanion !== 'none' && gameState === 'PLAYING') {
+            let compSprite = wispSprite;
+            if (activeCompanion === 'ember_bat') compSprite = friendlyBatSprite;
+            else if (activeCompanion === 'chrono_snail') compSprite = snailSprite;
+            drawPixelSpriteToCtx(ctx, compSprite, player.x - 22, player.y + 10 + Math.sin(performance.now() / 200) * 4, 16);
+        }
     
     if (bossActive && boss.y > -boss.h) {
         drawPixelSpriteToCtx(ctx, bossSprites[boss.type], boss.x, boss.y, boss.w);

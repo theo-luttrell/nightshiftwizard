@@ -176,7 +176,7 @@ button.shop-btn { background-color: #4a0e4e; border-color: #cc66ff; color: #ffd7
 
 #pauseBtn {
     display: none; position: absolute; top: 10px; right: 10px; cursor: pointer; 
-    font-size: 16px; color: #fff; z-index: 100; pointer-events: auto;
+    font-size: 32px; color: #fff; z-index: 100; pointer-events: auto;
     text-shadow: 2px 2px 0 #000; transition: transform 0.2s;
 }
 #pauseBtn:hover { transform: scale(1.2); }
