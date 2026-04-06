@@ -6,190 +6,7 @@
     <title>Night Shift Wizard: Arcane Overdrive (v5.2)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0b0b1a;
-            color: #fff;
-            font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none;
-        }
-        #game-container {
-            position: relative;
-            box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
-            border: 4px solid #333;
-            background-color: #050510;
-        }
-        canvas {
-            display: block;
-            image-rendering: pixelated;
-            background: linear-gradient(to bottom, #050510 0%, #111128 100%);
-            cursor: none;
-        }
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .overlay-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            text-align: center;
-            background: rgba(5, 5, 16, 0.95);
-            padding: 20px;
-            pointer-events: auto;
-            border: 2px solid #5d275d;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 280px;
-            max-height: 85%;
-            overflow-y: auto;
-        }
-        .overlay-screen::-webkit-scrollbar { width: 8px; }
-        .overlay-screen::-webkit-scrollbar-track { background: #111; }
-        .overlay-screen::-webkit-scrollbar-thumb { background: #8a3a8a; border-radius: 4px; }
-
-        /* Custom scrollbar for EULA text box */
-        #eulaContent::-webkit-scrollbar { width: 6px; }
-        #eulaContent::-webkit-scrollbar-track { background: #000; }
-        #eulaContent::-webkit-scrollbar-thumb { background: #ff00ff; border-radius: 3px; }
-
-        .pixel-title {
-            font-size: 20px;
-            color: #ff00ff;
-            text-shadow: 3px 3px 0px #3e1a5f;
-            margin-bottom: 5px;
-            line-height: 1.4;
-            cursor: pointer;
-        }
-        .subtitle { font-size: 10px; color: #00ffff; margin-top: 0; margin-bottom: 20px; }
-        .menu-text { font-size: 9px; line-height: 1.8; margin-bottom: 15px; color: #e0e0e0; }
-        
-        .boss-warning {
-            display: none; position: absolute; top: 35%; color: #ff4444;
-            font-size: 14px; text-shadow: 2px 2px 0px #000;
-            animation: blink 0.4s infinite alternate;
-        }
-        @keyframes blink { from { opacity: 1; } to { opacity: 0; } }
-        
-        button {
-            background-color: #3e1a5f; color: white; border: 2px solid #8a3a8a;
-            padding: 12px; font-size: 10px; cursor: pointer; margin-top: 10px;
-            font-family: inherit; width: 100%; text-transform: uppercase;
-            transition: all 0.2s; flex-shrink: 0;
-        }
-        button:hover:not(:disabled) { background-color: #6a31a1; transform: scale(1.02); }
-        button:active:not(:disabled) { background-color: #ff00ff; }
-        button:disabled { background-color: #222 !important; border-color: #444 !important; color: #666 !important; cursor: not-allowed; transform: none; }
-        
-        label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
-        input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
-        
-        input[type="text"] {
-            background: #111; color: #fff; border: 2px solid #8a3a8a;
-            padding: 10px; font-family: inherit; font-size: 10px;
-            text-transform: uppercase; width: 90%; text-align: center;
-            margin-bottom: 10px; box-sizing: border-box;
-        }
-        input[type="text"]:focus { outline: none; border-color: #00ffff; }
-        
-        .stats-box { background: rgba(0,0,0,0.5); border: 1px solid #3e1a5f; padding: 8px; margin-bottom: 10px; border-radius: 4px; width: 90%; }
-        .shard-display { color: #cc66ff; font-size: 12px; text-shadow: 1px 1px 0 #000; margin-bottom: 10px; }
-        .new-record { display: none; color: #39ff14; font-size: 10px; margin-top: -5px; margin-bottom: 10px; animation: blink 0.3s infinite alternate; }
-        button.special { background-color: #8b0000; border-color: #ff4444; }
-        button.special:hover:not(:disabled) { background-color: #cc0000; }
-        button.shop-btn { background-color: #4a0e4e; border-color: #cc66ff; color: #ffd700; }
-        
-        /* Split Layout for Shop */
-        #shopScreen {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: flex-start;
-            width: 95%;
-            max-width: 480px;
-            padding: 15px;
-            overflow: hidden; 
-        }
-        #shopLeftPanel {
-            width: 65%;
-            max-height: 100%;
-            overflow-y: auto;
-            padding-right: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #shopLeftPanel::-webkit-scrollbar { width: 6px; }
-        #shopLeftPanel::-webkit-scrollbar-track { background: #111; }
-        #shopLeftPanel::-webkit-scrollbar-thumb { background: #8a3a8a; border-radius: 3px; }
-
-        #shopRightPanel {
-            width: 32%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: sticky;
-            top: 10px;
-        }
-
-        /* Item Cards */
-        .shop-item {
-            background: linear-gradient(135deg, #1a0a2a 0%, #2d134d 100%);
-            border: 2px solid #8a3a8a;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-            width: 100%; 
-            box-sizing: border-box;
-            text-align: left;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .shop-item:hover { transform: translateY(-2px); border-color: #00ffff; }
-        .shop-item h3 { margin: 0 0 5px 0; font-size: 10px; color: #00ffff; text-shadow: 1px 1px 0 #000; }
-        .shop-item p { margin: 0 0 10px 0; font-size: 8px; color: #ccc; line-height: 1.4; }
-        .shop-item-row { display: flex; justify-content: space-between; align-items: center; }
-        .shop-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 8px; }
-        
-        /* Dialogue Box */
-        .dialogue-box {
-            background: rgba(0,0,0,0.85);
-            border: 2px dashed #00ffff;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 8px;
-            color: #fff;
-            margin-bottom: 15px;
-            line-height: 1.6;
-            min-height: 60px;
-            cursor: pointer;
-            text-align: left;
-        }
-        .dialogue-box span { color: #ffd700; font-size: 6px; display: block; margin-top: 8px; text-align: right; animation: blink 1s infinite alternate; }
-
-        #pauseBtn {
-            display: none; position: absolute; top: 10px; right: 10px; cursor: pointer; 
-            font-size: 32px; color: #fff; z-index: 100; pointer-events: auto;
-            text-shadow: 2px 2px 0 #000; transition: transform 0.2s;
-        }
-        #pauseBtn:hover { transform: scale(1.2); }
-    </style>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <div id="game-container">
@@ -378,7 +195,7 @@
                         Welcome, initiate...
                         <span>CLICK TO CONTINUE</span>
                     </div>
-                    <canvas id="shopWizardCanvas" width="64" height="64" style="image-rendering: pixelated;"></canvas>
+                    <canvas id="shopWizardCanvas" width="64" height="64" style="image-rendering: pixelated;" onclick="registerShopkeeperClick()"></canvas>
                 </div>
             </div>
 
@@ -412,10 +229,15 @@
             </div>
             
             <div id="devToolsScreen" class="overlay-screen" style="display: none; border-color: #39ff14;">
-                <h2 style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
+                <h2 id="devToolsTitle" style="font-size: 14px; color: #39ff14; text-shadow: 2px 2px 0px #000;">DEV TOOLS</h2>
                 <label style="color: #39ff14;"><input type="checkbox" id="invincibilityToggle" onchange="toggleInvincibility()"> INVINCIBILITY</label>
                 <button style="background-color: #8a2be2; border-color: #cc66ff;" onclick="arcaneShards+=1000; saveMeta(); updateShopUI();">ADD 1000 SHARDS</button>
-                <button style="background-color: #006400; border-color: #39ff14;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
+                
+                <label id="secretLbLabel" style="color: #ff4444; display: none; margin-top: 15px;">
+                    <input type="checkbox" id="allowInvincibleLBToggle" onchange="toggleAllowInvincibleLB()"> ALLOW INVINCIBLE LB
+                </label>
+                
+                <button style="background-color: #006400; border-color: #39ff14; margin-top: 15px;" onclick="switchScreen('mainMenuScreen')">CLOSE MENU</button>
             </div>
 
             <div id="pauseScreen" class="overlay-screen" style="display: none;">
@@ -446,7 +268,9 @@
             
         </div>
     </div>
+<script src="./sprites.js"></script>
 <script>
+    // --- SUPABASE CONFIG ---
     const supabaseUrl = 'https://dmpsaindnowmxybrwoem.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcHNhaW5kbm93bXh5YnJ3b2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTA5ODAsImV4cCI6MjA5MDg4Njk4MH0.dUULkS_k_T8rTHy7czQfrjWvoxhEllYWGtwtsGIk-5o';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -485,7 +309,10 @@
     let isMuted = false;
     let showBgStars = true;
     let secretClicks = 0;
+    let shopkeeperClicks = 0;
+    
     let isInvincible = false;
+    let allowInvincibleLB = false;
 
     // --- META-PROGRESSION & SAVES ---
     let highScore = parseInt(localStorage.getItem('nsw_highScore')) || 0;
@@ -610,247 +437,6 @@
         shakeMag = magnitude;
     }
 
-    // --- RAW PIXEL ART DATA & SLICING ---
-    const colors = {
-        'tr': 'transparent', 'bl': '#000000', 'wh': '#ffffff', 'sk': '#e0e0e0', 
-        'pu': '#6a31a1', 'dp': '#3e1a5f', 'go': '#ffd700', 'or': '#ffa500', 
-        'rd': '#ff4444', 'dr': '#8b0000', 'be': '#333333', 'cy': '#00ffff', 'dc': '#008b8b',
-        'lg': '#32cd32', 'dg': '#006400', 'vi': '#8a2be2', 'gy': '#a9a9a9',
-        'mg': '#ff00ff', 'ng': '#39ff14', 'lb': '#33ccff', 'bk': '#111111'
-    };
-
-    const rawEyeBoss = [
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#f2bece', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent'],
-        ['transparent', '#f2bece', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent'],
-        ['#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff'],
-        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#181425', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'],
-        ['#ffccda', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#181425', '#181425', '#181425', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffccda'],
-        ['transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ff0044', '#ff0044', '#181425', '#ff0044', '#ff0044', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent'],
-        ['transparent', 'transparent', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ff0044', '#ff0044', '#ff0044', '#ffffff', '#ffffff', '#ffffff', '#ffccda', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#ffffff', '#ffccda', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffccda', '#ffffff', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ffffff', '#ffffff', '#ffccda', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-    ];
-
-    const rawPhantoms = [
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#67396c', 'transparent', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#2ce8f5', 'transparent', '#2ce8f5', 'transparent', 'transparent'],
-        ['transparent', '#814075', 'transparent', '#67396c', 'transparent', '#814075', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#2ce8f5', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-    ];
-
-    const rawPhantomBoss = [
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d08b45', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d08b45', '#d48d44', '#d48d44'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#67396c', '#67396c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#42aac4', '#42aac4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', 'transparent', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#c5814a', '#c5814a', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44'],
-        ['transparent', 'transparent', 'transparent', '#68386d', '#68386d', 'transparent', 'transparent', 'transparent', 'transparent', '#68386d', '#68386d', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4b92b1', '#4994b4', '#4b8aab', '#4b8aab', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b8aab', '#4b8aab', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', 'transparent', '#d48d44', '#d08b45', '#d48d44', '#cc8847', '#cc8847', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#cc8847', '#cc8847', '#d48d44', '#d08b45', '#d48d44', '#d08b45'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', 'transparent', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', '#4994b4', '#4b92b1', '#4b92b1', 'transparent', 'transparent', 'transparent', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d08b45', '#d48d44', '#d08b45', '#d08b45', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#4b92b1', '#4994b4', '#4994b4', '#4994b4', '#4994b4', '#4b92b1', '#4994b4', '#4994b4', '#4b92b1', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#d08b45', '#d48d44', '#d48d44', '#d48d44', '#d48d44', '#d08b45', '#d48d44', '#d48d44', '#d08b45', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-    ];
-
-    const rawPlayer = [
-        ['transparent', 'transparent', 'transparent', '#844789', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#eb0c50', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#5cb947', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', '#68386c', '#844789', '#844789', '#844789', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#eb0c50', '#eb0c50', '#eb0c50', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#5cb947', '#5cb947', '#5cb947', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#5d3260', '#5d3260', '#5d3260', '#5d3260', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#f00040', '#f00040', '#f00040', '#f00040', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#5cb947', '#5cb947', '#5cb947', '#5cb947', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#68386c', '#5d3260', '#5d3260', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#f00040', '#f00040', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#5cb947', '#5cb947', '#63c74d', 'transparent', 'transparent', 'transparent'],
-        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', 'transparent', 'transparent'],
-        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', '#68386c', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157'],
-        ['transparent', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', 'transparent', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#63c74d', '#63c74d'],
-        ['#68386c', '#68386c', '#b55088', '#68386c', '#b55088', '#68386c', '#68386c', '#68386c', '#68386c', 'transparent', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#feae34', 'transparent', '#63c74d', '#63c74d', '#70e157', '#70e157', '#63c74d', '#63c74d', '#70e157', '#63c74d', '#70e157'],
-        ['#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', 'transparent', '#feae34', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#ff0044', '#feae34', '#ff0044', '#feae34', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157', '#63c74d', '#63c74d', '#70e157'],
-        ['#b55088', '#68386c', '#68386c', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', 'transparent', 'transparent', '#feae34', '#ff0044', '#feae34', '#ff0044', '#feae34', '#ff0044', '#ff0044', '#feae34', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#63c74d', '#70e157', 'transparent'],
-        ['transparent', '#b55088', '#68386c', '#b55088', '#68386c', '#68386c', '#b55088', '#b55088', 'transparent', 'transparent', 'transparent', '#feae34', '#ff0044', '#ff0044', '#ff0044', '#feae34', '#feae34', '#feae34', 'transparent', 'transparent', 'transparent', '#70e157', '#63c74d', '#63c74d', '#63c74d', '#70e157', '#70e157', '#70e157', 'transparent'],
-        ['transparent', '#b55088', '#b55088', '#68386c', '#b55088', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#feae34', '#feae34', '#feae34', '#feae34', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#70e157', '#70e157', '#70e157', '#70e157', '#181425', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', '#181425', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-    ];
-
-    const rawSkulls = [
-        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#eceff4', '#eceff4', 'transparent', 'transparent', 'transparent', '#fec647', '#fee761', '#fed855', '#fec647', '#fec647', 'transparent'],
-        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#eceff4', 'transparent', '#fec647', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fec647'],
-        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855'],
-        ['#ffffff', '#181425', '#181425', '#ffffff', '#181425', '#181425', '#ffffff', 'transparent', '#fee761', '#feae34', '#feae34', '#fee761', '#feae34', '#feae34', '#fee761'],
-        ['#ffffff', '#ffffff', '#ffffff', '#181425', '#ffffff', '#ffffff', '#ffffff', 'transparent', '#fee761', '#fee761', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761'],
-        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', 'transparent'],
-        ['transparent', '#ffffff', 'transparent', '#ffffff', 'transparent', '#ffffff', 'transparent', 'transparent', 'transparent', '#fee761', 'transparent', '#fee761', 'transparent', '#fee761', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#9c487f', '#9c487f', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#9c487f'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#68386c', '#68386c', '#b55088', '#68386c', '#68386c', '#b55088'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#68386c', '#b55088', '#b55088', '#b55088'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', '#b55088', '#b55088', '#b55088', '#b55088', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#b55088', 'transparent', '#b55088', 'transparent', '#b55088', 'transparent']
-    ];
-
-    const rawSkullBoss = [
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#cbcdce', '#ffffff', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#fff4e3', '#fff4e3', '#fff4e3', '#fff4e3', '#fff4e3', 'transparent', 'transparent'],
-        ['transparent', '#ffffff', '#c3c5c7', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fffbf5', '#fff4e3', 'transparent'],
-        ['transparent', '#ffffff', '#ffffff', '#cbcdce', '#ffffff', '#ffffff', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#ffffff', '#fffbf5', '#fffbf5', '#fff4e3', 'transparent'],
-        ['#ffffff', '#ffffff', '#c3c5c7', '#ffffff', '#c3c5c7', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#ffffff', '#ffffff', '#fffbf5', '#fff4e3'],
-        ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fffbf5', '#fff4e3'],
-        ['#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#edf1f5', '#ffffff', '#ffffff', '#ffffff', '#edf1f5', '#181425', '#181425', '#fffbf5', '#ffffff', '#fff4e3'],
-        ['#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#181425', '#ffffff', '#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#181425', '#ffffff', '#ffffff'],
-        ['#fff4e3', '#ffffff', '#ffffff', '#181425', '#181425', '#181425', '#ffffff', '#181425', '#ffffff', '#181425', '#181425', '#181425', '#ffffff', '#ffffff', '#ffffff'],
-        ['transparent', '#ffffff', '#ffffff', '#ffffff', '#edf1f5', '#edf1f5', '#181425', '#181425', '#181425', '#edf1f5', '#edf1f5', '#ffffff', '#ffffff', '#ffffff', 'transparent'],
-        ['transparent', '#ffffff', '#fffbf5', '#ffffff', '#ffffff', '#ffffff', '#181425', '#edf1f5', '#181425', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fff4e3', 'transparent'],
-        ['transparent', '#fff4e3', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#fff4e3', '#fff4e3', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#fff4e3', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#ffebcb', '#ffffff', 'transparent', '#ffebcb', '#fff4e3', '#ffffff', 'transparent', '#fff4e3', '#ffebcb', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', '#feae34', '#fee761', '#fee25d', '#fee761', '#fee25d', '#fee25d', '#fed855', '#fed855', '#fed855', '#fed855', '#fed855', 'transparent', 'transparent'],
-        ['transparent', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fee25d', '#fee25d', '#fee25d', '#fee25d', '#fed855', '#fed855', 'transparent'],
-        ['transparent', '#fee761', '#fee761', '#feae34', '#fee761', '#fee761', '#fee25d', '#fee761', '#fee25d', '#fed855', '#fee761', '#fed855', '#fee25d', '#fed855', 'transparent'],
-        ['#fee761', '#fee761', '#feae34', '#fee761', '#feae34', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee25d', '#fee761', '#fed855', '#fee25d', '#fed855'],
-        ['#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee25d', '#fed855'],
-        ['#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fed855', '#fee761', '#fee761', '#fee761', '#fed855', '#e99f30', '#e99f30', '#fed855', '#fee761', '#fed855'],
-        ['#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761'],
-        ['#fed855', '#fee761', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#e99f30', '#fee761', '#e99f30', '#e99f30', '#e99f30', '#fee761', '#fee761', '#fee761'],
-        ['transparent', '#fee761', '#fee761', '#fee761', '#fed855', '#fed855', '#e99f30', '#e99f30', '#e99f30', '#fed855', '#fed855', '#fee761', '#fee761', '#fee761', 'transparent'],
-        ['transparent', '#fee761', '#fed855', '#fee761', '#fee761', '#fee761', '#e99f30', '#fed855', '#e99f30', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', 'transparent'],
-        ['transparent', '#fed855', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fed855', '#fed855', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#fed855', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', '#fec647', '#fee761', 'transparent', '#fec647', '#fed855', '#fee761', 'transparent', '#fed855', '#fec647', 'transparent', 'transparent', 'transparent'],
-        ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-    ];
-// --- GRAND ARTIFICER (HD VARIANT: 32x32) ---
-// This is a high-resolution sprite natively designed at 32x32 logical pixels.
-// It features significantly more detail than the original 16x16 version.
-const rawShopkeeperHD = [
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#ffd700', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee761', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee25d', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee761', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#ffd700', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#00ffff', '#00ffff', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#00ffff', '#00ffff', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#00ffff', '#00ffff', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#00ffff', '#00ffff', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#ffccda', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#ffccda', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#181425', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#181425', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#181425', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', 'transparent', '#181425', '#ffd700', '#fee761', '#ffd700', '#181425'],
-    ['transparent', 'transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#e0e0e0', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', 'transparent', '#181425', '#ffd700', '#fee761', '#fee25d', '#fee761', '#ffd700'],
-    ['transparent', 'transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', '#ffd700', '#fee761', '#fee761', '#fee761', '#ffd700', 'transparent'],
-    ['transparent', 'transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#ffd700', '#fee761', '#ffd700', '#ffd700', 'transparent'],
-    ['transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#ffd700', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#ffd700', '#fee761', '#ffd700', '#181425', 'transparent'],
-    ['transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee25d', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#ffd700', '#fee761', '#ffd700', '#181425', 'transparent'],
-    ['transparent', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee761', '#fee761', '#fee761', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#ffd700', '#fee761', '#ffd700', '#181425', 'transparent'],
-    ['transparent', 'transparent', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee25d', '#fee761', '#fee761', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', '#181425', '#ffd700', '#181425', '#181425', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#ffd700', '#fee761', '#fee761', '#fee761', '#ffd700', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', 'transparent', 'transparent', '#ffd700', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#4a0e4e', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', '#ffd700', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', '#181425', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#181425', 'transparent', 'transparent', 'transparent'],
-    ['transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent']
-];
-
-    function sliceSheet(sheet, startRow, startCol, height, width) {
-        let frame = [];
-        for (let r = 0; r < height; r++) {
-            frame.push(sheet[startRow + r].slice(startCol, startCol + width));
-        }
-        return frame;
-    }
-
-    const eyeBossVariants = [rawEyeBoss];
-    
-    const phantomVariants = [
-        sliceSheet(rawPhantoms, 0, 0, 7, 7),
-        sliceSheet(rawPhantoms, 0, 8, 7, 7),
-        sliceSheet(rawPhantoms, 8, 0, 7, 7),
-        sliceSheet(rawPhantoms, 8, 8, 7, 7)
-    ];
-    const phantomBossVariants = [
-        sliceSheet(rawPhantomBoss, 0, 0, 15, 15),
-        sliceSheet(rawPhantomBoss, 0, 16, 15, 15),
-        sliceSheet(rawPhantomBoss, 0, 32, 15, 15)
-    ];
-    
-    const playerVariants = [
-        sliceSheet(rawPlayer, 0, 0, 16, 9),
-        sliceSheet(rawPlayer, 0, 10, 16, 9),
-        sliceSheet(rawPlayer, 0, 20, 16, 9)
-    ];
-    const skullVariants = [
-        sliceSheet(rawSkulls, 0, 0, 7, 7),
-        sliceSheet(rawSkulls, 0, 8, 7, 7),
-        sliceSheet(rawSkulls, 8, 8, 7, 7)
-    ];
-    const skullBossVariants = [
-        sliceSheet(rawSkullBoss, 0, 0, 15, 15),
-        sliceSheet(rawSkullBoss, 16, 0, 15, 15)
-    ];
-
-    const wizardSprite = playerVariants[0];
-    const pyroSprite = playerVariants[1];
-    const necroSprite = playerVariants[2];
-
-    const skullSprites = skullVariants;
-    const phantomSprites = phantomVariants; 
-    
-    // --- LEGACY ENTITIES ---
-    const shardSprite = [['tr','tr','tr','tr','tr','tr','wh','vi','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','wh','vi','vi','mg','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','vi','vi','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','vi','vi','mg','mg','mg','mg','vi','tr','tr','tr','tr','tr'],['tr','tr','vi','vi','vi','mg','mg','mg','mg','vi','vi','vi','tr','tr','tr','tr'],['tr','tr','tr','vi','vi','mg','mg','mg','mg','vi','vi','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','vi','vi','mg','mg','vi','vi','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','vi','vi','vi','vi','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','vi','vi','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const starSprite = [['tr','tr','tr','tr','tr','tr','tr','go','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','or','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','or','or','or','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','or','or','wh','or','or','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const cometSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','or','or','or','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','go','go','go','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','wh','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','wh','wh','wh','go','go','tr','tr','tr','tr','tr'],['go','go','go','go','go','wh','wh','wh','wh','wh','go','go','go','go','go','tr'],['tr','go','go','or','or','or','wh','wh','wh','or','or','or','go','go','tr','tr'],['tr','tr','go','go','or','or','or','wh','or','or','or','go','go','tr','tr','tr'],['tr','tr','tr','go','go','or','or','or','or','or','go','go','tr','tr','tr','tr'],['tr','tr','go','go','go','or','or','or','or','or','go','go','go','tr','tr','tr'],['tr','go','go','go','tr','go','go','go','go','go','tr','go','go','go','tr','tr'],['go','go','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','go','go','tr']];
-    const potionSprite = [['tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','or','or','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','wh','wh','bl','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','bl','cy','cy','cy','cy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','cy','wh','cy','cy','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','cy','wh','cy','cy','dc','cy','bl','tr','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','dc','dc','dc','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','bl','cy','cy','cy','cy','cy','cy','cy','cy','bl','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr']];
-    const specterSprite = [['tr','tr','tr','tr','tr','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','cy','wh','wh','cy','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','bl','wh','wh','bl','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','wh','wh','wh','wh','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','wh','wh','tr','wh','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','wh','tr','tr','wh','tr','tr','wh','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','wh','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const batSprite = [['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr'],['tr','bl','gy','gy','bl','tr','tr','tr','tr','bl','gy','gy','bl','tr','tr','tr'],['bl','gy','gy','gy','gy','bl','bl','bl','bl','gy','gy','gy','gy','bl','tr','tr'],['bl','gy','gy','bl','gy','gy','gy','gy','gy','gy','bl','gy','gy','bl','tr','tr'],['tr','bl','bl','tr','bl','gy','rd','gy','rd','gy','bl','tr','bl','bl','tr','tr'],['tr','tr','tr','tr','bl','gy','gy','gy','gy','gy','bl','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','bl','gy','gy','gy','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','bl','bl','bl','tr','tr','tr','tr','tr','tr','tr']];
-    const rocketSprite = [['tr','tr','tr','tr','tr','tr','ng','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','ng','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','ng','wh','wh','ng','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','ng','ng','ng','ng','ng','ng','ng','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','bl','bl','bl','bl','bl','bl','bl','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','or','rd','rd','or','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','or','or','tr','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const magnetSprite = [['tr','tr','tr','tr','mg','mg','mg','mg','mg','mg','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','mg','mg','wh','tr','tr','wh','mg','mg','tr','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','mg','mg','tr','tr','tr','tr','tr','tr','mg','mg','tr','tr','tr','tr'],['tr','tr','wh','wh','tr','tr','tr','tr','tr','tr','wh','wh','tr','tr','tr','tr'],['tr','tr','bl','bl','tr','tr','tr','tr','tr','tr','bl','bl','tr','tr','tr','tr']];
-    const blastSprite = [['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','rd','or','wh','wh','or','rd','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','or','wh','wh','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','rd','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','tr','rd','tr','tr','tr','tr','tr','tr','tr','tr']];
-    const fireballSprite = [['tr','tr','tr','tr','tr','rd','rd','rd','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','wh','wh','wh','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','rd','or','go','go','wh','go','go','or','rd','tr','tr','tr','tr','tr'],['tr','tr','tr','rd','or','or','go','go','or','rd','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','rd','rd','or','or','rd','tr','tr','tr','tr','tr','tr','tr']];
-    const holyStarSprite = [['tr','tr','tr','tr','tr','tr','tr','cy','tr','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','tr','cy','cy','cy','tr','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','cy','cy','dc','cy','cy','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','cy','cy','dc','dc','dc','cy','cy','tr','tr','tr','tr','tr'],['cy','cy','cy','cy','cy','dc','dc','wh','dc','dc','cy','cy','cy','cy','cy','tr'],['tr','cy','cy','dc','dc','dc','wh','wh','wh','dc','dc','dc','cy','cy','tr','tr'],['tr','tr','cy','cy','dc','dc','dc','wh','dc','dc','dc','cy','cy','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','tr','cy','cy','dc','dc','dc','dc','dc','cy','cy','tr','tr','tr','tr'],['tr','tr','cy','cy','cy','dc','dc','dc','dc','dc','cy','cy','cy','tr','tr','tr'],['tr','cy','cy','cy','tr','cy','cy','cy','cy','cy','tr','cy','cy','cy','tr','tr']];
-    const slimeSprite = [['tr','tr','tr','tr','tr','tr','go','go','go','go','tr','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','tr','go','go','tr','tr','go','go','tr','tr','tr','tr','tr'],['tr','tr','tr','tr','go','go','tr','tr','tr','tr','go','go','tr','tr','tr','tr'],['tr','tr','tr','tr','dg','dg','dg','dg','dg','dg','dg','dg','tr','tr','tr','tr'],['tr','tr','tr','dg','lg','lg','lg','lg','lg','lg','lg','lg','dg','tr','tr','tr'],['tr','tr','dg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','dg','tr','tr'],['tr','dg','lg','lg','lg','bk','wh','lg','lg','bk','wh','lg','lg','lg','dg','tr'],['tr','dg','lg','lg','lg','bk','bk','lg','lg','bk','bk','lg','lg','lg','dg','tr'],['dg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','lg','dg','dg','lg','lg','lg','lg','lg','lg','dg'],['dg','lg','lg','lg','lg','lg','dg','tr','tr','dg','lg','lg','lg','lg','lg','dg'],['tr','dg','dg','dg','dg','dg','tr','tr','tr','tr','dg','dg','dg','dg','dg','tr']];
-    const dragonSprite = [['tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr'],['tr','tr','tr','dr','dr','tr','tr','tr','tr','tr','tr','dr','dr','tr','tr','tr'],['tr','tr','tr','tr','dr','dr','dr','dr','dr','dr','dr','dr','tr','tr','tr','tr'],['tr','tr','tr','dr','rd','rd','rd','rd','rd','rd','rd','rd','dr','tr','tr','tr'],['tr','tr','dr','rd','go','go','rd','rd','rd','rd','go','go','rd','dr','tr','tr'],['tr','dr','rd','go','bl','bl','go','rd','rd','go','bl','bl','go','rd','dr','tr'],['dr','rd','rd','go','go','go','go','rd','rd','go','go','go','go','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','rd','dr'],['dr','rd','rd','rd','rd','rd','bl','bl','bl','bl','rd','rd','rd','rd','rd','dr'],['tr','dr','rd','rd','rd','bl','wh','wh','wh','wh','bl','rd','rd','rd','dr','tr'],['tr','tr','dr','dr','dr','bl','wh','bl','bl','wh','bl','dr','dr','dr','tr','tr'],['tr','tr','tr','tr','tr','dr','bl','bl','bl','bl','dr','tr','tr','tr','tr','tr']];
-
-    const bossSprites = [
-        dragonSprite,             
-        eyeBossVariants[0],       
-        slimeSprite,              
-        skullBossVariants[0],     
-        phantomBossVariants[0],     
-        skullBossVariants[1],     
-        phantomBossVariants[1],     
-        phantomBossVariants[2]      
-    ];
-
     // --- RENDER ENGINE & UTILS ---
     function drawPixelSpriteToCtx(context, sprite, x, y, size) {
         const rows = sprite.length;
@@ -877,20 +463,15 @@ const rawShopkeeperHD = [
         drawPixelSpriteToCtx(ctx, sprite, x, y, size);
     }
 
-    // Renders the shopkeeper on the right panel
-    // Renders the HD shopkeeper on the right panel
     function drawShopWizard() {
         const shopCanvas = document.getElementById('shopWizardCanvas');
         const shopCtx = shopCanvas.getContext('2d');
         
-        // Scale the canvas up to clearly show the 32x32 HD sprite
-        // (32 pixels * 4 visual scale = 128px)
         shopCanvas.width = 128;
         shopCanvas.height = 128;
         
         shopCtx.clearRect(0, 0, shopCanvas.width, shopCanvas.height);
         
-        // Draw the HD Grand Artificer sprite to fill the resized canvas
         drawPixelSpriteToCtx(shopCtx, rawShopkeeperHD, 0, 0, shopCanvas.width);
     }
 
@@ -911,14 +492,13 @@ const rawShopkeeperHD = [
         }
     }
 
-// --- AUDIO ---
+    // --- AUDIO ---
     let audioCtx = null;
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     
-    // Initialize audio on the first user interaction
     window.addEventListener('mousedown', initAudio, {once:true});
     window.addEventListener('touchstart', initAudio, {once:true});
     window.addEventListener('keydown', initAudio, {once:true});
@@ -955,7 +535,6 @@ const rawShopkeeperHD = [
         if(screenId) screens[screenId].style.display = 'flex';
     }
 
-    // EULA Scroll Detection
     eulaContent.addEventListener('scroll', () => {
         if (eulaContent.scrollHeight - Math.ceil(eulaContent.scrollTop) <= eulaContent.clientHeight + 5) {
             btnAgreeEula.disabled = false;
@@ -1153,16 +732,45 @@ const rawShopkeeperHD = [
         updateShopUI();
     }
 
+    function openDevTools(isSecret = false) {
+        const title = document.getElementById('devToolsTitle');
+        const secretLb = document.getElementById('secretLbLabel');
+        const screen = document.getElementById('devToolsScreen');
+
+        if (isSecret) {
+            title.innerText = "SECRET DEV TOOLS";
+            title.style.color = "#ff00ff";
+            screen.style.borderColor = "#ff00ff";
+            secretLb.style.display = "flex";
+        } else {
+            title.innerText = "DEV TOOLS";
+            title.style.color = "#39ff14";
+            screen.style.borderColor = "#39ff14";
+            secretLb.style.display = "none";
+        }
+        switchScreen('devToolsScreen');
+    }
+
     function registerSecretClick() {
         secretClicks++;
         if(secretClicks >= 5) {
-            switchScreen('devToolsScreen');
+            openDevTools(false);
             secretClicks = 0;
         }
     }
+
+    function registerShopkeeperClick() {
+        shopkeeperClicks++;
+        if(shopkeeperClicks >= 5) {
+            openDevTools(true);
+            shopkeeperClicks = 0;
+        }
+    }
+
     function toggleMute() { isMuted = document.getElementById('muteToggle').checked; }
     function toggleBg() { showBgStars = document.getElementById('bgToggle').checked; }
     function toggleInvincibility() { isInvincible = document.getElementById('invincibilityToggle').checked; }
+    function toggleAllowInvincibleLB() { allowInvincibleLB = document.getElementById('allowInvincibleLBToggle').checked; }
 
     function togglePause() {
         if (gameState !== 'PLAYING' && gameState !== 'PAUSED') return;
@@ -1200,7 +808,11 @@ const rawShopkeeperHD = [
     window.addEventListener('keydown', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-        if (e.code === 'Backquote' && gameState === 'MENU') switchScreen('devToolsScreen'); 
+        
+        if (e.code === 'Backquote') {
+            openDevTools(e.altKey); 
+        }
+        
         if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
         initAudio();
     });
@@ -1233,7 +845,13 @@ const rawShopkeeperHD = [
             let eRoll = Math.random();
             if (eRoll > 0.85 && score >= 2500) { type = 'bat'; sprite = batSprite; sBase = 120; col = '#a9a9a9'; }
             else if (eRoll > 0.65 && score >= 1100) { type = 'specter'; sprite = specterSprite; sBase = 75; col = '#ffffff'; }
-            else if (eRoll > 0.35 && score >= 500) { type = 'phantom'; sprite = phantomSprites[Math.floor(Math.random()*phantomSprites.length)]; sBase = 100; col = '#6a31a1'; }
+            else if (eRoll > 0.35 && score >= 500) { 
+                type = 'phantom'; 
+                // Randomly pick one of the 4 ghost variants!
+                sprite = ghostVariants[Math.floor(Math.random() * ghostVariants.length)]; 
+                sBase = 100; 
+                col = '#6a31a1'; 
+            }
             else { type = 'skull'; sprite = skullSprites[Math.floor(Math.random()*skullSprites.length)]; sBase = 110; col = '#8b0000'; }
         }
         
@@ -1279,7 +897,7 @@ const rawShopkeeperHD = [
         const nameInput = document.getElementById('playerNameInput');
         const submitBtn = document.getElementById('submitScoreBtn');
         
-        if (!aborted && !isBossRush && score > 0) {
+        if (!aborted && !isBossRush && score > 0 && (!isInvincible || allowInvincibleLB)) {
             nameInput.style.display = 'block';
             nameInput.value = savedPlayerName; 
             submitBtn.style.display = 'block';
@@ -1294,13 +912,6 @@ const rawShopkeeperHD = [
 
         switchScreen('gameOverScreen');
     }
-
-    eulaContent.addEventListener('scroll', () => {
-        if (eulaContent.scrollHeight - Math.ceil(eulaContent.scrollTop) <= eulaContent.clientHeight + 5) {
-            btnAgreeEula.disabled = false;
-            btnAgreeEula.innerText = "I AGREE TO THE EULA";
-        }
-    });
 
     function startGame(rushMode = false) {
         initAudio(); 
@@ -1404,7 +1015,12 @@ const rawShopkeeperHD = [
             } else {
                 if (bBehavior === 0) { boss.x += boss.speed * (isEnraged?1.5:1) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; } 
                 else if (bBehavior === 1) { boss.wave += worldDt * (isEnraged?2.5:1.5); boss.x = (V_WIDTH/2 - boss.w/2) + Math.sin(boss.wave * 1.5) * 100; } 
-                else if (bBehavior === 2) { boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; boss.wave += worldDt * (isEnraged?8:4); boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; } 
+                else if (bBehavior === 2) { 
+                    boss.x += boss.speed * (isEnraged?2.5:1.5) * boss.dir * worldDt; 
+                    if (boss.x < 0 || boss.x > V_WIDTH - boss.w) boss.dir *= -1; 
+                    boss.wave += worldDt * (isEnraged?8:4); 
+                    boss.y = 20 + Math.abs(Math.sin(boss.wave)) * 60; 
+                } 
                 else if (bBehavior === 3) { boss.teleportTimer += worldDt; if (boss.teleportTimer > (isEnraged?1.5:2.5)) { boss.x = Math.random() * (V_WIDTH - boss.w); boss.teleportTimer = 0; spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#808080'); } }
                 boss.attackTimer += worldDt;
                 let atkRate = Math.max(0.4, 0.8 - (bossLevel * 0.05));
@@ -1420,7 +1036,9 @@ const rawShopkeeperHD = [
                             else { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: 220, vx: 0, color: '#ff4444' }); }
                         } 
                         else if (bBehavior === 1) { let spread = isEnraged?110:80; for(let j=-1; j<=1; j++) items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'fireball', sprite: fireballSprite, speed: isEnraged?250:200, vx: j * spread, color: '#8a2be2' }); } 
-                        else if (bBehavior === 2) { items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: phantomSprites[Math.floor(Math.random()*phantomSprites.length)], speed: isEnraged?200:160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' }); } 
+                        else if (bBehavior === 2) { 
+                            let randomGhost = ghostVariants[Math.floor(Math.random() * ghostVariants.length)];
+                            items.push({ x: boss.x + boss.w/2 - 12, y: boss.y + boss.h, w: 24, h: 24, type: 'phantom', sprite: randomGhost, speed: isEnraged?200:160, wave: Math.random() * Math.PI, vx: 0, color: '#006400' });  } 
                         else if (bBehavior === 3) { 
                             let gap = Math.floor(Math.random() * 5); let stagger = Math.floor(Math.random() * 3); let wSpd = isEnraged?260:160;
                             for(let k=0; k<5; k++) { if (k !== gap) { let yOff = (stagger===0)?k*28:(stagger===1)?(4-k)*28:Math.abs(2-k)*25; items.push({ x: (V_WIDTH/5) * k + 10, y: boss.y + boss.h - yOff, w: 24, h: 24, type: 'skull', sprite: skullSprites[Math.floor(Math.random()*skullSprites.length)], speed: wSpd, vx: 0, color: '#a9a9a9' }); } } 
