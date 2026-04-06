@@ -1,0 +1,182 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b0b1a;
+    color: #fff;
+    font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    touch-action: none;
+}
+#game-container {
+    position: relative;
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
+    border: 4px solid #333;
+    background-color: #050510;
+}
+canvas {
+    display: block;
+    image-rendering: pixelated;
+    background: linear-gradient(to bottom, #050510 0%, #111128 100%);
+    cursor: none;
+}
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.overlay-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+    background: rgba(5, 5, 16, 0.95);
+    padding: 20px;
+    pointer-events: auto;
+    border: 2px solid #5d275d;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 280px;
+    max-height: 85%;
+    overflow-y: auto;
+}
+.overlay-screen::-webkit-scrollbar { width: 8px; }
+.overlay-screen::-webkit-scrollbar-track { background: #111; }
+.overlay-screen::-webkit-scrollbar-thumb { background: #8a3a8a; border-radius: 4px; }
+
+/* Custom scrollbar for EULA text box */
+#eulaContent::-webkit-scrollbar { width: 6px; }
+#eulaContent::-webkit-scrollbar-track { background: #000; }
+#eulaContent::-webkit-scrollbar-thumb { background: #ff00ff; border-radius: 3px; }
+
+.pixel-title {
+    font-size: 20px;
+    color: #ff00ff;
+    text-shadow: 3px 3px 0px #3e1a5f;
+    margin-bottom: 5px;
+    line-height: 1.4;
+    cursor: pointer;
+}
+.subtitle { font-size: 10px; color: #00ffff; margin-top: 0; margin-bottom: 20px; }
+.menu-text { font-size: 9px; line-height: 1.8; margin-bottom: 15px; color: #e0e0e0; }
+
+.boss-warning {
+    display: none; position: absolute; top: 35%; color: #ff4444;
+    font-size: 14px; text-shadow: 2px 2px 0px #000;
+    animation: blink 0.4s infinite alternate;
+}
+@keyframes blink { from { opacity: 1; } to { opacity: 0; } }
+
+button {
+    background-color: #3e1a5f; color: white; border: 2px solid #8a3a8a;
+    padding: 12px; font-size: 10px; cursor: pointer; margin-top: 10px;
+    font-family: inherit; width: 100%; text-transform: uppercase;
+    transition: all 0.2s; flex-shrink: 0;
+}
+button:hover:not(:disabled) { background-color: #6a31a1; transform: scale(1.02); }
+button:active:not(:disabled) { background-color: #ff00ff; }
+button:disabled { background-color: #222 !important; border-color: #444 !important; color: #666 !important; cursor: not-allowed; transform: none; }
+
+label { font-size: 10px; display: flex; align-items: center; cursor: pointer; margin: 10px 0; }
+input[type="checkbox"] { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; }
+
+input[type="text"] {
+    background: #111; color: #fff; border: 2px solid #8a3a8a;
+    padding: 10px; font-family: inherit; font-size: 10px;
+    text-transform: uppercase; width: 90%; text-align: center;
+    margin-bottom: 10px; box-sizing: border-box;
+}
+input[type="text"]:focus { outline: none; border-color: #00ffff; }
+
+.stats-box { background: rgba(0,0,0,0.5); border: 1px solid #3e1a5f; padding: 8px; margin-bottom: 10px; border-radius: 4px; width: 90%; }
+.shard-display { color: #cc66ff; font-size: 12px; text-shadow: 1px 1px 0 #000; margin-bottom: 10px; }
+.new-record { display: none; color: #39ff14; font-size: 10px; margin-top: -5px; margin-bottom: 10px; animation: blink 0.3s infinite alternate; }
+button.special { background-color: #8b0000; border-color: #ff4444; }
+button.special:hover:not(:disabled) { background-color: #cc0000; }
+button.shop-btn { background-color: #4a0e4e; border-color: #cc66ff; color: #ffd700; }
+
+/* Split Layout for Shop */
+#shopScreen {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 95%;
+    max-width: 480px;
+    padding: 15px;
+    overflow: hidden; 
+}
+#shopLeftPanel {
+    width: 65%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#shopLeftPanel::-webkit-scrollbar { width: 6px; }
+#shopLeftPanel::-webkit-scrollbar-track { background: #111; }
+#shopLeftPanel::-webkit-scrollbar-thumb { background: #8a3a8a; border-radius: 3px; }
+
+#shopRightPanel {
+    width: 32%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 10px;
+}
+
+/* Item Cards */
+.shop-item {
+    background: linear-gradient(135deg, #1a0a2a 0%, #2d134d 100%);
+    border: 2px solid #8a3a8a;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    width: 100%; 
+    box-sizing: border-box;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+    transition: transform 0.2s, border-color 0.2s;
+}
+.shop-item:hover { transform: translateY(-2px); border-color: #00ffff; }
+.shop-item h3 { margin: 0 0 5px 0; font-size: 10px; color: #00ffff; text-shadow: 1px 1px 0 #000; }
+.shop-item p { margin: 0 0 10px 0; font-size: 8px; color: #ccc; line-height: 1.4; }
+.shop-item-row { display: flex; justify-content: space-between; align-items: center; }
+.shop-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 8px; }
+
+/* Dialogue Box */
+.dialogue-box {
+    background: rgba(0,0,0,0.85);
+    border: 2px dashed #00ffff;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 8px;
+    color: #fff;
+    margin-bottom: 15px;
+    line-height: 1.6;
+    min-height: 60px;
+    cursor: pointer;
+    text-align: left;
+}
+.dialogue-box span { color: #ffd700; font-size: 6px; display: block; margin-top: 8px; text-align: right; animation: blink 1s infinite alternate; }
+
+#pauseBtn {
+    display: none; position: absolute; top: 10px; right: 10px; cursor: pointer; 
+    font-size: 16px; color: #fff; z-index: 100; pointer-events: auto;
+    text-shadow: 2px 2px 0 #000; transition: transform 0.2s;
+}
+#pauseBtn:hover { transform: scale(1.2); }
