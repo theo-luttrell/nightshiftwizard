@@ -310,7 +310,7 @@ const achievementDefinitions = [
     id: "astral_explorer",
     title: "Astral Explorer",
     description: "Enter The Asteroid Belt (Zone 3).",
-    tier: "Adept",
+    tier: "Arcane",
     targetValue: 1,
     currentProgress: 0,
     unlocked: false,
