@@ -18,6 +18,7 @@ const screens = {
   pauseScreen: document.getElementById("pauseScreen"),
   shopScreen: document.getElementById("shopScreen"),
   leaderboardScreen: document.getElementById("leaderboardScreen"),
+  achievementsScreen: document.getElementById("achievementsScreen"),
   eulaScreen: document.getElementById("eulaScreen"),
   accountScreen: document.getElementById("accountScreen"),
   cloudConflictScreen: document.getElementById("cloudConflictScreen"),
@@ -103,15 +104,363 @@ let hasSeenShopTutorial = localStorage.getItem("nsw_shopTutorial") === "true";
 let shopDialogueIndex = 0;
 let isShopDialogueActive = false;
 const shopTutorialLines = [
-  "Welcome, initiate. I am the Grand Artificer.",
-  "Here, you may exchange Arcane Shards (♦) for power.",
-  "UPGRADES permanently enhance your potions and spells.",
-  "WARDROBE alters your mystical appearance.",
-  "RELICS drastically change the rules of a run.",
-  "SPELLS grant you an active ability.",
-  "COMPANIONS will fight by your side.",
-  "Choose wisely. The night is long...",
+  "Ah, a new face. Welcome to my shop.",
+  "Got any Arcane Shards? I can trade them for a little extra power.",
+  "Upgrades will make your potions and spells last longer.",
+  "Want a new look? Check out the Wardrobe.",
+  "Relics are powerful, but they bend the rules of the night.",
+  "I can also teach you some Spells, if you've got the shards.",
+  "Or maybe you'd like a Companion to keep you company out there?",
+  "Take your time. The night is just getting started...",
 ];
+
+// --- ACHIEVEMENTS CONFIG & STATE ---
+const achievementDefinitions = [
+  {
+    id: "initiate",
+    title: "The Initiate",
+    description: "Complete The Initiation tutorial run.",
+    tier: "Adept",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "account_sync",
+    title: "Account Sync",
+    description: "Link your local data to your account.",
+    tier: "Adept",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "grimoire_reader",
+    title: "Grimoire Reader",
+    description: "View the 'How to Play' instructions.",
+    tier: "Adept",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "night_shift_beginner",
+    title: "Night Shift Beginner",
+    description: "Reach a total cumulative score of 100,000.",
+    tier: "Adept",
+    targetValue: 100000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "astral_combo",
+    title: "Astral Combo",
+    description: "Reach a 10x combo multiplier.",
+    tier: "Adept",
+    targetValue: 10,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "wizard_scholar",
+    title: "Wizard Scholar",
+    description: "Reach a total cumulative score of 1,000,000.",
+    tier: "Arcane",
+    targetValue: 1000000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "overdrive",
+    title: "Overdrive",
+    description: "Reach a 25x combo multiplier.",
+    tier: "Arcane",
+    targetValue: 25,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "perfect_shift",
+    title: "Perfect Shift",
+    description:
+      "Reach a score of 50,000 in a single run without losing your combo.",
+    tier: "Cosmic",
+    targetValue: 50000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "supernova",
+    title: "Supernova",
+    description: "Reach a 50x combo multiplier.",
+    tier: "Void",
+    targetValue: 50,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "shield_buffer",
+    title: "Shield Buffer",
+    description: "Survive 25 Skulls using a Shield Potion.",
+    tier: "Adept",
+    targetValue: 25,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "skull_dodger",
+    title: "Skull Dodger",
+    description: "Survive for 120 seconds in a single run without getting hit.",
+    tier: "Arcane",
+    targetValue: 120,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "phantom_phased",
+    title: "Phantom Phased",
+    description: "Dodge 20 large hazards in a single run.",
+    tier: "Arcane",
+    targetValue: 20,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "ghostly_perfection",
+    title: "Ghostly Perfection",
+    description: "Reach 100,000 score in a single run without using a Shield.",
+    tier: "Cosmic",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "night_owl",
+    title: "Night Owl",
+    description: "Survive for 5 minutes (300s) in a single run.",
+    tier: "Void",
+    targetValue: 300,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "first_purchase",
+    title: "First Purchase",
+    description: "Buy an item from the Grand Artificer's shop.",
+    tier: "Adept",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "sharding_success",
+    title: "Sharding Success",
+    description: "Collect a total of 500 Arcane Shards.",
+    tier: "Arcane",
+    targetValue: 500,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "swift_wizard",
+    title: "Swift Wizard",
+    description: "Use the Speed Boots power-up 10 times.",
+    tier: "Arcane",
+    targetValue: 10,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "arcane_tycoon",
+    title: "Arcane Tycoon",
+    description: "Collect a total of 5,000 Arcane Shards.",
+    tier: "Cosmic",
+    targetValue: 5000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "master_artificer",
+    title: "Master Artificer",
+    description: "Fully upgrade every passive boost in the shop.",
+    tier: "Cosmic",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "void_vault",
+    title: "The Void Vault",
+    description: "Have 10,000 Arcane Shards currently stored.",
+    tier: "Void",
+    targetValue: 10000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "catacomb_dweller",
+    title: "Catacomb Dweller",
+    description: "Enter The Catacombs (Zone 2).",
+    tier: "Adept",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "astral_explorer",
+    title: "Astral Explorer",
+    description: "Enter The Asteroid Belt (Zone 3).",
+    tier: "Arcane",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "frozen_pioneer",
+    title: "Frozen Pioneer",
+    description: "Enter The Frozen biome (Zone 4).",
+    tier: "Arcane",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "fog_walker",
+    title: "Fog Walker",
+    description: "Reach a score of 75,000 inside The Catacombs biome.",
+    tier: "Cosmic",
+    targetValue: 75000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "meteor_master",
+    title: "Meteor Master",
+    description: "Reach a score of 100,000 inside The Asteroid Belt biome.",
+    tier: "Cosmic",
+    targetValue: 100000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "slide_sorcerer",
+    title: "Slide Sorcerer",
+    description: "Reach a score of 125,000 inside The Frozen biome.",
+    tier: "Cosmic",
+    targetValue: 125000,
+    currentProgress: 0,
+    unlocked: false,
+  },
+  {
+    id: "zone_dominator",
+    title: "Zone Dominator",
+    description: "Loop back to Zone 1 in a single run.",
+    tier: "Void",
+    targetValue: 1,
+    currentProgress: 0,
+    unlocked: false,
+  },
+];
+
+let achievements = JSON.parse(localStorage.getItem("nsw_achievements"));
+if (!achievements) {
+  achievements = JSON.parse(JSON.stringify(achievementDefinitions));
+} else {
+  achievementDefinitions.forEach((def) => {
+    let existing = achievements.find((a) => a.id === def.id);
+    if (!existing) achievements.push(JSON.parse(JSON.stringify(def)));
+    else {
+      existing.title = def.title;
+      existing.description = def.description;
+      existing.targetValue = def.targetValue;
+      existing.tier = def.tier;
+    }
+  });
+}
+
+let unlockedQueue = [];
+let activeToast = null;
+let toastTimer = 0;
+
+function updateAchievement(id, amount, isAbsolute = false) {
+  let ach = achievements.find((a) => a.id === id);
+  if (!ach || ach.unlocked) return;
+
+  if (isAbsolute) {
+    ach.currentProgress = Math.max(ach.currentProgress, amount);
+  } else {
+    ach.currentProgress += amount;
+  }
+
+  if (ach.currentProgress >= ach.targetValue) {
+    ach.currentProgress = ach.targetValue;
+    ach.unlocked = true;
+    unlockedQueue.push(ach);
+    saveMeta();
+    syncAchievementsToCloud();
+  }
+}
+
+async function syncAchievementsToCloud() {
+  if (!currentUser) return;
+  const { error } = await supabaseClient
+    .from("player_saves")
+    .update({ achievements: achievements })
+    .eq("user_id", currentUser.id);
+}
+
+function openAchievements() {
+  switchScreen("achievementsScreen");
+  populateAchievementsUI();
+}
+
+function populateAchievementsUI() {
+  const list = document.getElementById("achievementsList");
+  let html = "";
+  achievements.forEach((ach) => {
+    let opacity = ach.unlocked ? "1.0" : "0.5";
+    let borderColor = ach.unlocked ? "#39ff14" : "#8a3a8a";
+    let titleColor = ach.unlocked ? "#00ffff" : "#a9a9a9";
+
+    let progressHtml = "";
+    if (ach.targetValue > 1) {
+      let pct = Math.min(1, ach.currentProgress / ach.targetValue) * 100;
+      progressHtml = `
+        <div style="width:100%; background:#111; height:6px; margin-top:8px; border:1px solid #333;">
+          <div style="width:${pct}%; background:#00ffff; height:100%;"></div>
+        </div>`;
+    } else if (ach.unlocked) {
+      progressHtml = `<div style="color:#39ff14; font-size:6px; margin-top:8px;">UNLOCKED</div>`;
+    }
+
+    html += `
+      <div class="shop-item" style="opacity: ${opacity}; border-color: ${borderColor}; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px;">
+        <canvas id="ach_icon_${ach.id}" width="32" height="32" style="image-rendering: pixelated; flex-shrink: 0;"></canvas>
+        <div style="flex-grow: 1;">
+          <h3 style="margin: 0 0 5px 0; font-size: 10px; color: ${titleColor}; text-shadow: 1px 1px 0 #000;">${ach.title}</h3>
+          <p style="margin: 0; font-size: 8px; color: #ccc; line-height: 1.4;">${ach.description}</p>
+          ${progressHtml}
+        </div>
+      </div>`;
+  });
+  list.innerHTML = html;
+
+  achievements.forEach((ach) => {
+    const cvs = document.getElementById(`ach_icon_${ach.id}`);
+    if (cvs) {
+      let sprite =
+        ach.tier === "Arcane"
+          ? iconSilver
+          : ach.tier === "Cosmic"
+            ? iconGold
+            : ach.tier === "Void"
+              ? iconPlatinum
+              : iconBronze;
+      const ctx = cvs.getContext("2d");
+      drawPixelSpriteToCtx(ctx, sprite, 0, 0, 32);
+    }
+  });
+}
 
 document.getElementById("menuHighScore").innerText = highScore;
 document.getElementById("menuMaxCombo").innerText = maxComboAllTime;
@@ -131,6 +480,7 @@ function saveLocalOnly() {
   localStorage.setItem("nsw_spells", JSON.stringify(spells));
   localStorage.setItem("nsw_activeSpell", activeSpell);
   localStorage.setItem("nsw_shopTutorial", hasSeenShopTutorial);
+  localStorage.setItem("nsw_achievements", JSON.stringify(achievements));
   localStorage.setItem("nsw_lastSaved", new Date().toISOString());
 
   document.getElementById("menuShards").innerText = arcaneShards;
@@ -156,6 +506,22 @@ const NORMAL_SPEED = 300;
 let score = 0;
 let mouseX = V_WIDTH / 2;
 
+let currentBiome = "default";
+const biomeScores = {
+  default: 0,
+  frozen: 3000,
+  catacombs: 7000,
+  astral: 12000,
+};
+const biomeColors = {
+  default: { r: 5, g: 5, b: 16 },
+  frozen: { r: 10, g: 30, b: 50 },
+  catacombs: { r: 25, g: 5, b: 15 },
+  astral: { r: 20, g: 0, b: 40 },
+};
+let currentBgColor = { ...biomeColors.default };
+let targetBgColor = { ...biomeColors.default };
+
 const player = {
   x: V_WIDTH / 2 - 16,
   y: V_HEIGHT - 60,
@@ -163,6 +529,9 @@ const player = {
   h: 32,
   speed: NORMAL_SPEED,
   shieldHits: 0,
+  vx: 0,
+  acceleration: 1200,
+  friction: 0.95,
 };
 let items = [];
 let particles = [];
@@ -186,6 +555,13 @@ let shakeTimer = 0;
 let shakeMag = 0;
 let bossRushDelay = 0;
 let farStars = [];
+
+let runTimeTimer = 0;
+let noHitTimer = 0;
+let lostComboThisRun = false;
+let usedShieldThisRun = false;
+let biomeScoresDict = { default: 0, frozen: 0, catacombs: 0, astral: 0 };
+let lastFrameScore = 0;
 
 let itemHistory = [];
 let synergyTimer = 0;
@@ -223,6 +599,7 @@ function triggerSynergy() {
       "specter",
       "bat",
       "smallBat",
+      "meteor",
     ].includes(items[i].type);
     if (isBad) {
       spawnParticles(
@@ -334,7 +711,7 @@ function advanceShopDialogue() {
     hasSeenShopTutorial = true;
     saveMeta();
     document.getElementById("shopDialogue").innerHTML =
-      "Choose wisely. <span>(TUTORIAL COMPLETE)</span>";
+      "Take a look around. Let me know if you need anything.";
     document.getElementById("shopDialogue").style.borderColor = "#00ffff";
     playSound("chime");
   }
@@ -455,13 +832,15 @@ function startTutorialRun() {
   isTutorial = true;
   tutorialStep = 1;
   tutorialTimer = 2.0;
-  tutorialMessage = "USE A/D OR ARROWS TO MOVE";
+  tutorialMessage =
+    "Let's start simple. Use A/D or the Arrow keys to move around.";
 }
 
 function endTutorial() {
   if (!hasSeenTutorial && !isReplayingTutorial) {
     hasSeenTutorial = true;
     arcaneShards += 10;
+    updateAchievement("initiate", 1, true);
     saveMeta();
   }
   switchScreen("mainMenuScreen");
@@ -488,13 +867,13 @@ async function openLeaderboard(limit = 10) {
 
   if (error) {
     listElement.innerHTML =
-      '<div style="color:#ff4444; text-align:center;">Failed to read arcane scrolls.</div>';
+      '<div style="color:#ff4444; text-align:center;">Couldn\'t load the records right now.</div>';
     return;
   }
 
   if (data.length === 0) {
     listElement.innerHTML =
-      '<div style="color:#aaa; text-align:center;">The scrolls are empty.</div>';
+      '<div style="color:#aaa; text-align:center;">No one is on the leaderboard yet!</div>';
     return;
   }
 
@@ -527,6 +906,7 @@ async function pushToCloud() {
     spells: spells,
     active_spell: activeSpell,
     has_seen_tutorial: hasSeenTutorial,
+    achievements: achievements,
     last_synced: new Date().toISOString(),
   };
   const { error } = await supabaseClient
@@ -586,6 +966,8 @@ function applyCloudData(data) {
   if (data.active_spell) activeSpell = data.active_spell;
   if (data.has_seen_tutorial !== undefined)
     hasSeenTutorial = data.has_seen_tutorial;
+  if (data.achievements) achievements = data.achievements;
+  updateAchievement("account_sync", 1, true);
 
   localStorage.setItem("nsw_lastSaved", data.last_synced);
   saveLocalOnly();
@@ -624,9 +1006,10 @@ async function manualPullFromCloud() {
     const authSyncDisplay = document.getElementById("authSyncDisplay");
     if (authSyncDisplay)
       authSyncDisplay.innerText = new Date(data.last_synced).toLocaleString();
-    alert("Cloud save pulled successfully!");
+    alert("Cloud save loaded!");
+    updateAchievement("account_sync", 1, true);
   } else {
-    alert("No cloud save found.");
+    alert("We couldn't find a cloud save for this account.");
   }
 }
 
@@ -658,6 +1041,7 @@ async function authLogin() {
     document.getElementById("authError").style.display = "block";
   } else {
     currentUser = data.user;
+    syncAchievementsToCloud();
     const hasConflict = await checkCloudSync();
     if (!hasConflict) {
       openAccountScreen();
@@ -687,7 +1071,7 @@ async function authRegister() {
     document.getElementById("authError").style.display = "block";
   } else {
     document.getElementById("authError").innerText =
-      "Check email or try logging in!";
+      "Account created! Go ahead and log in.";
     document.getElementById("authError").style.color = "#39ff14";
     document.getElementById("authError").style.display = "block";
   }
@@ -863,8 +1247,7 @@ function openShop() {
     dialogueBox.style.borderColor = "#ff00ff";
   } else {
     isShopDialogueActive = false;
-    dialogueBox.innerHTML =
-      "What do you need, wizard? <span>(SHOP OPEN)</span>";
+    dialogueBox.innerHTML = "Back again? What can I get for you?";
     dialogueBox.style.borderColor = "#00ffff";
   }
 }
@@ -875,6 +1258,15 @@ function buyUpgrade(type, baseCost) {
     arcaneShards -= cost;
     upgrades[type]++;
     playSound("chime");
+    updateAchievement("first_purchase", 1, true);
+    if (
+      upgrades.potion >= 5 &&
+      upgrades.boots >= 5 &&
+      upgrades.magnet >= 5 &&
+      upgrades.blast >= 5
+    ) {
+      updateAchievement("master_artificer", 1, true);
+    }
     saveMeta();
     updateShopUI();
   }
@@ -885,6 +1277,7 @@ function buySkin(skinId, cost) {
     arcaneShards -= cost;
     skins[skinId] = true;
     playSound("chime");
+    updateAchievement("first_purchase", 1, true);
   }
   if (skins[skinId]) {
     activeSkin = skinId;
@@ -898,6 +1291,7 @@ function buyRelic(relicId, cost) {
     arcaneShards -= cost;
     relics[relicId] = true;
     playSound("chime");
+    updateAchievement("first_purchase", 1, true);
   }
   if (relics[relicId]) {
     activeRelic = relicId;
@@ -911,6 +1305,7 @@ function buyCompanion(compId, cost) {
     arcaneShards -= cost;
     companions[compId] = true;
     playSound("chime");
+    updateAchievement("first_purchase", 1, true);
   }
   if (companions[compId]) {
     activeCompanion = compId;
@@ -924,6 +1319,7 @@ function buySpell(spellId, cost) {
     arcaneShards -= cost;
     spells[spellId] = true;
     playSound("chime");
+    updateAchievement("first_purchase", 1, true);
   }
   if (spells[spellId]) {
     activeSpell = spellId;
@@ -1080,6 +1476,7 @@ function castSpell() {
         "specter",
         "bat",
         "smallBat",
+        "meteor",
       ].includes(item.type);
       if (isBad) {
         let dx = item.x + item.w / 2 - (player.x + player.w / 2);
@@ -1208,8 +1605,23 @@ function spawnItem() {
     }
   }
 
+  let spawnX = Math.random() * (V_WIDTH - w);
+  let spawnVx = 0;
+
+  if (currentBiome === "astral" && type === "skull" && Math.random() > 0.5) {
+    type = "meteor";
+    sprite = cometSprite;
+    w = 28;
+    h = 28;
+    sBase = 250;
+    col = "#ff4444";
+    let spawnLeft = Math.random() > 0.5;
+    spawnX = spawnLeft ? -30 : V_WIDTH + 30;
+    spawnVx = spawnLeft ? 150 : -150;
+  }
+
   items.push({
-    x: Math.random() * (V_WIDTH - w),
+    x: spawnX,
     y: -30,
     w: w,
     h: h,
@@ -1218,7 +1630,7 @@ function spawnItem() {
     speed: sBase * (baseSpeed / 100),
     color: col,
     wave: Math.random() * Math.PI * 2,
-    vx: 0,
+    vx: spawnVx,
     split: false,
   });
 }
@@ -1246,7 +1658,7 @@ function processGameOver(aborted = false) {
   gameState = "MENU";
   pauseBtn.style.display = "none";
 
-  gameOverTitle.innerText = aborted ? "ABORTED" : "CURSED!";
+  gameOverTitle.innerText = aborted ? "GIVING UP?" : "YOU DIED!";
   gameOverTitle.style.color = aborted ? "#a9a9a9" : "#ff4444";
 
   let isNewRecord = false;
@@ -1261,6 +1673,13 @@ function processGameOver(aborted = false) {
     }
     saveMeta();
   }
+
+  updateAchievement("night_shift_beginner", score);
+  updateAchievement("wizard_scholar", score);
+  if (!lostComboThisRun && score >= 50000)
+    updateAchievement("perfect_shift", 1, true);
+  if (!usedShieldThisRun && score >= 100000)
+    updateAchievement("ghostly_perfection", 1, true);
 
   finalScoreText.innerText = `Final Score: ${score}`;
   finalComboText.innerText = `Max Combo: x${maxComboRun}`;
@@ -1303,6 +1722,10 @@ function startGame(rushMode = false) {
   player.x = V_WIDTH / 2 - 16;
   mouseX = V_WIDTH / 2;
   player.shieldHits = 0;
+  player.vx = 0;
+  currentBiome = "default";
+  currentBgColor = { ...biomeColors.default };
+  targetBgColor = { ...biomeColors.default };
   comboMult = 1;
   comboTimer = 0;
   baseSpeed = 150;
@@ -1318,6 +1741,13 @@ function startGame(rushMode = false) {
   spellCooldown = 0;
   pulseEffectTimer = 0;
   keys = { left: false, right: false };
+
+  runTimeTimer = 0;
+  noHitTimer = 0;
+  lostComboThisRun = false;
+  usedShieldThisRun = false;
+  biomeScoresDict = { default: 0, frozen: 0, catacombs: 0, astral: 0 };
+  lastFrameScore = 0;
 
   bossLevel = 0;
   bossActive = false;
@@ -1391,11 +1821,41 @@ function update(timestamp) {
   if (spellCooldown > 0) spellCooldown -= dt;
   if (pulseEffectTimer > 0) pulseEffectTimer -= dt;
 
+  currentBgColor.r += (targetBgColor.r - currentBgColor.r) * dt * 0.5;
+  currentBgColor.g += (targetBgColor.g - currentBgColor.g) * dt * 0.5;
+  currentBgColor.b += (targetBgColor.b - currentBgColor.b) * dt * 0.5;
+
+  if (unlockedQueue.length > 0 && !activeToast) {
+    activeToast = unlockedQueue.shift();
+    toastTimer = 180;
+  }
+  if (toastTimer > 0) {
+    toastTimer -= dt * 60;
+    if (toastTimer <= 0) activeToast = null;
+  }
+
   if (gameState !== "PLAYING") {
     render();
     requestAnimationFrame(update);
     return;
   }
+
+  let scoreDelta = score - lastFrameScore;
+  if (scoreDelta > 0) {
+    biomeScoresDict[currentBiome] += scoreDelta;
+    if (biomeScoresDict["frozen"] >= 75000)
+      updateAchievement("slide_sorcerer", 1, true);
+    if (biomeScoresDict["catacombs"] >= 100000)
+      updateAchievement("fog_walker", 1, true);
+    if (biomeScoresDict["astral"] >= 125000)
+      updateAchievement("meteor_master", 1, true);
+  }
+  lastFrameScore = score;
+
+  runTimeTimer += dt;
+  noHitTimer += dt;
+  if (noHitTimer >= 120) updateAchievement("skull_dodger", 1, true);
+  if (runTimeTimer >= 300) updateAchievement("night_owl", 1, true);
 
   let worldDt = dt;
   if (rocketTimer > 0) {
@@ -1434,6 +1894,7 @@ function update(timestamp) {
         "specter",
         "bat",
         "smallBat",
+        "meteor",
       ].includes(item.type);
       if (
         isBad &&
@@ -1459,26 +1920,62 @@ function update(timestamp) {
     if (comboTimer <= 0) comboMult = 1;
   }
 
-  if (keys.left) {
-    player.x -= player.speed * dt;
-    mouseX = player.x;
-  } else if (keys.right) {
-    player.x += player.speed * dt;
+  if (currentBiome === "frozen") {
+    if (keys.left) player.vx -= player.acceleration * dt;
+    else if (keys.right) player.vx += player.acceleration * dt;
+    else player.vx *= player.friction;
+
+    if (player.vx > player.speed) player.vx = player.speed;
+    if (player.vx < -player.speed) player.vx = -player.speed;
+
+    player.x += player.vx * dt;
     mouseX = player.x;
   } else {
-    player.x += (mouseX - player.x) * (player.speed / 50) * dt;
+    player.vx = 0;
+    if (keys.left) {
+      player.x -= player.speed * dt;
+      mouseX = player.x;
+    } else if (keys.right) {
+      player.x += player.speed * dt;
+      mouseX = player.x;
+    } else {
+      player.x += (mouseX - player.x) * (player.speed / 50) * dt;
+    }
   }
 
   if (player.x < 0) {
     player.x = 0;
+    player.vx = 0;
     mouseX = 0;
   }
   if (player.x > V_WIDTH - player.w) {
     player.x = V_WIDTH - player.w;
+    player.vx = 0;
     mouseX = V_WIDTH - player.w;
   }
 
   if (comboMult > maxComboRun) maxComboRun = comboMult;
+
+  if (!isBossRush && !isTutorial) {
+    let newBiome = "default";
+    if (score >= biomeScores.astral) newBiome = "astral";
+    else if (score >= biomeScores.catacombs) newBiome = "catacombs";
+    else if (score >= biomeScores.frozen) newBiome = "frozen";
+
+    if (newBiome !== currentBiome) {
+      currentBiome = newBiome;
+      targetBgColor = biomeColors[newBiome];
+      playSound("bossHit");
+      triggerShake(0.3, 5);
+
+      if (newBiome === "catacombs")
+        updateAchievement("catacomb_dweller", 1, true);
+      if (newBiome === "astral") updateAchievement("astral_explorer", 1, true);
+      if (newBiome === "frozen") updateAchievement("frozen_pioneer", 1, true);
+      if (newBiome === "default" && score > 1000)
+        updateAchievement("zone_dominator", 1, true);
+    }
+  }
 
   if (isBossRush) {
     if (!bossActive) {
@@ -1653,7 +2150,7 @@ function update(timestamp) {
             });
             tutorialStep = 1;
           } else if (tutorialStep === 3) {
-            tutorialMessage = "DODGE THE CURSED";
+            tutorialMessage = "Watch out! Dodge the red skulls.";
             tutorialTimer = 2;
             tutorialStep = 4;
           } else if (tutorialStep === 4 || tutorialStep === 5) {
@@ -1670,7 +2167,8 @@ function update(timestamp) {
             });
             tutorialStep = 4;
           } else if (tutorialStep === 6) {
-            tutorialMessage = "HOARD THE ARCANE";
+            tutorialMessage =
+              "Grab those purple Arcane Shards. They're your pay around here.";
             tutorialTimer = 2;
             tutorialStep = 7;
           } else if (tutorialStep === 7 || tutorialStep === 8) {
@@ -1687,7 +2185,7 @@ function update(timestamp) {
             });
             tutorialStep = 7;
           } else if (tutorialStep === 9) {
-            tutorialMessage = "SEIZE POWER";
+            tutorialMessage = "Catch that potion, it'll save your life!";
             tutorialTimer = 2;
             tutorialStep = 10;
           } else if (tutorialStep === 10 || tutorialStep === 11) {
@@ -1752,6 +2250,7 @@ function update(timestamp) {
       "specter",
       "bat",
       "smallBat",
+      "meteor",
     ].includes(item.type);
     let speedMult = activeCompanion === "chrono_snail" && isBad ? 0.75 : 1;
 
@@ -1835,7 +2334,8 @@ function update(timestamp) {
       if (isBad) {
         if (isTutorial) {
           if (tutorialStep === 4) {
-            tutorialMessage = "Try again. Dodge the cursed skull.";
+            tutorialMessage =
+              "Ouch. Try again, and actually dodge it this time!";
             spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#8b0000");
             playSound("crunch");
             items.splice(i, 1);
@@ -1853,7 +2353,7 @@ function update(timestamp) {
               triggerShake(0.3, 8);
               items = [];
               tutorialMessage =
-                "Potions grant a shield. Boots grant speed. Jewels magnetize loot. Lasers clear the screen.";
+                "Potions shield you. Boots make you fast. Jewels pull in loot. Lasers... well, lasers destroy everything.";
               tutorialTimer = 5;
               tutorialStep = 13;
               break;
@@ -1878,9 +2378,11 @@ function update(timestamp) {
           items.splice(i, 1);
         } else if (player.shieldHits > 0) {
           player.shieldHits--;
+          noHitTimer = 0;
           playSound("crunch");
           spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#00ffff");
           triggerShake(0.3, 8);
+          updateAchievement("shield_buffer", 1);
           items.splice(i, 1);
         } else {
           processGameOver();
@@ -1891,17 +2393,17 @@ function update(timestamp) {
         if (isTutorial) {
           if (item.type === "star" && tutorialStep === 1) {
             tutorialMessage =
-              "Good. Stars build your score. Comets build your combo.";
+              "Nice catch. Stars boost your score, and comets build your combo.";
             tutorialTimer = 4;
             tutorialStep = 3;
           } else if (item.type === "shard" && tutorialStep === 7) {
             tutorialMessage =
-              "Arcane Shards are permanent. Even if you fall, you keep them. Spend them in my Shop.";
+              "Keep those Shards safe! Even if you mess up, you keep them to spend in my shop.";
             tutorialTimer = 4;
             tutorialStep = 9;
           } else if (item.type === "potion" && tutorialStep === 10) {
             player.shieldHits = 1;
-            tutorialMessage = "Now, survive this.";
+            tutorialMessage = "Good. Now brace yourself!";
             tutorialTimer = 2;
             tutorialStep = 12;
           }
@@ -1926,6 +2428,9 @@ function update(timestamp) {
           playSound("chime");
           score += 100 * comboMult * scoreMult;
           document.getElementById("menuShards").innerText = arcaneShards;
+          updateAchievement("sharding_success", 1);
+          updateAchievement("arcane_tycoon", 1);
+          if (arcaneShards >= 10000) updateAchievement("void_vault", 1, true);
         }
         if (item.type === "holyStar") {
           playSound("bossHit");
@@ -1944,13 +2449,17 @@ function update(timestamp) {
             else nextBossScore = score + 1500;
           }
         } else if (item.type === "potion") {
-          if (activeRelic !== "glass_cannon")
+          if (activeRelic !== "glass_cannon") {
             player.shieldHits = 1 + upgrades.potion;
-          else score += 50 * comboMult * scoreMult;
+            usedShieldThisRun = true;
+          } else {
+            score += 50 * comboMult * scoreMult;
+          }
           playSound("chime");
         } else if (item.type === "rocket") {
           rocketTimer = 5.0 + upgrades.boots * 1.5;
           playSound("chime");
+          updateAchievement("swift_wizard", 1);
         } else if (item.type === "magnet") {
           magnetTimer = 5.0 + upgrades.magnet * 1.5;
           playSound("chime");
@@ -1963,12 +2472,15 @@ function update(timestamp) {
           comboMult++;
           comboTimer = 3.0;
           baseSpeed += 1;
+          updateAchievement("astral_combo", comboMult, true);
+          updateAchievement("overdrive", comboMult, true);
+          updateAchievement("supernova", comboMult, true);
         }
 
         spawnParticles(item.x + item.w / 2, item.y + item.h / 2, item.color);
         items.splice(i, 1);
+        continue;
       }
-      continue;
     }
 
     if (
@@ -1983,27 +2495,29 @@ function update(timestamp) {
       ) {
         comboMult = 1;
         comboTimer = 0;
+        lostComboThisRun = true;
       }
       if (isTutorial && item.y > V_HEIGHT) {
         if (item.type === "star" && tutorialStep === 1) {
-          tutorialMessage = "Try again. Catch the star.";
+          tutorialMessage = "You missed it! Try again.";
           tutorialTimer = 2;
           tutorialStep = 2;
         } else if (item.type === "skull" && tutorialStep === 4) {
           tutorialMessage =
-            "Skulls will end your run instantly. Phantoms, Bats, and Specters will test your agility.";
+            "One hit from a skull and you're done. Phantoms and bats will keep you on your toes.";
           tutorialTimer = 4;
           tutorialStep = 6;
         } else if (item.type === "shard" && tutorialStep === 7) {
-          tutorialMessage = "Try again. Catch the shard.";
+          tutorialMessage = "Don't let your hard-earned pay drop! Try again.";
           tutorialTimer = 2;
           tutorialStep = 8;
         } else if (item.type === "potion" && tutorialStep === 10) {
-          tutorialMessage = "Try again. Catch the potion.";
+          tutorialMessage = "You really need this potion. Try again.";
           tutorialTimer = 2;
           tutorialStep = 11;
         }
       }
+      if (item.type === "phantom") updateAchievement("phantom_phased", 1);
       items.splice(i, 1);
     }
   }
@@ -2015,6 +2529,9 @@ function update(timestamp) {
 function render() {
   ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
   ctx.save();
+
+  ctx.fillStyle = `rgb(${Math.round(currentBgColor.r)}, ${Math.round(currentBgColor.g)}, ${Math.round(currentBgColor.b)})`;
+  ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
 
   if (shakeTimer > 0) {
     const dx = (Math.random() - 0.5) * shakeMag;
@@ -2130,6 +2647,15 @@ function render() {
   });
   ctx.globalAlpha = 1.0;
 
+  if (currentBiome === "catacombs") {
+    let breath = Math.sin(performance.now() / 1000) * 20;
+    let fog = ctx.createLinearGradient(breath, 0, -breath, V_HEIGHT / 2);
+    fog.addColorStop(0, "rgba(25, 5, 15, 0.95)");
+    fog.addColorStop(1, "rgba(25, 5, 15, 0.0)");
+    ctx.fillStyle = fog;
+    ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT / 2 + 20);
+  }
+
   if (synergyTimer > 0) {
     ctx.fillStyle = `rgba(0, 255, 255, ${Math.min(0.8, synergyTimer)})`;
     ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
@@ -2174,6 +2700,35 @@ function render() {
 
   ctx.restore();
 
+  if (activeToast) {
+    ctx.fillStyle = "rgba(10, 5, 20, 0.9)";
+    ctx.fillRect(V_WIDTH / 2 - 120, 10, 240, 45);
+    ctx.strokeStyle = "#39ff14";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(V_WIDTH / 2 - 120, 10, 240, 45);
+
+    let sprite =
+      activeToast.tier === "Arcane"
+        ? iconSilver
+        : activeToast.tier === "Cosmic"
+          ? iconGold
+          : activeToast.tier === "Void"
+            ? iconPlatinum
+            : iconBronze;
+    drawPixelSpriteToCtx(ctx, sprite, V_WIDTH / 2 - 110, 16, 32);
+
+    ctx.fillStyle = "#39ff14";
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.textAlign = "center";
+
+    // Shift text slightly to account for the icon on the left
+    ctx.fillText(`[${activeToast.tier}] UNLOCKED!`, V_WIDTH / 2 + 10, 25);
+
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText(activeToast.title, V_WIDTH / 2 + 10, 40);
+  }
+
   if (gameState === "PLAYING" || gameState === "PAUSED") {
     ctx.fillStyle = "#fff";
     ctx.font = "10px 'Press Start 2P', monospace";
@@ -2217,16 +2772,3 @@ function render() {
   drawMenuIcons();
   requestAnimationFrame(update);
 })();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("./sw.js")
-      .then((registration) => {
-        console.log("ServiceWorker registered with scope:", registration.scope);
-      })
-      .catch((error) => {
-        console.log("ServiceWorker registration failed:", error);
-      });
-  });
-}

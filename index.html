@@ -6,9 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Night Shift Wizard: Arcane Overdrive (v8.0)</title>
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#8a3a8a" />
+    <title>Night Shift Wizard: Arcane Overdrive (v12.0)</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
@@ -19,6 +17,14 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="./style.css" />
+    <!-- Code injected by Five-server -->
+    <script
+      async
+      data-id="five-server"
+      data-file="/Users/luttrelltheo/Documents/nsw/index.html"
+      type="application/javascript"
+      src="/fiveserver.js"
+    ></script>
   </head>
   <body>
     <div id="game-container">
@@ -183,8 +189,8 @@
             style="width: 100%; text-align: left"
             onclick="startTutorialRun()"
           >
-            A new wizard... let us see if you have the reflexes to survive the
-            night shift.
+            Ah, the new hire... let's see if you can actually survive the night
+            shift.
             <span>CLICK TO BEGIN INITIATION</span>
           </div>
         </div>
@@ -205,7 +211,7 @@
             style="width: 100%; text-align: left"
             onclick="endTutorial()"
           >
-            You are ready. The night is yours.
+            Not bad. I think you're ready. Good luck out there.
             <span>CLICK TO ENTER THE MENU</span>
           </div>
         </div>
@@ -226,16 +232,28 @@
             ♦ <span id="menuShards">0</span> SHARDS
           </div>
 
-          <button class="play-btn" onclick="startGame(false)">PLAY RUN</button>
+          <button class="play-btn" onclick="startGame(false)">
+            START SHIFT
+          </button>
 
           <div class="split-row">
             <button class="shop-btn half-btn" onclick="openShop()">
-              WIZARD'S SHOP
+              THE SHOP
             </button>
             <button class="special half-btn" onclick="startGame(true)">
               BOSS RUSH
             </button>
           </div>
+          <button
+            onclick="openAchievements()"
+            style="
+              background-color: #2d134d;
+              border-color: #00ffff;
+              margin-top: 10px;
+            "
+          >
+            ASTRAL ARCHIVES
+          </button>
 
           <div class="icon-row">
             <button
@@ -332,7 +350,7 @@
 
             <div class="shop-item">
               <h3 style="color: #00ffff">Shield Potion</h3>
-              <p>Increases shield capacity (+1 hit per level).</p>
+              <p>Take an extra hit before your shield shatters.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px"
                   >Lv.<span id="lvlPotion">0</span></span
@@ -345,7 +363,7 @@
 
             <div class="shop-item">
               <h3 style="color: #39ff14">Hermes Boots</h3>
-              <p>Base duration of speed/ramming +1.5s per level.</p>
+              <p>Run faster and ram enemies for longer.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px"
                   >Lv.<span id="lvlBoots">0</span></span
@@ -358,7 +376,7 @@
 
             <div class="shop-item">
               <h3 style="color: #ff00ff">Magnet Jewel</h3>
-              <p>Base duration of magnetism +1.5s per level.</p>
+              <p>Pull shards from further away.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px"
                   >Lv.<span id="lvlMagnet">0</span></span
@@ -371,7 +389,7 @@
 
             <div class="shop-item">
               <h3 style="color: #ff4444">Laser Blast</h3>
-              <p>Increases laser duration by 0.8s per level.</p>
+              <p>Keep the destructive beam firing longer.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px"
                   >Lv.<span id="lvlBlast">0</span></span
@@ -440,7 +458,7 @@
 
             <div class="shop-item">
               <h3 style="color: #a9a9a9">No Relic</h3>
-              <p>Standard wizarding rules apply.</p>
+              <p>Just you, your wand, and the night.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px">Owned</span>
                 <button id="btnBuyRelic_none" onclick="buyRelic('none', 0)">
@@ -451,7 +469,10 @@
 
             <div class="shop-item">
               <h3 style="color: #00ffff">Glass Cannon</h3>
-              <p>Doubles Score. Potions grant Score instead of Shields.</p>
+              <p>
+                Potions give score instead of shields, but all points are
+                doubled.
+              </p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusRelic_glass_cannon"
                   >Locked</span
@@ -467,7 +488,7 @@
 
             <div class="shop-item">
               <h3 style="color: #a9a9a9">Lead Boots</h3>
-              <p>-30% Speed. Crushing skulls yields score.</p>
+              <p>Move slower, but crushing skulls grants points.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusRelic_lead_boots"
                   >Locked</span
@@ -495,7 +516,7 @@
 
             <div class="shop-item">
               <h3 style="color: #a9a9a9">None</h3>
-              <p>No active spell.</p>
+              <p>Rely on your reflexes alone.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px">Owned</span>
                 <button id="btnBuySpell_none" onclick="buySpell('none', 0)">
@@ -506,7 +527,7 @@
 
             <div class="shop-item">
               <h3 style="color: #ff00ff">Blink</h3>
-              <p>Short-range teleport. (3s CD)</p>
+              <p>Instantly warp a short distance. (3s Cooldown)</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusSpell_blink"
                   >Locked</span
@@ -519,7 +540,9 @@
 
             <div class="shop-item">
               <h3 style="color: #00ffff">Arcane Pulse</h3>
-              <p>Repels nearby hazards. (5s CD)</p>
+              <p>
+                Blast away nearby enemies with a wave of force. (5s Cooldown)
+              </p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusSpell_pulse"
                   >Locked</span
@@ -544,7 +567,7 @@
 
             <div class="shop-item">
               <h3 style="color: #a9a9a9">None</h3>
-              <p>Fly solo.</p>
+              <p>Face the night alone.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px">Owned</span>
                 <button id="btnBuyComp_none" onclick="buyCompanion('none', 0)">
@@ -555,7 +578,7 @@
 
             <div class="shop-item">
               <h3 style="color: #cc66ff">Void Wisp</h3>
-              <p>Automatically seeks out Arcane Shards.</p>
+              <p>A little friend that gathers shards for you.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusComp_void_wisp"
                   >Locked</span
@@ -571,7 +594,7 @@
 
             <div class="shop-item">
               <h3 style="color: #ff4444">Ember Bat</h3>
-              <p>Shoots upward to destroy hazards.</p>
+              <p>Fires upward, clearing the path above you.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusComp_ember_bat"
                   >Locked</span
@@ -587,7 +610,7 @@
 
             <div class="shop-item">
               <h3 style="color: #39ff14">Chrono-Snail</h3>
-              <p>Slows the descent of incoming hazards.</p>
+              <p>Time bends around this snail, slowing incoming enemies.</p>
               <div class="shop-item-row">
                 <span style="font-size: 9px" id="statusComp_chrono_snail"
                   >Locked</span
@@ -652,6 +675,34 @@
           <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
         </div>
 
+        <div
+          id="achievementsScreen"
+          class="overlay-screen"
+          style="
+            display: none;
+            border-color: #cc66ff;
+            width: 95%;
+            max-width: 480px;
+            padding: 15px;
+          "
+        >
+          <h2 style="font-size: 14px; color: #cc66ff; margin-top: 0">
+            ASTRAL ARCHIVES
+          </h2>
+          <div
+            id="achievementsList"
+            style="
+              width: 100%;
+              text-align: left;
+              margin: 10px 0;
+              overflow-y: auto;
+              flex-grow: 1;
+              padding-right: 5px;
+            "
+          ></div>
+          <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
+        </div>
+
         <div id="howToPlayScreen" class="overlay-screen" style="display: none">
           <h2 style="font-size: 12px; color: #ffd700">HOW TO PLAY</h2>
           <div
@@ -679,6 +730,7 @@
               onclick="
                 document.getElementById('howToOptions').style.display = 'none';
                 document.getElementById('grimoireText').style.display = 'block';
+                updateAchievement('grimoire_reader', 1, true);
               "
             >
               READ THE GRIMOIRE
@@ -768,6 +820,34 @@
 
           <button
             style="
+              background-color: #4a0e4e;
+              border-color: #00ffff;
+              margin-top: 15px;
+            "
+            onclick="runUnitTests()"
+          >
+            RUN UNIT TESTS
+          </button>
+
+          <div
+            id="testResults"
+            style="
+              display: none;
+              width: 100%;
+              margin-top: 15px;
+              padding: 10px;
+              background: rgba(0, 0, 0, 0.8);
+              border: 1px solid #39ff14;
+              box-sizing: border-box;
+              max-height: 150px;
+              overflow-y: auto;
+            "
+          >
+            <!-- Test outputs will be injected here -->
+          </div>
+
+          <button
+            style="
               background-color: #006400;
               border-color: #39ff14;
               margin-top: 15px;
@@ -822,8 +902,8 @@
             >
               Never
             </p>
-            <button onclick="pushToCloud()">FORCE PUSH (SAVE)</button>
-            <button onclick="manualPullFromCloud()">FORCE PULL (LOAD)</button>
+            <button onclick="pushToCloud()">SAVE TO CLOUD</button>
+            <button onclick="manualPullFromCloud()">LOAD FROM CLOUD</button>
             <button onclick="authLogout()" class="special">LOG OUT</button>
           </div>
           <button onclick="checkTutorialAndProceed()" style="margin-top: 15px">
@@ -837,7 +917,7 @@
           style="display: none; border-color: #ff00ff"
         >
           <h2 style="font-size: 14px; color: #ff00ff; margin-top: 0">
-            CLOUD CONFLICT
+            WAIT A MINUTE...
           </h2>
           <p
             style="
@@ -847,8 +927,8 @@
               margin-bottom: 15px;
             "
           >
-            A newer or richer save was found in the astral cloud. Overwrite your
-            local progress?
+            It looks like you have a better save file backed up in the cloud. Do
+            you want to load it?
           </p>
           <button
             onclick="acceptCloudSave()"
@@ -858,10 +938,10 @@
               margin-bottom: 10px;
             "
           >
-            DOWNLOAD CLOUD SAVE
+            YES, LOAD CLOUD SAVE
           </button>
           <button onclick="rejectCloudSave()" class="special">
-            KEEP LOCAL SAVE
+            NO, KEEP CURRENT PROGRESS
           </button>
         </div>
 
@@ -883,7 +963,7 @@
             id="gameOverTitle"
             style="color: #ff4444; font-size: 20px; margin: 0 0 10px 0"
           >
-            CURSED!
+            YOU DIED!
           </h1>
           <p id="newRecordAlert" class="new-record">NEW RECORD!</p>
           <div class="stats-box">
@@ -936,5 +1016,6 @@
     </div>
     <script src="./sprites.js"></script>
     <script src="./game.js"></script>
+    <script src="./tests.js"></script>
   </body>
 </html>

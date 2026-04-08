@@ -9,7 +9,6 @@ body {
   align-items: center;
   height: 100vh;
   overflow: hidden;
-  touch-action: none;
 }
 #game-container {
   position: relative;
@@ -22,6 +21,7 @@ canvas {
   image-rendering: pixelated;
   background: linear-gradient(to bottom, #050510 0%, #111128 100%);
   cursor: none;
+  touch-action: none;
 }
 #ui-layer {
   position: absolute;
@@ -226,13 +226,18 @@ input[type="password"] {
   padding: 10px;
   font-family: inherit;
   font-size: 10px;
-  text-transform: uppercase;
   width: 90%;
   text-align: center;
   margin-bottom: 10px;
   box-sizing: border-box;
 }
-input[type="text"]:focus {
+input[type="text"],
+input[type="email"] {
+  text-transform: uppercase;
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
   outline: none;
   border-color: #00ffff;
 }
@@ -310,6 +315,25 @@ button.shop-btn {
   justify-content: center;
   position: sticky;
   top: 10px;
+}
+
+/* Responsive Shop Layout for Mobile */
+@media (max-width: 480px) {
+  #shopScreen {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  #shopLeftPanel {
+    width: 100%;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+  #shopRightPanel {
+    width: 100%;
+    position: relative;
+    top: 0;
+    margin-top: 15px;
+  }
 }
 
 /* Item Cards */
@@ -393,10 +417,4 @@ button.shop-btn {
 }
 #pauseBtn:hover {
   transform: scale(1.2);
-}
-
-input[type="text"] {
-  -webkit-user-select: text; /* Restores the ability to highlight/type */
-  user-select: text;
-  cursor: text; /* Forces the I-beam cursor to appear */
 }
