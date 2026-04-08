@@ -300,8 +300,8 @@ const achievementDefinitions = [
   {
     id: "catacomb_dweller",
     title: "Catacomb Dweller",
-    description: "Enter The Catacombs (Zone 4).",
-    tier: "Arcane",
+    description: "Enter The Catacombs (Zone 2).",
+    tier: "Adept",
     targetValue: 1,
     currentProgress: 0,
     unlocked: false,
@@ -318,8 +318,8 @@ const achievementDefinitions = [
   {
     id: "frozen_pioneer",
     title: "Frozen Pioneer",
-    description: "Enter The Frozen biome (Zone 2).",
-    tier: "Adept",
+    description: "Enter The Frozen biome (Zone 4).",
+    tier: "Arcane",
     targetValue: 1,
     currentProgress: 0,
     unlocked: false,
@@ -1921,15 +1921,21 @@ function update(timestamp) {
   }
 
   if (currentBiome === "frozen") {
-    if (keys.left) player.vx -= player.acceleration * dt;
-    else if (keys.right) player.vx += player.acceleration * dt;
-    else player.vx *= player.friction;
+    if (keys.left) {
+      player.vx -= player.acceleration * dt;
+      mouseX = player.x;
+    } else if (keys.right) {
+      player.vx += player.acceleration * dt;
+      mouseX = player.x;
+    } else {
+      player.vx += (mouseX - player.x) * 15 * dt;
+      player.vx *= player.friction;
+    }
 
     if (player.vx > player.speed) player.vx = player.speed;
     if (player.vx < -player.speed) player.vx = -player.speed;
 
     player.x += player.vx * dt;
-    mouseX = player.x;
   } else {
     player.vx = 0;
     if (keys.left) {
