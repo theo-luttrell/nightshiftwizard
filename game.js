@@ -479,6 +479,7 @@ function saveLocalOnly() {
   localStorage.setItem("nsw_activeCompanion", activeCompanion);
   localStorage.setItem("nsw_spells", JSON.stringify(spells));
   localStorage.setItem("nsw_activeSpell", activeSpell);
+  localStorage.setItem("nsw_hasSeenTutorial", hasSeenTutorial);
   localStorage.setItem("nsw_shopTutorial", hasSeenShopTutorial);
   localStorage.setItem("nsw_achievements", JSON.stringify(achievements));
   localStorage.setItem("nsw_lastSaved", new Date().toISOString());
