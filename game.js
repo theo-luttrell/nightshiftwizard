@@ -727,11 +727,101 @@ function advanceShopDialogue() {
 }
 
 // --- AUDIO ---
+let currentMusicKey = null;
+let currentMusic = null;
+let currentVariantIndex = 0;
+let isCrossfading = false;
+const FADE_TIME = 2.0; // Seconds before track end to start crossfade
+
+const musicTracks = {
+  main_menu: [new Audio("./audio/main_menu_track_1.mp3")],
+  shop: [new Audio("./audio/shop_track_1.mp3")],
+  bg: [
+    new Audio("./audio/bg_track_1.mp3"),
+    new Audio("./audio/bg_track_2.mp3"),
+  ],
+  boss: [
+    new Audio("./audio/boss_track_1.mp3"),
+    new Audio("./audio/boss_track_2.mp3"),
+    new Audio("./audio/boss_track_3.mp3"),
+    new Audio("./audio/boss_track_4.mp3"),
+  ],
+};
+
+function executeCrossfade(outgoingTrack, incomingTrack) {
+  isCrossfading = true;
+  incomingTrack.volume = 0;
+  incomingTrack.currentTime = 0;
+  incomingTrack.play().catch((e) => console.log("Audio blocked:", e));
+
+  const fadeInterval = setInterval(() => {
+    let step = 0.05 / FADE_TIME;
+    let outVol = outgoingTrack.volume - step;
+    let inVol = incomingTrack.volume + step;
+
+    if (outVol <= 0 || inVol >= 1.0) {
+      clearInterval(fadeInterval);
+      outgoingTrack.volume = 0;
+      outgoingTrack.pause();
+      incomingTrack.volume = 1.0;
+      currentMusic = incomingTrack;
+      isCrossfading = false;
+    } else {
+      outgoingTrack.volume = Math.max(0, outVol);
+      incomingTrack.volume = Math.min(1.0, inVol);
+    }
+  }, 50);
+}
+
+function checkTrackTime(e) {
+  const track = e.target;
+  if (
+    track.duration > 0 &&
+    track.currentTime >= track.duration - FADE_TIME &&
+    !isCrossfading
+  ) {
+    let nextIndex =
+      (currentVariantIndex + 1) % musicTracks[currentMusicKey].length;
+    let nextTrack = musicTracks[currentMusicKey][nextIndex];
+    currentVariantIndex = nextIndex;
+    executeCrossfade(track, nextTrack);
+  }
+}
+
+Object.values(musicTracks).forEach((category) => {
+  category.forEach((track) => {
+    track.loop = false; // We handle the loop manually with the crossfader
+    track.volume = 1.0;
+    track.addEventListener("timeupdate", checkTrackTime);
+  });
+});
+
+function playMusic(trackKey, forceVariantIndex = 0) {
+  if (isMuted) return;
+  if (currentMusicKey === trackKey) return;
+
+  if (currentMusic) {
+    currentMusic.pause();
+    currentMusic.currentTime = 0;
+  }
+
+  currentMusicKey = trackKey;
+  currentVariantIndex = forceVariantIndex;
+  currentMusic = musicTracks[trackKey][currentVariantIndex];
+
+  currentMusic.volume = 1.0;
+  currentMusic.currentTime = 0;
+  currentMusic.play().catch((e) => console.log("Audio blocked:", e));
+}
+
 let audioCtx = null;
 function initAudio() {
   if (!audioCtx)
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
+  if (currentMusic && currentMusic.paused && !isMuted) {
+    currentMusic.play().catch((e) => console.log("Audio blocked:", e));
+  }
 }
 
 window.addEventListener("mousedown", initAudio, { once: true });
@@ -785,6 +875,7 @@ function playSound(type) {
 function switchScreen(screenId) {
   Object.values(screens).forEach((s) => (s.style.display = "none"));
   if (screenId) screens[screenId].style.display = "flex";
+  if (screenId === "mainMenuScreen") playMusic("main_menu");
 }
 
 eulaContent.addEventListener("scroll", () => {
@@ -1769,6 +1860,7 @@ function processGameOver(aborted = false) {
   }
 
   switchScreen("gameOverScreen");
+  playMusic("main_menu");
 }
 
 function startGame(rushMode = false) {
@@ -1827,6 +1919,7 @@ function startGame(rushMode = false) {
 
   lastTime = performance.now();
   gameState = "PLAYING";
+  playMusic("bg");
 }
 
 function spawnBoss() {
@@ -1841,6 +1934,8 @@ function spawnBoss() {
   setTimeout(() => (bossWarning.style.display = "none"), 2000);
   playSound("bossHit");
   triggerShake(0.5, 5);
+  let trackIndex = bossLevel % musicTracks.boss.length;
+  playMusic("boss", trackIndex);
 }
 
 // --- MAIN GAME LOOP ---

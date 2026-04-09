@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NSW DLC Payload Generator</title>
+    <style>
+      body {
+        background-color: #0a0510;
+        color: #eeeeee;
+        font-family: "Courier New", Courier, monospace;
+        padding: 20px;
+        margin: 0;
+      }
+      h1,
+      h2 {
+        color: #00ffff;
+        text-shadow: 2px 2px 0 #ff00ff;
+        text-transform: uppercase;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .section {
+        background: #151020;
+        border: 2px solid #39ff14;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+      }
+      .item-block {
+        background: #0a0510;
+        border: 1px solid #ff00ff;
+        padding: 10px;
+        margin-bottom: 10px;
+        position: relative;
+      }
+      input,
+      textarea {
+        background: #000;
+        color: #fff;
+        border: 1px solid #00ffff;
+        padding: 8px;
+        width: calc(100% - 20px);
+        margin-bottom: 10px;
+        font-family: monospace;
+      }
+      textarea {
+        height: 80px;
+        resize: vertical;
+      }
+      button {
+        background: #ff00ff;
+        color: #fff;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-family: monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+        box-shadow: 0 0 5px #ff00ff;
+        margin-top: 5px;
+      }
+      button:hover {
+        background: #00ffff;
+        box-shadow: 0 0 10px #00ffff;
+        color: #000;
+      }
+      .remove-btn {
+        background: #ff4444;
+        box-shadow: 0 0 5px #ff4444;
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        padding: 5px 10px;
+      }
+      .flex-row {
+        display: flex;
+        gap: 10px;
+      }
+      .flex-row input {
+        width: 100%;
+      }
+      #outputArea {
+        background: #000;
+        border: 2px solid #ffd700;
+        color: #39ff14;
+        height: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Astral Archives: DLC Generator</h1>
+      <p>
+        Build your expansion below. Copy the generated JSON into your Supabase
+        <code>dlc_content</code> table.
+      </p>
+
+      <div class="section" style="border-color: #ffd700">
+        <h2>General Info</h2>
+        <label>DLC ID (e.g., void_expansion, halloween_pack):</label>
+        <input type="text" id="dlcId" placeholder="void_expansion" />
+      </div>
+
+      <div class="section" id="skinsSection">
+        <h2>New Skins</h2>
+        <div id="skinsContainer"></div>
+        <button onclick="addSkin()">+ Add Skin</button>
+      </div>
+
+      <div class="section" id="biomesSection">
+        <h2>New Biomes</h2>
+        <div id="biomesContainer"></div>
+        <button onclick="addBiome()">+ Add Biome</button>
+      </div>
+
+      <div class="section" id="hazardsSection">
+        <h2>New Hazards</h2>
+        <div id="hazardsContainer"></div>
+        <button onclick="addHazard()">+ Add Hazard</button>
+      </div>
+
+      <button
+        onclick="generateJSON()"
+        style="
+          width: 100%;
+          font-size: 18px;
+          padding: 15px;
+          background: #39ff14;
+          color: #000;
+          box-shadow: 0 0 15px #39ff14;
+        "
+      >
+        GENERATE PAYLOAD
+      </button>
+
+      <div class="section" style="margin-top: 20px; border-color: #ffd700">
+        <h2>Output JSON</h2>
+        <textarea id="outputArea" readonly></textarea>
+      </div>
+    </div>
+
+    <script>
+      function createRemoveBtn(element) {
+        const btn = document.createElement("button");
+        btn.innerText = "X";
+        btn.className = "remove-btn";
+        btn.onclick = () => element.remove();
+        return btn;
+      }
+
+      function addSkin() {
+        const div = document.createElement("div");
+        div.className = "item-block skin-block";
+        div.innerHTML = `
+            <div class="flex-row">
+                <div><label>Skin ID:</label><input type="text" class="skin-id" placeholder="void_walker"></div>
+                <div><label>Price (Shards):</label><input type="number" class="skin-price" value="0"></div>
+            </div>
+            <label>Sprite Array (Valid JSON format <code>[["#fff", ...], [...]]</code>):</label>
+            <textarea class="skin-sprite" placeholder='[["transparent", "#ff00ff"], ["#ff00ff", "#000000"]]'></textarea>
+        `;
+        div.appendChild(createRemoveBtn(div));
+        document.getElementById("skinsContainer").appendChild(div);
+      }
+
+      function addBiome() {
+        const div = document.createElement("div");
+        div.className = "item-block biome-block";
+        div.innerHTML = `
+            <div class="flex-row">
+                <div><label>Biome ID:</label><input type="text" class="biome-id" placeholder="void_core"></div>
+                <div><label>Score Threshold:</label><input type="number" class="biome-score" value="20000"></div>
+            </div>
+            <label>Background Color (RGB):</label>
+            <div class="flex-row">
+                <input type="number" class="biome-r" placeholder="R (e.g., 5)">
+                <input type="number" class="biome-g" placeholder="G (e.g., 0)">
+                <input type="number" class="biome-b" placeholder="B (e.g., 15)">
+            </div>
+        `;
+        div.appendChild(createRemoveBtn(div));
+        document.getElementById("biomesContainer").appendChild(div);
+      }
+
+      function addHazard() {
+        const div = document.createElement("div");
+        div.className = "item-block hazard-block";
+        div.innerHTML = `
+            <div class="flex-row">
+                <div><label>Type ID:</label><input type="text" class="hazard-type" placeholder="laser_grid"></div>
+                <div><label>Base Speed:</label><input type="number" class="hazard-speed" value="300"></div>
+                <div><label>VFX Color (Hex):</label><input type="text" class="hazard-color" placeholder="#00ffff"></div>
+            </div>
+            <label>Sprite Array (Valid JSON format):</label>
+            <textarea class="hazard-sprite" placeholder='[["transparent", "#00ffff"], ["#00ffff", "#ffffff"]]'></textarea>
+        `;
+        div.appendChild(createRemoveBtn(div));
+        document.getElementById("hazardsContainer").appendChild(div);
+      }
+
+      function generateJSON() {
+        const payload = {
+          dlc_id: document.getElementById("dlcId").value || "unnamed_dlc",
+        };
+
+        // Parse Skins
+        const skinBlocks = document.querySelectorAll(".skin-block");
+        if (skinBlocks.length > 0) {
+          payload.new_skins = [];
+          skinBlocks.forEach((block) => {
+            let rawArray = block.querySelector(".skin-sprite").value;
+            let parsedArray = [];
+            try {
+              parsedArray = JSON.parse(rawArray);
+            } catch (e) {
+              alert(
+                "Error parsing sprite array for a skin. Make sure it is valid JSON (use double quotes).",
+              );
+            }
+
+            payload.new_skins.push({
+              id: block.querySelector(".skin-id").value,
+              price: parseInt(block.querySelector(".skin-price").value),
+              spriteArray: parsedArray,
+            });
+          });
+        }
+
+        // Parse Biomes
+        const biomeBlocks = document.querySelectorAll(".biome-block");
+        if (biomeBlocks.length > 0) {
+          payload.new_biomes = [];
+          biomeBlocks.forEach((block) => {
+            payload.new_biomes.push({
+              id: block.querySelector(".biome-id").value,
+              score_threshold: parseInt(
+                block.querySelector(".biome-score").value,
+              ),
+              bg_color: {
+                r: parseInt(block.querySelector(".biome-r").value || 0),
+                g: parseInt(block.querySelector(".biome-g").value || 0),
+                b: parseInt(block.querySelector(".biome-b").value || 0),
+              },
+            });
+          });
+        }
+
+        // Parse Hazards
+        const hazardBlocks = document.querySelectorAll(".hazard-block");
+        if (hazardBlocks.length > 0) {
+          payload.new_hazards = [];
+          hazardBlocks.forEach((block) => {
+            let rawArray = block.querySelector(".hazard-sprite").value;
+            let parsedArray = [];
+            try {
+              parsedArray = JSON.parse(rawArray);
+            } catch (e) {
+              alert(
+                "Error parsing sprite array for a hazard. Make sure it is valid JSON.",
+              );
+            }
+
+            payload.new_hazards.push({
+              type: block.querySelector(".hazard-type").value,
+              base_speed: parseInt(block.querySelector(".hazard-speed").value),
+              color: block.querySelector(".hazard-color").value,
+              spriteArray: parsedArray,
+            });
+          });
+        }
+
+        // Output formatting
+        document.getElementById("outputArea").value = JSON.stringify(
+          payload,
+          null,
+          2,
+        );
+      }
+    </script>
+  </body>
+</html>
