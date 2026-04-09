@@ -67,7 +67,14 @@ let upgrades = JSON.parse(localStorage.getItem("nsw_upgrades")) || {
   boots: 0,
   magnet: 0,
   blast: 0,
+  fog: 0,
+  meteor: 0,
+  ice: 0,
 };
+if (upgrades.fog === undefined) upgrades.fog = 0;
+if (upgrades.meteor === undefined) upgrades.meteor = 0;
+if (upgrades.ice === undefined) upgrades.ice = 0;
+
 let skins = JSON.parse(localStorage.getItem("nsw_skins")) || {
   wizard: true,
   pyromancer: false,
@@ -563,6 +570,7 @@ let lostComboThisRun = false;
 let usedShieldThisRun = false;
 let biomeScoresDict = { default: 0, frozen: 0, catacombs: 0, astral: 0 };
 let lastFrameScore = 0;
+let globalPulseTimer = 0;
 
 let itemHistory = [];
 let synergyTimer = 0;
@@ -952,7 +960,18 @@ function applyCloudData(data) {
   highScore = data.high_score || 0;
   maxComboAllTime = data.max_combo || 1;
   arcaneShards = data.arcane_shards || 0;
-  upgrades = data.upgrades || { potion: 0, boots: 0, magnet: 0, blast: 0 };
+  upgrades = data.upgrades || {
+    potion: 0,
+    boots: 0,
+    magnet: 0,
+    blast: 0,
+    fog: 0,
+    meteor: 0,
+    ice: 0,
+  };
+  if (upgrades.fog === undefined) upgrades.fog = 0;
+  if (upgrades.meteor === undefined) upgrades.meteor = 0;
+  if (upgrades.ice === undefined) upgrades.ice = 0;
   skins = data.skins || { wizard: true, pyromancer: false, necromancer: false };
   relics = data.relics || {
     none: true,
@@ -1118,6 +1137,12 @@ async function submitScore() {
 function updateShopUI() {
   document.getElementById("shopShards").innerText = arcaneShards;
 
+  const biomeCosts = {
+    fog: [200, 600, 1500],
+    meteor: [400, 1000, 2500],
+    ice: [600, 1200, 3000],
+  };
+
   ["potion", "boots", "magnet", "blast"].forEach((type) => {
     let lvl = upgrades[type];
     let cost = getUpgradeCost(
@@ -1132,6 +1157,25 @@ function updateShopUI() {
     );
     btn.innerHTML = `♦ ${cost}`;
     btn.disabled = arcaneShards < cost;
+  });
+
+  ["fog", "meteor", "ice"].forEach((type) => {
+    let lvl = upgrades[type];
+    let btn = document.getElementById(
+      "btnBuy" + type.charAt(0).toUpperCase() + type.slice(1),
+    );
+    document.getElementById(
+      "lvl" + type.charAt(0).toUpperCase() + type.slice(1),
+    ).innerText = lvl;
+
+    if (lvl >= 3) {
+      btn.innerText = "MAXED";
+      btn.disabled = true;
+    } else {
+      let cost = biomeCosts[type][lvl];
+      btn.innerHTML = `♦ ${cost}`;
+      btn.disabled = arcaneShards < cost;
+    }
   });
 
   document.getElementById("btnEquipWizard").innerText =
@@ -1268,6 +1312,26 @@ function buyUpgrade(type, baseCost) {
     ) {
       updateAchievement("master_artificer", 1, true);
     }
+    saveMeta();
+    updateShopUI();
+  }
+}
+
+function buyBiomeUpgrade(type) {
+  const biomeCosts = {
+    fog: [200, 600, 1500],
+    meteor: [400, 1000, 2500],
+    ice: [600, 1200, 3000],
+  };
+  let lvl = upgrades[type];
+  if (lvl >= 3) return;
+  let cost = biomeCosts[type][lvl];
+
+  if (arcaneShards >= cost) {
+    arcaneShards -= cost;
+    upgrades[type]++;
+    playSound("chime");
+    updateAchievement("first_purchase", 1, true);
     saveMeta();
     updateShopUI();
   }
@@ -1785,6 +1849,8 @@ function update(timestamp) {
   if (dt > 0.1) dt = 0.1;
   lastTime = timestamp;
 
+  globalPulseTimer += dt * 3;
+
   if (gameState === "PAUSED") {
     requestAnimationFrame(update);
     return;
@@ -1922,6 +1988,9 @@ function update(timestamp) {
   }
 
   if (currentBiome === "frozen") {
+    const iceFrictions = [0.95, 0.89, 0.85, 0.8];
+    let activeFriction = iceFrictions[upgrades.ice];
+
     if (keys.left) {
       player.vx -= player.acceleration * dt;
       mouseX = player.x;
@@ -1930,7 +1999,7 @@ function update(timestamp) {
       mouseX = player.x;
     } else {
       player.vx += (mouseX - player.x) * 15 * dt;
-      player.vx *= player.friction;
+      player.vx *= activeFriction;
     }
 
     if (player.vx > player.speed) player.vx = player.speed;
@@ -2241,7 +2310,12 @@ function update(timestamp) {
       }
     } else {
       spawnTimer += worldDt;
-      if (spawnTimer > Math.max(0.3, 0.8 - score / 5000)) {
+      let spawnThreshold = Math.max(0.3, 0.8 - score / 5000);
+      if (currentBiome === "astral") {
+        const meteorMults = [1.0, 1.25, 1.6, 2.25];
+        spawnThreshold *= meteorMults[upgrades.meteor];
+      }
+      if (spawnTimer > spawnThreshold) {
         spawnItem();
         spawnTimer = 0;
       }
@@ -2572,6 +2646,13 @@ function render() {
   }
 
   if (player.shieldHits > 0 && gameState === "PLAYING") {
+    ctx.save();
+    const pulseGlow = 10 + Math.sin(globalPulseTimer) * 5;
+    ctx.shadowColor = player.shieldHits > 1 ? "#ff00ff" : "#00ffff";
+    ctx.shadowBlur = pulseGlow;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
     ctx.beginPath();
     ctx.arc(
       player.x + player.w / 2,
@@ -2583,6 +2664,8 @@ function render() {
     ctx.strokeStyle = player.shieldHits > 1 ? "#ff00ff" : "#00ffff";
     ctx.lineWidth = 2 + (player.shieldHits - 1);
     ctx.stroke();
+
+    ctx.restore();
   }
 
   let currentSprite = wizardSprite;
@@ -2591,9 +2674,56 @@ function render() {
 
   if (gameState === "PLAYING")
     drawPixelSpriteToCtx(ctx, currentSprite, player.x, player.y, player.w);
-  items.forEach((item) =>
-    drawPixelSpriteToCtx(ctx, item.sprite, item.x, item.y, item.w),
-  );
+
+  items.forEach((item) => {
+    const isGood = [
+      "shard",
+      "potion",
+      "rocket",
+      "blast",
+      "magnet",
+      "star",
+      "comet",
+      "holyStar",
+    ].includes(item.type);
+    const isBad = [
+      "skull",
+      "phantom",
+      "fireball",
+      "specter",
+      "bat",
+      "smallBat",
+      "meteor",
+    ].includes(item.type);
+
+    if (item.y < 0 && item.speed > 200) {
+      const flashAlpha = 0.5 + Math.sin(globalPulseTimer * 2) * 0.5;
+      ctx.save();
+      ctx.fillStyle = `rgba(255, 0, 85, ${flashAlpha})`;
+      ctx.beginPath();
+      ctx.moveTo(item.x + item.w / 2, 5);
+      ctx.lineTo(item.x + item.w / 2 - 5, 15);
+      ctx.lineTo(item.x + item.w / 2 + 5, 15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.save();
+    if (isGood) {
+      const pulseGlow = 10 + Math.sin(globalPulseTimer) * 5;
+      ctx.shadowColor = ["star", "comet", "holyStar"].includes(item.type)
+        ? "#ffd700"
+        : "#00ffff";
+      ctx.shadowBlur = pulseGlow;
+    } else if (isBad) {
+      ctx.shadowColor = "#ff0055";
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+    }
+    drawPixelSpriteToCtx(ctx, item.sprite, item.x, item.y, item.w);
+    ctx.restore();
+  });
 
   allyProjectiles.forEach((p) =>
     drawPixelSpriteToCtx(ctx, p.sprite, p.x, p.y, p.w),
@@ -2612,7 +2742,13 @@ function render() {
   }
 
   if (bossActive && boss.y > -boss.h) {
+    ctx.save();
+    ctx.shadowColor = "#ff0055";
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
     drawPixelSpriteToCtx(ctx, bossSprites[boss.type], boss.x, boss.y, boss.w);
+    ctx.restore();
+
     ctx.fillStyle = "#333";
     ctx.fillRect(boss.x, boss.y - 10, boss.w, 6);
     ctx.fillStyle = "#ff4444";
@@ -2660,11 +2796,28 @@ function render() {
 
   if (currentBiome === "catacombs") {
     let breath = Math.sin(performance.now() / 1000) * 20;
-    let fog = ctx.createLinearGradient(breath, 0, -breath, V_HEIGHT / 2);
-    fog.addColorStop(0, "rgba(25, 5, 15, 0.95)");
-    fog.addColorStop(1, "rgba(25, 5, 15, 0.0)");
-    ctx.fillStyle = fog;
-    ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT / 2 + 20);
+    let fogRadius = [0, 48, 96, 150][upgrades.fog];
+
+    if (fogRadius > 0) {
+      let mask = ctx.createRadialGradient(
+        player.x + player.w / 2,
+        player.y + player.h / 2,
+        0,
+        player.x + player.w / 2,
+        player.y + player.h / 2,
+        fogRadius,
+      );
+      mask.addColorStop(0, "rgba(25, 5, 15, 0.0)");
+      mask.addColorStop(1, "rgba(25, 5, 15, 0.95)");
+      ctx.fillStyle = mask;
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+    } else {
+      let fog = ctx.createLinearGradient(breath, 0, -breath, V_HEIGHT / 2);
+      fog.addColorStop(0, "rgba(25, 5, 15, 0.95)");
+      fog.addColorStop(1, "rgba(25, 5, 15, 0.0)");
+      ctx.fillStyle = fog;
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT / 2 + 20);
+    }
   }
 
   if (synergyTimer > 0) {

@@ -74,6 +74,18 @@ canvas {
   border-radius: 3px;
 }
 
+.overlay-screen > h2 {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #050510;
+  margin-top: 0 !important;
+  padding-bottom: 5px;
+  box-shadow:
+    0 -20px 0 20px #050510,
+    0 10px 20px 10px #050510;
+}
+
 .pixel-title {
   font-size: 20px;
   color: #ff00ff;
@@ -140,6 +152,17 @@ button:disabled {
   color: #666 !important;
   cursor: not-allowed;
   transform: none;
+}
+
+.sticky-back-btn {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  margin-top: 15px;
+  margin-bottom: 0;
+  box-shadow:
+    0 20px 0 20px #050510,
+    0 -10px 20px 10px #050510;
 }
 
 /* Main Menu Hierarchy */
@@ -325,6 +348,7 @@ button.shop-btn {
   }
   #shopLeftPanel {
     width: 100%;
+    max-height: none;
     overflow-y: visible;
     padding-right: 0;
   }
@@ -332,7 +356,9 @@ button.shop-btn {
     width: 100%;
     position: relative;
     top: 0;
-    margin-top: 15px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    order: -1;
   }
 }
 

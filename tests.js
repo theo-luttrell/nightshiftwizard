@@ -185,6 +185,20 @@ function runUnitTests() {
     return success;
   });
 
+  runTest("buyBiomeUpgrade", "'fog'", true, () => {
+    const origShards = arcaneShards;
+    const origFog = upgrades.fog;
+
+    arcaneShards = 200; // Exact tier 1 cost
+    upgrades.fog = 0;
+    buyBiomeUpgrade("fog");
+    const success = arcaneShards === 0 && upgrades.fog === 1;
+
+    arcaneShards = origShards;
+    upgrades.fog = origFog; // Restore
+    return success;
+  });
+
   runTest("buySkin", "'pyromancer', 100", true, () => {
     const origShards = arcaneShards;
     const origSkin = skins.pyromancer;
