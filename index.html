@@ -309,31 +309,37 @@
 
         <div id="shopScreen" class="overlay-screen" style="display: none">
           <div id="shopLeftPanel">
-            <h2
-              style="
-                font-size: 14px;
-                color: #cc66ff;
-                margin-top: 0;
-                width: 100%;
-                text-align: center;
-              "
-            >
-              THE ARCANE SHOP
-            </h2>
             <div
-              class="shard-display"
               style="
                 position: sticky;
                 top: 0;
-                background: rgba(5, 5, 16, 0.95);
+                background: #050510;
                 width: 100%;
-                padding: 10px 0;
-                z-index: 10;
-                border-bottom: 1px solid #5d275d;
+                z-index: 100;
                 text-align: center;
+                box-shadow:
+                  0 -20px 0 20px #050510,
+                  0 10px 20px 10px #050510;
+                margin-top: 0;
               "
             >
-              ♦ <span id="shopShards">0</span>
+              <h2
+                style="
+                  font-size: 14px;
+                  color: #cc66ff;
+                  margin: 0;
+                  padding-bottom: 10px;
+                "
+              >
+                THE ARCANE SHOP
+              </h2>
+              <div
+                style="border-bottom: 1px solid #5d275d; padding-bottom: 10px"
+              >
+                <div class="shard-display" style="margin-bottom: 0">
+                  ♦ <span id="shopShards">0</span>
+                </div>
+              </div>
             </div>
 
             <div
@@ -623,9 +629,8 @@
                 </button>
               </div>
             </div>
-
             <button
-              style="margin-top: 20px; width: 100%"
+              class="sticky-back-btn"
               onclick="switchScreen('mainMenuScreen')"
             >
               BACK TO MENU
@@ -672,7 +677,12 @@
           <button id="btnLoadMoreLb" onclick="openLeaderboard(100)">
             SHOW TOP 100
           </button>
-          <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
+          <button
+            class="sticky-back-btn"
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            BACK TO MENU
+          </button>
         </div>
 
         <div
@@ -700,7 +710,12 @@
               padding-right: 5px;
             "
           ></div>
-          <button onclick="switchScreen('mainMenuScreen')">BACK TO MENU</button>
+          <button
+            class="sticky-back-btn"
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            BACK TO MENU
+          </button>
         </div>
 
         <div id="howToPlayScreen" class="overlay-screen" style="display: none">
@@ -738,10 +753,13 @@
             <button class="special" onclick="startTutorialIntro(true)">
               ENTER THE INITIATION
             </button>
-            <button onclick="switchScreen('mainMenuScreen')">
-              BACK TO MENU
-            </button>
           </div>
+          <button
+            class="sticky-back-btn"
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            BACK TO MENU
+          </button>
         </div>
 
         <div id="optionsScreen" class="overlay-screen" style="display: none">
@@ -769,7 +787,12 @@
             />
             Show Stars</label
           >
-          <button onclick="switchScreen('mainMenuScreen')">BACK</button>
+          <button
+            class="sticky-back-btn"
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            BACK TO MENU
+          </button>
         </div>
 
         <div
@@ -845,16 +868,11 @@
           >
             <!-- Test outputs will be injected here -->
           </div>
-
           <button
-            style="
-              background-color: #006400;
-              border-color: #39ff14;
-              margin-top: 15px;
-            "
+            class="sticky-back-btn"
             onclick="switchScreen('mainMenuScreen')"
           >
-            CLOSE MENU
+            BACK TO MENU
           </button>
         </div>
 
@@ -906,7 +924,7 @@
             <button onclick="manualPullFromCloud()">LOAD FROM CLOUD</button>
             <button onclick="authLogout()" class="special">LOG OUT</button>
           </div>
-          <button onclick="checkTutorialAndProceed()" style="margin-top: 15px">
+          <button class="sticky-back-btn" onclick="checkTutorialAndProceed()">
             BACK TO MENU
           </button>
         </div>

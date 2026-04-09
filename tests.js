@@ -280,9 +280,12 @@ function runUnitTests() {
     items = [{ type: "skull", x: 0, y: 0, w: 10, h: 10 }]; // 1 bad item
     triggerSynergy();
 
-    // Synergy clears bad items (+100 score) and adds 1000 flat score
+    // Synergy flags bad items (+100 score) and adds 1000 flat score
     const success =
-      score === 1100 && items.length === 0 && synergyTimer === 1.5;
+      score === 1100 &&
+      items.length === 1 &&
+      items[0].synergyDestroyed === true &&
+      synergyTimer === 1.5;
 
     score = origScore;
     items = origItems;
