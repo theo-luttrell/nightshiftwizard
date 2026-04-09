@@ -601,14 +601,14 @@ function triggerSynergy() {
       "smallBat",
       "meteor",
     ].includes(items[i].type);
-    if (isBad) {
+    if (isBad && !items[i].synergyDestroyed) {
       spawnParticles(
         items[i].x + items[i].w / 2,
         items[i].y + items[i].h / 2,
         "#00ffff",
       );
       score += 100 * comboMult * scoreMult;
-      items.splice(i, 1);
+      items[i].synergyDestroyed = true;
     }
   }
   score += 1000 * comboMult * scoreMult;
@@ -2249,6 +2249,10 @@ function update(timestamp) {
 
   for (let i = items.length - 1; i >= 0; i--) {
     let item = items[i];
+    if (item.synergyDestroyed) {
+      items.splice(i, 1);
+      continue;
+    }
     let isBad = [
       "skull",
       "phantom",

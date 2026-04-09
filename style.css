@@ -418,3 +418,25 @@ button.shop-btn {
 #pauseBtn:hover {
   transform: scale(1.2);
 }
+
+/* Bug Report Button */
+#bug-report-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  width: auto;
+  padding: 10px 15px;
+  background-color: #1a0a2a;
+  color: #ff00ff;
+  border: 2px solid #8a3a8a;
+  font-size: 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+  cursor: pointer;
+}
+#bug-report-btn:hover {
+  background-color: #2d134d;
+  border-color: #ff00ff;
+  transform: scale(1.05);
+}

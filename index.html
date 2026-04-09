@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Night Shift Wizard: Arcane Overdrive (v12.0)</title>
+    <title>Night Shift Wizard: Arcane Overdrive (v8.0)</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
@@ -252,7 +252,7 @@
               margin-top: 10px;
             "
           >
-            ACHIEVEMENTS
+            ASTRAL ARCHIVES
           </button>
 
           <div class="icon-row">
@@ -687,7 +687,7 @@
           "
         >
           <h2 style="font-size: 14px; color: #cc66ff; margin-top: 0">
-            ACHIEVEMENTS
+            ASTRAL ARCHIVES
           </h2>
           <div
             id="achievementsList"
@@ -1017,5 +1017,69 @@
     <script src="./sprites.js"></script>
     <script src="./game.js"></script>
     <script src="./tests.js"></script>
+
+    <!-- CRASH-PROOF BUG REPORTER -->
+    <button id="bug-report-btn">REPORT BUG</button>
+    <script>
+      (function () {
+        const SUPABASE_URL = "https://dmpsaindnowmxybrwoem.supabase.co";
+        const SUPABASE_ANON_KEY =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcHNhaW5kbm93bXh5YnJ3b2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTA5ODAsImV4cCI6MjA5MDg4Njk4MH0.dUULkS_k_T8rTHy7czQfrjWvoxhEllYWGtwtsGIk-5o";
+        const btn = document.getElementById("bug-report-btn");
+        let lastError = "No fatal error captured.";
+
+        // Listen for global uncaught exceptions
+        window.addEventListener("error", function (e) {
+          lastError = e.message + " at " + e.filename + ":" + e.lineno;
+          btn.style.backgroundColor = "#8b0000";
+          btn.style.borderColor = "#ff4444";
+          btn.style.color = "#ffffff";
+          btn.innerText = "CRASH DETECTED - REPORT BUG";
+        });
+
+        btn.addEventListener("click", async function () {
+          const desc = prompt(
+            "Please briefly describe what you were doing before the bug occurred:",
+          );
+          if (desc === null) return; // User cancelled
+
+          try {
+            btn.innerText = "SENDING...";
+            const response = await fetch(
+              SUPABASE_URL + "/rest/v1/bug_reports",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: SUPABASE_ANON_KEY,
+                  Authorization: "Bearer " + SUPABASE_ANON_KEY,
+                  Prefer: "return=minimal",
+                },
+                body: JSON.stringify({
+                  error_message: lastError,
+                  user_agent: navigator.userAgent,
+                  player_description: desc,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              alert(
+                "Bug reported successfully! The Grand Artificer will look into it.",
+              );
+              btn.style.display = "none";
+            } else {
+              alert(
+                "Failed to send report. Response status: " + response.status,
+              );
+              btn.innerText = "REPORT BUG";
+            }
+          } catch (err) {
+            alert("Network error while sending report: " + err.message);
+            btn.innerText = "REPORT BUG";
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
