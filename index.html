@@ -254,6 +254,18 @@
           >
             ACHIEVEMENTS
           </button>
+          <button
+            id="btnArchives"
+            onclick="openArchives()"
+            style="
+              background-color: #1a0a2a;
+              border-color: #ffd700;
+              margin-top: 10px;
+              color: #ffd700;
+            "
+          >
+            THE ARCHIVES
+          </button>
 
           <div class="icon-row">
             <button
@@ -752,6 +764,39 @@
           </h2>
           <div
             id="achievementsList"
+            style="
+              width: 100%;
+              text-align: left;
+              margin: 10px 0;
+              overflow-y: auto;
+              flex-grow: 1;
+              padding-right: 5px;
+            "
+          ></div>
+          <button
+            class="sticky-back-btn"
+            onclick="switchScreen('mainMenuScreen')"
+          >
+            BACK TO MENU
+          </button>
+        </div>
+
+        <div
+          id="archivesScreen"
+          class="overlay-screen"
+          style="
+            display: none;
+            border-color: #ffd700;
+            width: 95%;
+            max-width: 480px;
+            padding: 15px;
+          "
+        >
+          <h2 style="font-size: 14px; color: #ffd700; margin-top: 0">
+            THE ARCHIVES
+          </h2>
+          <div
+            id="tabletList"
             style="
               width: 100%;
               text-align: left;

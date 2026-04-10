@@ -19,6 +19,7 @@ const screens = {
   shopScreen: document.getElementById("shopScreen"),
   leaderboardScreen: document.getElementById("leaderboardScreen"),
   achievementsScreen: document.getElementById("achievementsScreen"),
+  archivesScreen: document.getElementById("archivesScreen"),
   eulaScreen: document.getElementById("eulaScreen"),
   accountScreen: document.getElementById("accountScreen"),
   cloudConflictScreen: document.getElementById("cloudConflictScreen"),
@@ -110,6 +111,86 @@ let pulseEffectTimer = 0;
 let hasSeenShopTutorial = localStorage.getItem("nsw_shopTutorial") === "true";
 let shopDialogueIndex = 0;
 let isShopDialogueActive = false;
+
+let unlockedTablets = JSON.parse(localStorage.getItem("nsw_tablets")) || [];
+function saveTablets() {
+  localStorage.setItem("nsw_tablets", JSON.stringify(unlockedTablets));
+}
+const LORE_TABLETS = [
+  {
+    id: 1,
+    title: "Employee Onboarding Snippet",
+    author: "Veilcorp HR (Automated)",
+    text: '> "Congratulations on your assignment as a Void Containment Technician, Grade III. Please remember that your arcane field is company property for the duration of your shift. Do not attempt to physically touch the Breach walls. Do not attempt to converse with Void Condensate. If you feel your memories slipping, please report to the Quartermaster for a standard-issue Shield Potion. Veilcorp is not responsible for temporal displacement, existential unraveling, or loss of self. Have a great shift!"',
+  },
+  {
+    id: 2,
+    title: "Scrawled Note Found in the Catacombs",
+    author: "Worker #4409 (Deceased)",
+    text: "> \"The fog down here isn't weather. It's us. I was running through Zone 2 today and the fog parted for a second. I saw my childhood bedroom. Not a projection. The actual room, floating in the gray. The Void is chewing up my past and spitting it out as weather. I asked Silas for something to clear the fog, and he just looked at me and said, 'You don't want to see what's behind it, kid.' He's right. I don't.\"",
+  },
+  {
+    id: 3,
+    title: "R&D Observation Log",
+    author: "Dr. Aris Thorne, Veilcorp Metaphysics Div.",
+    text: "> \"Observation of the 'Phantom' entities confirms our worst fears. They are not independent Void lifeforms. They are perfect arcane casts of prior technicians who suffered total field collapse during their shifts. The Void absorbs their defensive spells and replays them endlessly, like a skipped record. I submitted a request to HR to suspend operations and properly lay these echoes to rest. HR denied the request, citing that the Phantoms provide 'excellent defensive training' for new hires.\"",
+  },
+  {
+    id: 4,
+    title: "Quartermaster's Warning",
+    author: "Silas Vane",
+    text: "> \"Listen to me closely. I don't care how many Arcane Shards you scoop up on your shift. Spend them. Do not hoard them in your locker. Do not sleep with them under your cot. They are made from your own resistance, and if you get enough of them in one place, they start trying to finish the thoughts you abandoned when you shed them. Last kid who hoarded ten thousand of them walked into the Breach with no gear on just to 'hear what the choir was singing.' Spend them. That's what I'm here for.\"",
+  },
+  {
+    id: 5,
+    title: "Automated Audit Warning",
+    author: "Veilcorp Management System",
+    text: '> "NOTICE: Sector 7 worker performance has exceeded expected baseline variance. Initiating Breach Integrity Assessment Unit (B.I.A.U.).\\nWorker Directive: Survive the incoming diagnostic barrage. Failure to maintain structural integrity during the audit will result in immediate termination of employment and existence. Thank you for your continued dedication to Veilcorp."',
+  },
+  {
+    id: 6,
+    title: "Recovered Audio Transcript (Zone 4)",
+    author: "Unknown (Voice heavily distorted)",
+    text: "> \"It's so cold down here. But it's not temperature. It's time. I tried to cast a Pulse spell three minutes ago, and the spark is still just hovering in my palm, trying to render. My boots are sliding because the universe hasn't updated my friction yet. I can see a Specter moving toward me, but it's taking years. I have so much time to think. Too much time. I think I'm going to stop pushing now. Let's just see what happens when the ice breaks...\"",
+  },
+  {
+    id: 7,
+    title: "Breakroom Graffiti (Transcribed)",
+    author: "Unknown Worker",
+    text: "> \"If Silas offers you the Glass Cannon, don't take it. I don't care how desperate you are to double your shift yield. It strips your innate shielding to feed the score multiplier. You burn twice as bright, but if a single Skull grazes your shoulder, you don't just die—you get erased. I watched Miller equip one on Tuesday. He missed a dodge in Zone 2 and didn't even leave a body behind. Just a puff of purple dust and a mop bucket.\"",
+  },
+  {
+    id: 8,
+    title: "R&D Observation Log",
+    author: "Dr. Aris Thorne, Veilcorp Metaphysics Div.",
+    text: "> \"Workers continue to fundamentally misunderstand the nature of the 'meteors' in Zone 3. They are not rocks falling from our sky. They are the intersecting remnants of adjacent timelines that failed to contain their own Breaches. When you dodge a meteor down there, you aren't dodging a rock—you are dodging a shattered continent from a universe that didn't have Veilcorp to plug the hole. Remind the technicians to respect the debris.\"",
+  },
+  {
+    id: 9,
+    title: "Quartermaster's Inventory Ledger",
+    author: "Silas Vane",
+    text: "> \"Caught three more Void Wisps near the access grate this morning. They were trying to feed on the residual shard-dust left on the floor. I managed to trap them in a standard containment vial and tether them to an arcane leash. They're harmless once you bind them to a worker's field, and they'll actively scoop up loose shards to feed themselves. I'll put them in the shop tomorrow for 500 Shards a pop. If you can put a leash on a parasite, you can put a price on it.\"",
+  },
+  {
+    id: 10,
+    title: "Veilcorp Automated Payroll Memo",
+    author: "Veilcorp HR & Payroll Division",
+    text: "> \"Dear Technician. Your Arcane Shard yield for last night's shift was 14% below the sector average. Telemetry indicates your arcane resistance field was 'soft' during the Zone 1 descent, allowing the Void to consume potential shard output before it could crystallize. Remember: Veilcorp pays for raw, unyielding resistance. If you are feeling fatigued, we recommend purchasing an artificial stimulant from the Quartermaster. Please resist harder tonight.\"",
+  },
+  {
+    id: 11,
+    title: "Maintenance Log / Shift Report",
+    author: "Worker #8812",
+    text: "> \"Putting this in the log for the new hires: The black things with wings aren't bats. There's no biological life down there. They are just chunks of heavy void-slag falling apart under their own weight. If you hit them with a pulse or a laser, they fracture into smaller, sharper pieces that fall twice as fast. Stop trying to kill them. You can't kill a falling brick. Just get out of the way.\"",
+  },
+  {
+    id: 12,
+    title: "Recovered Audio Transcript",
+    author: "Worker #5022 (Status: Terminated)",
+    text: "> \"[Heavy breathing, sound of magical impacts] It's an Audit! The B.I.A.U. just dropped past the Zone 2 fog line! It's firing a cyclical wave pattern—seven pulses, then a sweeping beam. I can't break its shielding. I threw everything I have at the core and it didn't even register a scratch! [Loud mechanical hum] It's not trying to kill me, it's just ticking boxes on a checklist! How long does this diagnostic last?! I can't hold—[Audio Feed Severed]\"",
+  },
+];
+
 const shopTutorialLines = [
   "Ah, a new face. Welcome to my shop.",
   "Got any Arcane Shards? I can trade them for a little extra power.",
@@ -489,6 +570,7 @@ function saveLocalOnly() {
   localStorage.setItem("nsw_hasSeenTutorial", hasSeenTutorial);
   localStorage.setItem("nsw_shopTutorial", hasSeenShopTutorial);
   localStorage.setItem("nsw_achievements", JSON.stringify(achievements));
+  localStorage.setItem("nsw_tablets", JSON.stringify(unlockedTablets));
   localStorage.setItem("nsw_lastSaved", new Date().toISOString());
 
   document.getElementById("menuShards").innerText = arcaneShards;
@@ -542,6 +624,7 @@ const player = {
   friction: 0.95,
 };
 let items = [];
+let activeDataDrives = [];
 let particles = [];
 let bgStars = [];
 let spawnTimer = 0;
@@ -593,6 +676,48 @@ let boss = {
   teleportTimer: 0,
 };
 
+function spawnDataDrive(x, y) {
+  activeDataDrives.push({
+    x: x,
+    y: y,
+    w: 16,
+    h: 16,
+    speed: 120,
+    wave: Math.random() * Math.PI * 2,
+  });
+}
+
+function unlockRandomTablet() {
+  let locked = LORE_TABLETS.filter((t) => !unlockedTablets.includes(t.id));
+  if (locked.length === 0) {
+    arcaneShards += 1000;
+    saveMeta();
+    updateShopUI();
+    unlockedQueue.push({
+      tier: "Lore",
+      title: "All Archives Decrypted",
+      description: "Shard Bonus: +1000",
+      targetValue: 1,
+      currentProgress: 1,
+      unlocked: true,
+    });
+    return;
+  }
+  let picked = locked[Math.floor(Math.random() * locked.length)];
+  unlockedTablets.push(picked.id);
+  saveTablets();
+  saveMeta();
+  playSound("chime");
+  unlockedQueue.push({
+    tier: "Lore",
+    title: picked.title,
+    description: "New Archive Decrypted",
+    targetValue: 1,
+    currentProgress: 1,
+    unlocked: true,
+  });
+}
+
 function triggerSynergy() {
   playSound("bossHit");
   triggerShake(1.0, 20);
@@ -618,6 +743,7 @@ function triggerSynergy() {
       );
       score += 100 * comboMult * scoreMult;
       items[i].synergyDestroyed = true;
+      if (Math.random() < 0.02) spawnDataDrive(items[i].x, items[i].y);
     }
   }
   score += 1000 * comboMult * scoreMult;
@@ -646,7 +772,14 @@ function triggerShake(duration, magnitude) {
 }
 
 // --- RENDER ENGINE & UTILS ---
-function drawPixelSpriteToCtx(context, sprite, x, y, size) {
+function drawPixelSpriteToCtx(
+  context,
+  sprite,
+  x,
+  y,
+  size,
+  outlineColor = null,
+) {
   const rows = sprite.length;
   if (rows === 0) return;
   const cols = sprite[0].length;
@@ -655,6 +788,41 @@ function drawPixelSpriteToCtx(context, sprite, x, y, size) {
 
   const offsetX = x + (size - cols * pixelSize) / 2;
   const offsetY = y + (size - rows * pixelSize) / 2;
+
+  if (outlineColor) {
+    context.fillStyle = outlineColor;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const colorKey = sprite[r][c];
+        if (colorKey !== "tr" && colorKey !== "transparent") {
+          context.fillRect(
+            offsetX + (c - 0.5) * pixelSize,
+            offsetY + r * pixelSize,
+            pixelSize + 0.5,
+            pixelSize + 0.5,
+          );
+          context.fillRect(
+            offsetX + (c + 0.5) * pixelSize,
+            offsetY + r * pixelSize,
+            pixelSize + 0.5,
+            pixelSize + 0.5,
+          );
+          context.fillRect(
+            offsetX + c * pixelSize,
+            offsetY + (r - 0.5) * pixelSize,
+            pixelSize + 0.5,
+            pixelSize + 0.5,
+          );
+          context.fillRect(
+            offsetX + c * pixelSize,
+            offsetY + (r + 0.5) * pixelSize,
+            pixelSize + 0.5,
+            pixelSize + 0.5,
+          );
+        }
+      }
+    }
+  }
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -1007,6 +1175,7 @@ async function pushToCloud() {
     active_spell: activeSpell,
     has_seen_tutorial: hasSeenTutorial,
     achievements: achievements,
+    tablets: unlockedTablets,
     last_synced: new Date().toISOString(),
   };
   const { error } = await supabaseClient
@@ -1078,6 +1247,7 @@ function applyCloudData(data) {
   if (data.has_seen_tutorial !== undefined)
     hasSeenTutorial = data.has_seen_tutorial;
   if (data.achievements) achievements = data.achievements;
+  if (data.tablets) unlockedTablets = data.tablets;
   updateAchievement("account_sync", 1, true);
 
   localStorage.setItem("nsw_lastSaved", data.last_synced);
@@ -1229,9 +1399,9 @@ function updateShopUI() {
   document.getElementById("shopShards").innerText = arcaneShards;
 
   const biomeCosts = {
-    fog: [200, 600, 1500],
-    meteor: [400, 1000, 2500],
-    ice: [600, 1200, 3000],
+    fog: [20, 60, 1000],
+    meteor: [40, 100, 1000],
+    ice: [60, 120, 1000],
   };
 
   ["potion", "boots", "magnet", "blast"].forEach((type) => {
@@ -1870,6 +2040,7 @@ function startGame(rushMode = false) {
   score = 0;
   maxComboRun = 1;
   items = [];
+  activeDataDrives = [];
   particles = [];
   runShards = 0;
 
@@ -1936,6 +2107,53 @@ function spawnBoss() {
   triggerShake(0.5, 5);
   let trackIndex = bossLevel % musicTracks.boss.length;
   playMusic("boss", trackIndex);
+}
+
+function openArchives() {
+  switchScreen("archivesScreen");
+  const list = document.getElementById("tabletList");
+  list.innerHTML = "";
+
+  LORE_TABLETS.forEach((tablet) => {
+    const isUnlocked = unlockedTablets.includes(tablet.id);
+    const container = document.createElement("div");
+    container.className = "shop-item";
+    container.style.borderColor = isUnlocked ? "#ffd700" : "#444";
+    container.style.opacity = isUnlocked ? "1" : "0.6";
+
+    if (isUnlocked) {
+      container.innerHTML = `
+        <h3 style="color: #ffd700; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleTablet(${tablet.id})">
+          <span>[#${tablet.id.toString().padStart(2, "0")}] ${tablet.title}</span>
+          <span id="tabIcon_${tablet.id}" style="font-size: 14px; margin-left: 5px;">+</span>
+        </h3>
+        <p style="color: #00ffff; font-size: 8px; margin-bottom: 5px;">Author: ${tablet.author}</p>
+        <div id="tabText_${tablet.id}" style="display: none; font-size: 8px; color: #ccc; line-height: 1.6; margin-top: 10px; border-top: 1px dashed #5d275d; padding-top: 10px; text-transform: none;">
+          ${tablet.text.replace(/\n/g, "<br/>")}
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <h3 style="color: #666; margin-bottom: 5px;">[#${tablet.id.toString().padStart(2, "0")}] DATA CORRUPTED</h3>
+        <p style="color: #444; font-size: 8px; margin: 0;">ENCRYPTED - FIND MORE DRIVES</p>
+      `;
+    }
+    list.appendChild(container);
+  });
+}
+
+function toggleTablet(id) {
+  const textEl = document.getElementById("tabText_" + id);
+  const iconEl = document.getElementById("tabIcon_" + id);
+  if (textEl.style.display === "none") {
+    textEl.style.display = "block";
+    iconEl.innerText = "-";
+    playSound("bloop");
+  } else {
+    textEl.style.display = "none";
+    iconEl.innerText = "+";
+    playSound("chime");
+  }
 }
 
 // --- MAIN GAME LOOP ---
@@ -2043,6 +2261,27 @@ function update(timestamp) {
     }
   }
 
+  for (let i = activeDataDrives.length - 1; i >= 0; i--) {
+    let d = activeDataDrives[i];
+    d.y += d.speed * worldDt;
+    d.wave += worldDt * 3;
+    d.x += Math.sin(d.wave) * 50 * worldDt;
+
+    if (
+      player.x < d.x + d.w &&
+      player.x + player.w > d.x &&
+      player.y < d.y + d.h &&
+      player.y + player.h > d.y
+    ) {
+      spawnParticles(d.x + d.w / 2, d.y + d.h / 2, "#ffd700");
+      playSound("bloop");
+      unlockRandomTablet();
+      activeDataDrives.splice(i, 1);
+      continue;
+    }
+    if (d.y > V_HEIGHT) activeDataDrives.splice(i, 1);
+  }
+
   for (let i = allyProjectiles.length - 1; i >= 0; i--) {
     let p = allyProjectiles[i];
     p.y -= p.speed * worldDt;
@@ -2067,6 +2306,7 @@ function update(timestamp) {
       ) {
         spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#ff4444");
         score += 20 * comboMult * (activeRelic === "glass_cannon" ? 2 : 1);
+        if (Math.random() < 0.02) spawnDataDrive(item.x, item.y);
         items.splice(j, 1);
         hitHazard = true;
         break;
@@ -2491,6 +2731,7 @@ function update(timestamp) {
     ) {
       if (isBad) {
         spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#ff4444");
+        if (Math.random() < 0.02) spawnDataDrive(item.x, item.y);
         items.splice(i, 1);
         score += 20 * comboMult * scoreMult;
         continue;
@@ -2545,6 +2786,7 @@ function update(timestamp) {
           spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#a9a9a9");
           score += 20 * comboMult * scoreMult;
           triggerShake(0.1, 2);
+          if (Math.random() < 0.02) spawnDataDrive(item.x, item.y);
           items.splice(i, 1);
         } else if (rocketTimer > 0 || isInvincible) {
           playSound("crunch");
@@ -2555,6 +2797,7 @@ function update(timestamp) {
           );
           score += 50 * comboMult * scoreMult;
           triggerShake(0.1, 3);
+          if (Math.random() < 0.02) spawnDataDrive(item.x, item.y);
           items.splice(i, 1);
         } else if (player.shieldHits > 0) {
           player.shieldHits--;
@@ -2563,6 +2806,7 @@ function update(timestamp) {
           spawnParticles(item.x + item.w / 2, item.y + item.h / 2, "#00ffff");
           triggerShake(0.3, 8);
           updateAchievement("shield_buffer", 1);
+          if (Math.random() < 0.02) spawnDataDrive(item.x, item.y);
           items.splice(i, 1);
         } else {
           processGameOver();
@@ -2625,6 +2869,8 @@ function update(timestamp) {
             playSound("chime");
             spawnParticles(boss.x + boss.w / 2, boss.y + boss.h / 2, "#ffd700");
             triggerShake(0.5, 12);
+            if (Math.random() < 0.2)
+              spawnDataDrive(boss.x + boss.w / 2, boss.y + boss.h / 2);
             if (isBossRush) bossRushDelay = 2.5;
             else nextBossScore = score + 1500;
           }
@@ -2805,6 +3051,7 @@ function render() {
     }
 
     ctx.save();
+    let outlineCol = null;
     if (isGood) {
       const pulseGlow = 10 + Math.sin(globalPulseTimer) * 5;
       ctx.shadowColor = ["star", "comet", "holyStar"].includes(item.type)
@@ -2812,11 +3059,17 @@ function render() {
         : "#00ffff";
       ctx.shadowBlur = pulseGlow;
     } else if (isBad) {
-      ctx.shadowColor = "#ff0055";
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
+      outlineCol = "#ff0055";
     }
-    drawPixelSpriteToCtx(ctx, item.sprite, item.x, item.y, item.w);
+    drawPixelSpriteToCtx(ctx, item.sprite, item.x, item.y, item.w, outlineCol);
+    ctx.restore();
+  });
+
+  activeDataDrives.forEach((d) => {
+    ctx.save();
+    ctx.shadowColor = "#ffd700";
+    ctx.shadowBlur = 15 + Math.sin(globalPulseTimer * 5) * 5;
+    drawPixelSpriteToCtx(ctx, dataDriveSprite, d.x, d.y, d.w);
     ctx.restore();
   });
 
@@ -2837,12 +3090,14 @@ function render() {
   }
 
   if (bossActive && boss.y > -boss.h) {
-    ctx.save();
-    ctx.shadowColor = "#ff0055";
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    drawPixelSpriteToCtx(ctx, bossSprites[boss.type], boss.x, boss.y, boss.w);
-    ctx.restore();
+    drawPixelSpriteToCtx(
+      ctx,
+      bossSprites[boss.type],
+      boss.x,
+      boss.y,
+      boss.w,
+      "#ff0055",
+    );
 
     ctx.fillStyle = "#333";
     ctx.fillRect(boss.x, boss.y - 10, boss.w, 6);
